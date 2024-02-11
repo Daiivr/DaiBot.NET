@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Reflection.Emit;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static SysBot.Pokemon.TradeSettings;
@@ -247,6 +246,33 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task TradeEggAsync([Summary("Showdown Set")][Remainder] string content)
     {
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
+
+            var queueEmbed = new EmbedBuilder
+            {
+                Description = $"<:red:1206057066146308128> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
+
         content = ReusableActions.StripCodeBlock(content);
         var set = new ShowdownSet(content);
         var template = AutoLegalityWrapper.GetTemplate(set);
@@ -291,6 +317,32 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task TradeMysteryEggAsync()
     {
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
+
+            var queueEmbed = new EmbedBuilder
+            {
+                Description = $"<:red:1206057066146308128> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
         try
         {
             var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
@@ -329,6 +381,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             LogUtil.LogSafe(ex, nameof(TradeModule<T>));
             await ReplyAsync($"⚠️ {Context.User.Mention}, se produjo un error al procesar la solicitud.").ConfigureAwait(false);
         }
+
     }
 
     private void SetPerfectIVsAndShiny(PKM pk)
@@ -369,7 +422,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             var queueEmbed = new EmbedBuilder
             {
-                Description = $"✘ {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
+                Description = $"<:red:1206057066146308128> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
                 Color = Color.Red,
                 ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
                 ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
@@ -426,11 +479,11 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             // Set default held item only if it's not from "Legends: Arceus"
             if (!isLegendsArceus && pkm.HeldItem == 0 && !pkm.IsEgg)
             {
-                pkm.HeldItem = (int)SysCord<T>.Runner.Config.Trade.DefaultHeldItem;
+                pkm.HeldItem = (int)SysCord<T>.Runner.Config.Trade.TradeConfiguration.DefaultHeldItem;
             }
             else if (isLegendsArceus)
             {
-                pkm.HeldItem = (int)HeldItem.None; // Set to None for "Legends: Arceus" Pokémon
+                pkm.HeldItem = (int)TradeSettingsCategory.HeldItem.None; // Set to None for "Legends: Arceus" Pokémon
             }
 
             var la = new LegalityAnalysis(pkm);
@@ -439,7 +492,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             if (pkm is not T pk || !la.Valid)
             {
                 var reason = result == "Timeout" ? $"Este **{spec}** tomó demasiado tiempo en generarse." : result == "VersionMismatch" ? "Solicitud denegada: Las versiones de **PKHeX** y **Auto-Legality Mod** no coinciden." : $"{Context.User.Mention} No se puede crear un **{spec}** con los datos proporcionados.";
-                var errorMessage = $"Oops! {reason}";
+                var errorMessage = $"<:red:1206057066146308128> Oops! {reason}";
                 if (result == "Failed")
                     errorMessage += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
 
@@ -447,6 +500,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 {
                     Description = errorMessage,
                     Color = Color.Red,
+                    ImageUrl = "https://i.imgur.com/Y64hLzW.gif",
                     ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
                 };
 
@@ -528,7 +582,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     public async Task BatchTradeAsync([Summary("Lista de conjuntos de showdowns separados por '---'")][Remainder] string content)
     {
         // First, check if batch trades are allowed
-        if (!SysCord<T>.Runner.Config.Trade.AllowBatchTrades)
+        if (!SysCord<T>.Runner.Config.Trade.TradeConfiguration.AllowBatchTrades)
         {
             await ReplyAsync("⚠️ Los intercambios por lotes están actualmente deshabilitados.").ConfigureAwait(false);
             return;
@@ -542,7 +596,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             var queueEmbed = new EmbedBuilder
             {
-                Description = $"✘ {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
+                Description = $"<:red:1206057066146308128> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
                 Color = Color.Red,
                 ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
                 ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
@@ -560,7 +614,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
 
         var trades = ParseBatchTradeContent(content);
-        var maxTradesAllowed = SysCord<T>.Runner.Config.Trade.MaxPkmsPerTrade;
+        var maxTradesAllowed = SysCord<T>.Runner.Config.Trade.TradeConfiguration.MaxPkmsPerTrade;
 
         // Check if batch mode is allowed and if the number of trades exceeds the limit
         if (maxTradesAllowed < 1 || trades.Count > maxTradesAllowed)
@@ -657,7 +711,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                     _ => $"No pude crear un {spec} a partir de ese conjunto.."
                 };
 
-                var errorMessage = $"Oops! {reason}";
+                var errorMessage = $"<:red:1206057066146308128> Oops! {reason}";
                 if (result == "Failed")
                     errorMessage += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
 
@@ -701,7 +755,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     public async Task ListEventsAsync([Remainder] string args = "")
     {
         const int itemsPerPage = 20; // Number of items per page
-        var eventsFolderPath = SysCord<T>.Runner.Config.Trade.EventsFolder;
+        var eventsFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.EventsFolder;
         var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
 
         // Parsing the arguments to separate filter and page number
@@ -794,7 +848,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     {
         try
         {
-            var eventsFolderPath = SysCord<T>.Runner.Config.Trade.EventsFolder;
+            var eventsFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.EventsFolder;
             var eventFiles = Directory.GetFiles(eventsFolderPath)
                                       .Select(Path.GetFileName)
                                       .OrderBy(x => x)
@@ -846,7 +900,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     public async Task BattleReadyListAsync([Remainder] string args = "")
     {
         const int itemsPerPage = 20; // Number of items per page
-        var battleReadyFolderPath = SysCord<T>.Runner.Config.Trade.BattleReadyPKMFolder;
+        var battleReadyFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.BattleReadyPKMFolder;
         var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
 
         // Parsing the arguments to separate filter and page number
@@ -939,7 +993,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     {
         try
         {
-            var battleReadyFolderPath = SysCord<T>.Runner.Config.Trade.BattleReadyPKMFolder;
+            var battleReadyFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.BattleReadyPKMFolder;
             var battleReadyFiles = Directory.GetFiles(battleReadyFolderPath)
                                             .Select(Path.GetFileName)
                                             .OrderBy(x => x)
@@ -1005,6 +1059,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         var usr = Context.Message.MentionedUsers.ElementAt(0);
         var sig = usr.GetFavor();
+
         await TradeAsyncAttach(code, sig, usr).ConfigureAwait(false);
     }
 
@@ -1075,7 +1130,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await reply.DeleteAsync().ConfigureAwait(false);
             return;
         }
-        var cfg = Info.Hub.Config.Trade;
+        var homeLegalityCfg = Info.Hub.Config.Trade.HomeLegalitySettings;
         var la = new LegalityAnalysis(pk);
         if (!la.Valid)
         {
@@ -1084,9 +1139,10 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             var customthumbnail = "https://i.imgur.com/DWLEXyu.png";
             string legalityReport = la.Report(verbose: false);
 
-            string responseMessage = pk.IsEgg ? "⚠️ Conjunto de showdown no válido para este huevo. Por favor revisa tu información y vuelve a intentarlo.." :
+            string responseMessage = pk.IsEgg ? $"{usr.Mention} El conjunto de showdown no válido para este huevo. Por favor revisa tu información y vuelve a intentarlo." :
                 $"✘ {usr.Mention} el archivo **{typeof(T).Name}** no es __legal__ y no puede ser tradeado.\n### He aquí la razón:\n```{legalityReport}```\n```🔊Consejo:\n• Por favor verifica detenidamente la informacion en PKHeX e intentalo de nuevo!\n• Puedes utilizar el plugin de ALM para legalizar tus pokemons y ahorrarte estos problemas.```";
-            if (cfg.DisallowNonNatives && (la.EncounterOriginal.Context != pk.Context || pk.GO))
+
+            if (homeLegalityCfg.DisallowNonNatives && (la.EncounterOriginal.Context != pk.Context || pk.GO))
             {
                 // Allow the owner to prevent trading entities that require a HOME Tracker even if the file has one already.
                 var embedBuilder = new EmbedBuilder()
@@ -1110,7 +1166,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 await reply2.DeleteAsync().ConfigureAwait(false);
                 return;
             }
-            if (cfg.DisallowTracked && pk is IHomeTrack { HasTracker: true })
+            if (homeLegalityCfg.DisallowTracked && pk is IHomeTrack { HasTracker: true })
             {
                 // Allow the owner to prevent trading entities that already have a HOME Tracker.
                 var embedBuilder = new EmbedBuilder()

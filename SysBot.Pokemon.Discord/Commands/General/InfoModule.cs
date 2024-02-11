@@ -17,6 +17,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 {
     private const string detail = "Soy un bot de Discord de código abierto impulsado por PKHe X.Core y otro software de código abierto.";
     private const string repo = "https://github.com/kwsch/SysBot.NET";
+    private const string gengar = "https://github.com/bdawg1989/MergeBot";
     private const string daifork = "https://github.com/Daiivr/SysBot.NET";
 
     [Command("info")]
@@ -32,7 +33,8 @@ public class InfoModule : ModuleBase<SocketCommandContext>
         };
 
         builder.AddField("Info",
-            $"- [Código fuente]({repo})\n" +
+            $"- [Código fuente del SySBot Original]({repo})\n" +
+            $"- [Código fuente de Mergebot]({gengar})\n" +
             $"- [Codigo Fuente de este Bot]({daifork})\n" +
             $"- {Format.Bold("Propietario")}: {app.Owner} ({app.Owner.Id})\n" +
             $"- {Format.Bold("Biblioteca")}: Discord.Net ({DiscordConfig.Version})\n" +

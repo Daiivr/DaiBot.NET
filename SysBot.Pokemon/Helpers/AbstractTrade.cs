@@ -23,7 +23,7 @@ namespace SysBot.Pokemon.Helpers
         public abstract IPokeTradeNotifier<T> GetPokeTradeNotifier(T pkm, int code);//完善此方法以实现消息通知功能
         protected PokeTradeTrainerInfo userInfo = default!;
         private TradeQueueInfo<T> queueInfo = default!;
-        private List<pictocodes> lgcode;
+        private List<Pictocodes> lgcode;
         public static readonly ushort[] ShinyLock = {  (ushort)Species.Victini, (ushort)Species.Keldeo, (ushort)Species.Volcanion, (ushort)Species.Cosmog, (ushort)Species.Cosmoem, (ushort)Species.Magearna, (ushort)Species.Marshadow, (ushort)Species.Eternatus,
                                                     (ushort)Species.Kubfu, (ushort)Species.Urshifu, (ushort)Species.Zarude, (ushort)Species.Glastrier, (ushort)Species.Spectrier, (ushort)Species.Calyrex };
 
@@ -323,15 +323,15 @@ namespace SysBot.Pokemon.Helpers
         /// <returns></returns>
         private bool JudgeMultiNum(int multiNum)
         {
-            var maxPkmsPerTrade = queueInfo.Hub.Config.Trade.MaxPkmsPerTrade;
+            var maxPkmsPerTrade = queueInfo.Hub.Config.Trade.TradeConfiguration.MaxPkmsPerTrade;
             if (maxPkmsPerTrade <= 1)
             {
-                SendMessage("Please contact the bot owner to change the trade/MaxPkmsPerTrade configuration to greater than 1.");
+                SendMessage("Comuníquese con el propietario del bot para cambiar la configuración de comercio/Pkms máximos por comercio a mayor que 1.");
                 return false;
             }
             else if (multiNum > maxPkmsPerTrade)
             {
-                SendMessage($"The number of Pokémon exchanged in batches should be less than or equal to {maxPkmsPerTrade}.");
+                SendMessage($"La cantidad de Pokémon intercambiados en lotes debe ser menor o igual a {maxPkmsPerTrade}.");
                 return false;
             }
             return true;
@@ -484,7 +484,7 @@ namespace SysBot.Pokemon.Helpers
                 ? PokeTradeType.Seed
                 : (type == PokeRoutineType.Dump ? PokeTradeType.Dump : PokeTradeType.Specific);
             var detail =
-                new PokeTradeDetail<T>(pk, trainer, notifier, tt, code, lgcode, true);
+                new PokeTradeDetail<T>(pk, trainer, notifier, tt, code, true);
             detail.Context.Add("skipAutoOTList", skipAutoOTList);
             if (pks.Count > 0)
             {

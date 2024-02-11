@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.IO;
 using SysBot.Pokemon.Helpers;
-
+using System.Text.RegularExpressions;
 namespace SysBot.Pokemon.Discord;
 
 public static class QueueHelper<T> where T : PKM, new()
@@ -24,7 +24,6 @@ public static class QueueHelper<T> where T : PKM, new()
     // A dictionary to hold batch trade file paths and their deletion status
     private static Dictionary<int, List<string>> batchTradeFiles = new Dictionary<int, List<string>>();
     private static Dictionary<ulong, int> userBatchTradeMaxDetailId = new Dictionary<ulong, int>();
-    private static List<pictocodes> lgcode;
 
     public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, int formArgument = 0, bool isMysteryEgg = false)
     {
@@ -68,8 +67,8 @@ public static class QueueHelper<T> where T : PKM, new()
         var name = user.Username;
 
         var trainer = new PokeTradeTrainerInfo(trainerName, userID);
-        var notifier = new DiscordTradeNotifier<T>(pk, trainer, code, trader, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode);
-        var detail = new PokeTradeDetail<T>(pk, trainer, notifier, t, code, lgcode, sig == RequestSignificance.Favored);
+        var notifier = new DiscordTradeNotifier<T>(pk, trainer, code, trader, batchTradeNumber, totalBatchTrades, isMysteryEgg);
+        var detail = new PokeTradeDetail<T>(pk, trainer, notifier, t, code, sig == RequestSignificance.Favored);
         var trade = new TradeEntry<T>(detail, userID, type, name);
         var strings = GameInfo.GetStrings(1);
         var hub = SysCord<T>.Runner.Hub;
@@ -90,12 +89,12 @@ public static class QueueHelper<T> where T : PKM, new()
             var baseEta = Info.Hub.Config.Queues.EstimateDelay(position.Position, botct);
             // Increment ETA by 1 minute for each batch trade
             var adjustedEta = baseEta + (batchTradeNumber - 1);
-            etaMessage = $"Estimado: {adjustedEta:F1} min(s) parta el tradeo {batchTradeNumber}/{totalBatchTrades}.";
+            etaMessage = $"Estimado: {adjustedEta:F1} min(s) para el tradeo {batchTradeNumber}/{totalBatchTrades}.";
         }
         else
         {
             var adjustedEta = (batchTradeNumber - 1); // Add 1 minute for each subsequent batch trade
-            etaMessage = $"Estimado: {adjustedEta:F1} minuto(s) parta el tradeo {batchTradeNumber}/{totalBatchTrades}.";
+            etaMessage = $"Estimado: {adjustedEta:F1} minuto(s) para el tradeo {batchTradeNumber}/{totalBatchTrades}.";
         }
 
         Dictionary<string, string> scaleEmojis = new Dictionary<string, string>
@@ -178,21 +177,248 @@ public static class QueueHelper<T> where T : PKM, new()
         int[] ivs = pk.IVs;
         string ivsDisplay = $"{ivs[0]}/{ivs[1]}/{ivs[2]}/{ivs[3]}/{ivs[4]}/{ivs[5]}";
 
+        var moveNamesList = new List<string>();
+
+        //Remueve el None si no encuentra un movimiento
+        if (pk.Move1 != 0)
+            moveNamesList.Add($"{(Move)pk.Move1}");
+        if (pk.Move2 != 0)
+            moveNamesList.Add($"{(Move)pk.Move2}");
+        if (pk.Move3 != 0)
+            moveNamesList.Add($"{(Move)pk.Move3}");
+        if (pk.Move4 != 0)
+            moveNamesList.Add($"{(Move)pk.Move4}");
+
+        // Add emojis for specific moves
+        var waterEmoji = "<:move_water:1135381853675716728>"; // Water emoji
+        var fireEmoji = "<:move_fire:1135381665028522025>"; // Fire emoji
+        var electricEmoji = "<:move_electric:1135381611748270211>"; // Electric emoji
+        var bugEmoji = "<:move_bug:1135381533750984794>"; // Bug Emoji
+        var darkEmoji = "<:move_dark:1135381573588496414>"; // Dark Emoji
+        var ghostEmoji = "<:move_ghost:1135381691465203733>"; //Ghost emoji
+        var poisonEmoji = "<:move_poison:1135381791788765255>"; //Poison emoji
+        var iceEmoji = "<:move_ice:1135381764223799356>"; //Ice emoji
+        var steelEmoji = "<:move_steel:1135381836823011408>"; //steel emoji
+        var rockEmoji = "<:move_rock:1135381815889252432>"; //rock emoji
+        var groundEmoji = "<:move_ground:1135381748360954027>"; //ground emoji
+        var fairyEmoji = "<:move_fairy:1135381627053297704>"; //fairy emoji
+        var grassEmoji = "<:move_grass:1135381703796469780>"; //grass emoji
+        var fightingEmoji = "<:move_fighting:1135381642878398464>"; //fighting emoji
+        var normalEmoji = "<:move_normal:1135381779247804447>"; //normal emoji
+        var dragonEmoji = "<:move_dragon:1135381595935752375>"; //dragon emoji
+        var flyingEmoji = "<:move_flying:1135381678429315262>"; //flying emoji
+        var psychicEmoji = "<:move_psychic:1135381805290229770>"; //pyschic emoji
+
+
+        // move list
+        var waterMoves = new List<string> { "WaterGun", "HydroPump", "Surf", "BubbleBeam", "Withdraw", "Waterfall", "Clamp", "Bubble", "Crabhammer", "Octazooka", "RainDance", "Whirlpool", "Dive", "HydroCannon", "WaterSpout", "MuddyWater", "WaterSport", "WaterPulse", "Brine", "AquaRing", "AquaTail", "AquaJet", "Soak", "Scald", "WaterPledge", "RazorShell", "SteamEruption", "WaterShuriken", "OriginPulse", "HydroVortex", "HydroVortex", "SparklingAria", "OceanicOperetta", "Liquidation", "SplishySplash", "BouncyBubble", "SnipeShot", "FishiousRend", "MaxGeyser", "LifeDew", "FlipTurn", "SurgingStrikes", "WaveCrash", "JetPunch", "TripleDive", "AquaStep", "HydroSteam", "ChillingWater", "AquaCutter" };
+        var fireMoves = new List<string> { "WillOWisp", "FirePunch", "Ember", "Flamethrower", "FireSpin", "FireBlast", "FlameWheel", "SacredFire", "SunnyDay", "HeatWave", "Eruption", "BlazeKick", "BlastBurn", "Overheat", "FlareBlitz", "FireFang", "LavaPlume", "MagmaStorm", "FlameBurst", "FlameCharge", "Incinerate", "Inferno", "FirePledge", "HeatCrash", "SearingShot", "BlueFlare", "FieryDance", "V-create", "FusionFlare", "MysticalFire", "InfernoOverdrive", "InfernoOverdrive", "FireLash", "BurnUp", "ShellTrap", "MindBlown", "SizzlySlide", "MaxFlare", "PyroBall", "BurningJealousy", "RagingFury", "TorchSong", "ArmorCannon", "BitterBlade", "BlazingTorque", "BurningBulwark", "TemperFlare" };
+        var electricMoves = new List<string> { "ThunderPunch", "ThunderShock", "Thunderbolt", "ThunderWave", "Thunder", "ZapCannon", "Spark", "Charge", "VoltTackle", "ShockWave", "MagnetRise", "ThunderFang", "Discharge", "ChargeBeam", "ElectroBall", "VoltSwitch", "Electroweb", "WildCharge", "BoltStrike", "FusionBolt", "IonDeluge", "ParabolicCharge", "Electrify", "EerieImpulse", "MagneticFlux", "ElectricTerrain", "Nuzzle", "GigavoltHavoc", "GigavoltHavoc", "Catastropika", "StokedSparksurfer", "ZingZap", "10,000,000VoltThunderbolt", "PlasmaFists", "ZippyZap", "PikaPapow", "BuzzyBuzz", "BoltBeak", "MaxLightning", "AuraWheel", "Overdrive", "RisingVoltage", "ThunderCage", "WildboltStorm", "ElectroDrift", "DoubleShock", "ElectroShot", "Thunderclap", "SupercellSlam" };
+        var bugEmojiMoves = new List<string> { "XScissor", "Uturn", "Twineedle", "PinMissile", "StringShot", "LeechLife", "SpiderWeb", "FuryCutter", "Megahorn", "TailGlow", "SilverWind", "SignalBeam", "U-turn", "X-Scissor", "BugBuzz", "BugBite", "AttackOrder", "DefendOrder", "HealOrder", "RagePowder", "QuiverDance", "StruggleBug", "Steamroller", "StickyWeb", "FellStinger", "Powder", "Infestation", "SavageSpin-Out", "SavageSpin-Out", "FirstImpression", "PollenPuff", "Lunge", "MaxFlutterby", "SkitterSmack", "SilkTrap", "Pounce", };
+        var darkMoves = new List<string> { "Bite", "Thief", "FeintAttack", "Pursuit", "Crunch", "BeatUp", "Torment", "Flatter", "Memento", "Taunt", "KnockOff", "Snatch", "FakeTears", "Payback", "Assurance", "Embargo", "Fling", "Punishment", "SuckerPunch", "DarkPulse", "NightSlash", "Switcheroo", "NastyPlot", "DarkVoid", "HoneClaws", "FoulPlay", "Quash", "NightDaze", "Snarl", "PartingShot", "Topsy-Turvy", "HyperspaceFury", "BlackHoleEclipse", "BlackHoleEclipse", "DarkestLariat", "ThroatChop", "PowerTrip", "BrutalSwing", "MaliciousMoonsault", "BaddyBad", "JawLock", "MaxDarkness", "Obstruct", "FalseSurrender", "LashOut", "WickedBlow", "FieryWrath", "CeaselessEdge", "KowtowCleave", "Ruination", "Comeuppance", "WickedTorque" };
+        var ghostMoves = new List<string> { "NightShade", "ConfuseRay", "Lick", "Nightmare", "Curse", "Spite", "DestinyBond", "ShadowBall", "Grudge", "Astonish", "ShadowPunch", "ShadowClaw", "ShadowSneak", "OminousWind", "ShadowForce", "Hex", "PhantomForce", "Trick-or-Treat", "Never-EndingNightmare", "Never-EndingNightmare", "SpiritShackle", "SinisterArrowRaid", "Soul-Stealing7-StarStrike", "ShadowBone", "SpectralThief", "MoongeistBeam", "MenacingMoonrazeMaelstrom", "MaxPhantasm", "Poltergeist", "AstralBarrage", "BitterMalice", "InfernalParade", "LastRespects", "RageFist" };
+        var poisonMoves = new List<string> { "PoisonSting", "Acid", "PoisonPowder", "Toxic", "Smog", "Sludge", "PoisonGas", "AcidArmor", "SludgeBomb", "PoisonFang", "PoisonTail", "GastroAcid", "ToxicSpikes", "PoisonJab", "CrossPoison", "GunkShot", "Venoshock", "SludgeWave", "Coil", "AcidSpray", "ClearSmog", "Belch", "VenomDrench", "AcidDownpour", "AcidDownpour", "BanefulBunker", "ToxicThread", "Purify", "MaxOoze", "ShellSideArm", "CorrosiveGas", "DireClaw", "BarbBarrage", "MortalSpin", "NoxiousTorque", "MalignantChain" };
+        var iceMoves = new List<string> { "FreezeDry", "IcePunch", "Mist", "IceBeam", "Blizzard", "AuroraBeam", "Haze", "PowderSnow", "IcyWind", "Hail", "IceBall", "SheerCold", "IcicleSpear", "Avalanche", "IceShard", "IceFang", "FrostBreath", "Glaciate", "FreezeShock", "IceBurn", "IcicleCrash", "Freeze-Dry", "SubzeroSlammer", "SubzeroSlammer", "IceHammer", "AuroraVeil", "FreezyFrost", "MaxHailstorm", "TripleAxel", "GlacialLance", "MountainGale", "IceSpinner", "ChillyReception", "Snowscape" };
+        var steelMoves = new List<string> { "SteelWing", "IronTail", "MetalClaw", "MeteorMash", "MetalSound", "IronDefense", "DoomDesire", "GyroBall", "MetalBurst", "BulletPunch", "MirrorShot", "FlashCannon", "IronHead", "MagnetBomb", "Autotomize", "HeavySlam", "ShiftGear", "GearGrind", "King'sShield", "CorkscrewCrash", "CorkscrewCrash", "GearUp", "AnchorShot", "SmartStrike", "SunsteelStrike", "SearingSunrazeSmash", "DoubleIronBash", "MaxSteelspike", "BehemothBlade", "BehemothBash", "SteelBeam", "SteelRoller", "Shelter", "SpinOut", "MakeItRain", "GigatonHammer", "TachyonCutter", "HardPress" };
+        var rockMoves = new List<string> { "RockThrow", "RockSlide", "Sandstorm", "Rollout", "AncientPower", "RockTomb", "RockBlast", "RockPolish", "PowerGem", "RockWrecker", "StoneEdge", "StealthRock", "HeadSmash", "WideGuard", "SmackDown", "DiamondStorm", "ContinentalCrush", "ContinentalCrush", "Accelerock", "SplinteredStormshards", "TarShot", "MaxRockfall", "MeteorBeam", "StoneAxe", "SaltCure", "MightyCleave" };
+        var groundMoves = new List<string> { "MudSlap", "SandAttack", "Earthquake", "Fissure", "Dig", "BoneClub", "Bonemerang", "Mud-Slap", "Spikes", "BoneRush", "Magnitude", "MudSport", "SandTomb", "MudShot", "EarthPower", "MudBomb", "Bulldoze", "DrillRun", "Rototiller", "ThousandArrows", "ThousandWaves", "Land'sWrath", "PrecipiceBlades", "TectonicRage", "TectonicRage", "ShoreUp", "HighHorsepower", "StompingTantrum", "MaxQuake", "ScorchingSands", "HeadlongRush", "SandsearStorm" };
+        var fairyMoves = new List<string> { "BabyDollEyes", "SweetKiss", "Charm", "Moonlight", "DisarmingVoice", "DrainingKiss", "CraftyShield", "FlowerShield", "MistyTerrain", "PlayRough", "FairyWind", "Moonblast", "FairyLock", "AromaticMist", "Geomancy", "DazzlingGleam", "Baby-DollEyes", "LightofRuin", "TwinkleTackle", "TwinkleTackle", "FloralHealing", "GuardianofAlola", "FleurCannon", "Nature'sMadness", "Let'sSnuggleForever", "SparklySwirl", "MaxStarfall", "Decorate", "SpiritBreak", "StrangeSteam", "MistyExplosion", "SpringtideStorm", "MagicalTorque", "AlluringVoice" };
+        var grassMoves = new List<string> { "VineWhip", "Absorb", "MegaDrain", "LeechSeed", "RazorLeaf", "SolarBeam", "StunSpore", "SleepPowder", "PetalDance", "Spore", "CottonSpore", "GigaDrain", "Synthesis", "Ingrain", "NeedleArm", "Aromatherapy", "GrassWhistle", "BulletSeed", "FrenzyPlant", "MagicalLeaf", "LeafBlade", "WorrySeed", "SeedBomb", "EnergyBall", "LeafStorm", "PowerWhip", "GrassKnot", "WoodHammer", "SeedFlare", "GrassPledge", "HornLeech", "LeafTornado", "CottonGuard", "Forest'sCurse", "PetalBlizzard", "GrassyTerrain", "SpikyShield", "BloomDoom", "BloomDoom", "StrengthSap", "SolarBlade", "Leafage", "TropKick", "SappySeed", "MaxOvergrowth", "DrumBeating", "SnapTrap", "BranchPoke", "AppleAcid", "GravApple", "GrassyGlide", "JungleHealing", "Chloroblast", "SpicyExtract", "FlowerTrick", "Trailblaze", "MatchaGotcha", "SyrupBomb", "IvyCudgel" };
+        var fightingMoves = new List<string> { "KarateChop", "DoubleKick", "JumpKick", "RollingKick", "Submission", "LowKick", "Counter", "SeismicToss", "HighJumpKick", "TripleKick", "Reversal", "MachPunch", "Detect", "DynamicPunch", "VitalThrow", "CrossChop", "RockSmash", "FocusPunch", "Superpower", "Revenge", "BrickBreak", "ArmThrust", "SkyUppercut", "BulkUp", "Wake-UpSlap", "HammerArm", "CloseCombat", "ForcePalm", "AuraSphere", "DrainPunch", "VacuumWave", "FocusBlast", "StormThrow", "LowSweep", "QuickGuard", "CircleThrow", "FinalGambit", "SacredSword", "SecretSword", "FlyingPress", "MatBlock", "Power-UpPunch", "All-OutPummeling", "All-OutPummeling", "NoRetreat", "Octolock", "MaxKnuckle", "BodyPress", "MeteorAssault", "Coaching", "ThunderousKick", "VictoryDance", "TripleArrows", "AxeKick", "CollisionCourse", "CombatTorque", "UpperHand" };
+        var normalMoves = new List<string> { "SelfDestruct", "SoftBoiled", "LockOn", "DoubleEdge", "Pound", "DoubleSlap", "CometPunch", "MegaPunch", "PayDay", "Scratch", "ViseGrip", "Guillotine", "RazorWind", "SwordsDance", "Cut", "Whirlwind", "Bind", "Slam", "Stomp", "MegaKick", "Headbutt", "HornAttack", "FuryAttack", "HornDrill", "Tackle", "BodySlam", "Wrap", "TakeDown", "Thrash", "Double-Edge", "TailWhip", "Leer", "Growl", "Roar", "Sing", "Supersonic", "SonicBoom", "Disable", "HyperBeam", "Strength", "Growth", "QuickAttack", "Rage", "Mimic", "Screech", "DoubleTeam", "Recover", "Harden", "Minimize", "Smokescreen", "DefenseCurl", "FocusEnergy", "Bide", "Metronome", "Self-Destruct", "EggBomb", "Swift", "SkullBash", "SpikeCannon", "Constrict", "Soft-Boiled", "Glare", "Barrage", "LovelyKiss", "Transform", "DizzyPunch", "Flash", "Splash", "Explosion", "FurySwipes", "HyperFang", "Sharpen", "Conversion", "TriAttack", "SuperFang", "Slash", "Substitute", "Struggle", "Sketch", "MindReader", "Snore", "Flail", "Conversion2", "Protect", "ScaryFace", "BellyDrum", "Foresight", "PerishSong", "Lock-On", "Endure", "FalseSwipe", "Swagger", "MilkDrink", "MeanLook", "Attract", "SleepTalk", "HealBell", "Return", "Present", "Frustration", "Safeguard", "PainSplit", "BatonPass", "Encore", "RapidSpin", "SweetScent", "MorningSun", "HiddenPower", "PsychUp", "ExtremeSpeed", "FakeOut", "Uproar", "Stockpile", "SpitUp", "Swallow", "Facade", "SmellingSalts", "FollowMe", "NaturePower", "HelpingHand", "Wish", "Assist", "Recycle", "Yawn", "Endeavor", "Refresh", "SecretPower", "Camouflage", "TeeterDance", "SlackOff", "HyperVoice", "CrushClaw", "WeatherBall", "OdorSleuth", "Tickle", "Block", "Howl", "Covet", "NaturalGift", "Feint", "Acupressure", "TrumpCard", "WringOut", "LuckyChant", "MeFirst", "Copycat", "LastResort", "GigaImpact", "RockClimb", "Captivate", "Judgment", "DoubleHit", "CrushGrip", "SimpleBeam", "Entrainment", "AfterYou", "Round", "EchoedVoice", "ChipAway", "ShellSmash", "ReflectType", "Retaliate", "Bestow", "WorkUp", "TailSlap", "HeadCharge", "TechnoBlast", "RelicSong", "NobleRoar", "Boomburst", "PlayNice", "Confide", "HappyHour", "Celebrate", "HoldHands", "HoldBack", "BreakneckBlitz", "BreakneckBlitz", "Spotlight", "LaserFocus", "RevelationDance", "PulverizingPancake", "ExtremeEvoboost", "TearfulLook", "Multi-Attack", "VeeveeVolley", "MaxGuard", "StuffCheeks", "Teatime", "CourtChange", "MaxStrike", "TerrainPulse", "PowerShift", "TeraBlast", "PopulationBomb", "RevivalBlessing", "Doodle", "FilletAway", "RagingBull", "ShedTail", "TidyUp", "HyperDrill", "BloodMoon", "TeraStarstorm" };
+        var dragonMoves = new List<string> { "DragonRage", "Outrage", "DragonBreath", "Twister", "DragonClaw", "DragonDance", "DragonPulse", "DragonRush", "DracoMeteor", "RoarofTime", "SpacialRend", "DragonTail", "DualChop", "DevastatingDrake", "DevastatingDrake", "CoreEnforcer", "ClangingScales", "DragonHammer", "ClangorousSoulblaze", "", "DynamaxCannon", "DragonDarts", "MaxWyrmwind", "ClangorousSoul", "BreakingSwipe", "Eternabeam", "ScaleShot", "DragonEnergy", "OrderUp", "GlaiveRush", "FickleBeam", "DragonCheer" };
+        var flyingMoves = new List<string> { "Gust", "WingAttack", "Fly", "Peck", "DrillPeck", "MirrorMove", "SkyAttack", "Aeroblast", "FeatherDance", "AirCutter", "AerialAce", "Bounce", "Roost", "Pluck", "Tailwind", "AirSlash", "BraveBird", "Defog", "Chatter", "SkyDrop", "Acrobatics", "Hurricane", "OblivionWing", "DragonAscent", "SupersonicSkystrike", "SupersonicSkystrike", "BeakBlast", "FloatyFall", "MaxAirstream", "DualWingbeat", "BleakwindStorm" };
+        var psychicMoves = new List<string> { "Psybeam", "Confusion", "Psychic", "Hypnosis", "Meditate", "Agility", "Teleport", "Barrier", "LightScreen", "Reflect", "Amnesia", "Kinesis", "DreamEater", "Psywave", "Rest", "MirrorCoat", "FutureSight", "Trick", "RolePlay", "MagicCoat", "SkillSwap", "Imprison", "LusterPurge", "MistBall", "CosmicPower", "Extrasensory", "CalmMind", "PsychoBoost", "Gravity", "MiracleEye", "HealingWish", "PsychoShift", "HealBlock", "PowerTrick", "PowerSwap", "GuardSwap", "HeartSwap", "PsychoCut", "ZenHeadbutt", "TrickRoom", "LunarDance", "GuardSplit", "PowerSplit", "WonderRoom", "Psyshock", "Telekinesis", "MagicRoom", "Synchronoise", "StoredPower", "AllySwitch", "HealPulse", "HeartStamp", "Psystrike", "HyperspaceHole", "ShatteredPsyche", "ShatteredPsyche", "PsychicTerrain", "SpeedSwap", "Instruct", "GenesisSupernova", "PsychicFangs", "PrismaticLaser", "PhotonGeyser", "LightThatBurnstheSky", "GlitzyGlow", "MagicPowder", "MaxMindstorm", "ExpandingForce", "FreezingGlare", "EerieSpell", "PsyshieldBash", "MysticalPower", "EsperWing", "LunarBlessing", "TakeHeart", "LuminaCrash", "Psyblade", "TwinBeam", "PsychicNoise" };
+
+        for (int i = 0; i < moveNamesList.Count; i++)
+        {
+            foreach (var move in waterMoves)
+            {
+                var regex = new Regex($@"(?<!\w){Regex.Escape(move)}\b", RegexOptions.IgnoreCase);
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = waterEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+            foreach (var move in fireMoves)
+            {
+                var regex = new Regex($@"(?<!\w){Regex.Escape(move)}\b", RegexOptions.IgnoreCase);
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = fireEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+            foreach (var move in electricMoves)
+            {
+                var regex = new Regex($@"(?<!\w){Regex.Escape(move)}\b", RegexOptions.IgnoreCase);
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = electricEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+            foreach (var move in bugEmojiMoves)
+            {
+                var regex = new Regex($@"(?<!\w){Regex.Escape(move)}\b", RegexOptions.IgnoreCase);
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = bugEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+            foreach (var move in darkMoves)
+            {
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = darkEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+            foreach (var move in ghostMoves)
+            {
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = ghostEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+            foreach (var move in poisonMoves)
+            {
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = poisonEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+            foreach (var move in iceMoves)
+            {
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = iceEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+
+            foreach (var move in steelMoves)
+            {
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = steelEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+            foreach (var move in rockMoves)
+            {
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = rockEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+
+            foreach (var move in groundMoves)
+            {
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = groundEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+
+            foreach (var move in fightingMoves)
+            {
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = fightingEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+            foreach (var move in dragonMoves)
+            {
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = dragonEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+
+            foreach (var move in flyingMoves)
+            {
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = flyingEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+
+            foreach (var move in psychicMoves)
+            {
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = psychicEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+            foreach (var move in grassMoves)
+            {
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = grassEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+
+            foreach (var move in fairyMoves)
+            {
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = fairyEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+
+            foreach (var move in normalMoves)
+            {
+                if (moveNamesList[i].Equals(move, StringComparison.OrdinalIgnoreCase))
+                {
+                    moveNamesList[i] = normalEmoji + moveNamesList[i];
+                    moveNamesList[i] = $"- {Regex.Replace(moveNamesList[i], "(\\p{Lu})", " $1")}";
+                    break;
+                }
+            }
+        }
+
         // Fetch the Pokémon's moves and their PP
         ushort[] moves = new ushort[4];
         pk.GetMoves(moves.AsSpan());
-        int[] movePPs = { pk.Move1_PP, pk.Move2_PP, pk.Move3_PP, pk.Move4_PP };
-        List<string> moveNames = new List<string> { "" };
 
         for (int i = 0; i < moves.Length; i++)
         {
             ushort moveId = moves[i];
             if (moveId == 0) continue; // Skip if no move is assigned to this slot
             string moveName = GameInfo.MoveDataSource.FirstOrDefault(m => m.Value == moveId)?.Text ?? "Unknown Move";
-            moveNames.Add($"- {moveName} ({movePPs[i]}pp)");
         }
 
-        string movesDisplay = string.Join("\n", moveNames);
+        string movesDisplay = string.Join("\n", moveNamesList);
         string abilityName = GameInfo.AbilityDataSource.FirstOrDefault(a => a.Value == pk.Ability)?.Text ?? "Unknown Ability";
         string natureName = GameInfo.NatureDataSource.FirstOrDefault(n => n.Value == pk.Nature)?.Text ?? "Unknown Nature";
         string teraTypeString;
@@ -229,23 +455,23 @@ public static class QueueHelper<T> where T : PKM, new()
 
         if (isMysteryEgg)
         {
-            tradeTitle = "✨ Huevo misterioso Shiny ✨";
+            tradeTitle = "✨ Huevo misterioso Shiny ✨ de";
         }
         else if (isBatchTrade)
         {
-            tradeTitle = $"Comercio por lotes #{batchTradeNumber} - {shinyEmoji}{pokemonDisplayName}";
+            tradeTitle = $"Comercio por lotes #{batchTradeNumber} - {shinyEmoji}{pokemonDisplayName} de";
         }
         else if (FixOT)
         {
-            tradeTitle = $"Solicitud de FixOT";
+            tradeTitle = $"Solicitud de FixOT de ";
         }
         else if (isCloneRequest)
         {
-            tradeTitle = "Solicitud de Clonación";
+            tradeTitle = "¡Capsula de Clonación activada! para";
         }
         else if (isDumpRequest)
         {
-            tradeTitle = "Solicitud de Dump";
+            tradeTitle = "Solicitud de Dump de";
         }
         else
         {
@@ -262,15 +488,15 @@ public static class QueueHelper<T> where T : PKM, new()
         }
         else if (isDumpRequest)
         {
-            embedImageUrl = "https://i.imgur.com/FmSvdvy.png"; // URL for dump request
+            embedImageUrl = "https://i.imgur.com/9wfEHwZ.png"; // URL for dump request
         }
         else if (isCloneRequest)
         {
-            embedImageUrl = "https://i.imgur.com/acxv2pn.png"; // URL for clone request
+            embedImageUrl = "https://i.imgur.com/aSTCjUn.png"; // URL for clone request
         }
         else if (FixOT)
         {
-            embedImageUrl = "https://i.imgur.com/FpotPyx.png"; // URL for fixot request
+            embedImageUrl = "https://i.imgur.com/gRZGFIi.png"; // URL for fixot request
         }
         string heldItemUrl = string.Empty;
 
@@ -291,11 +517,11 @@ public static class QueueHelper<T> where T : PKM, new()
         // Determine the author's name based on trade type
         if (isMysteryEgg || FixOT || isCloneRequest || isDumpRequest || isBatchTrade)
         {
-            authorName = $"{userName}'s {tradeTitle}";
+            authorName = $"{tradeTitle} {userName}";
         }
         else // Normal trade
         {
-            authorName = $"{userName}'s {isPkmShiny} {pokemonDisplayName}";
+            authorName = $"{isPkmShiny} {pokemonDisplayName} de {userName} ";
         }
         var embedBuilder = new EmbedBuilder()
             .WithColor(embedColor)
@@ -366,15 +592,41 @@ public static class QueueHelper<T> where T : PKM, new()
                     }
                 }
             }
+            leftSideContent += $"**Habilidad**: {abilityName}\n";
             if (!(pk is PB7)) // Exclude scale for PB7 type
             {
                 leftSideContent += $"{scale}\n";
+            };
+            leftSideContent += $"**Naturaleza**: {natureName}\n" +
+                               $"**IVs**: {ivsDisplay}\n";
+            var evs = new List<string>();
+
+            // Agregar los EVs no nulos al listado
+            if (pk.EV_HP != 0)
+                evs.Add($"{pk.EV_HP} HP");
+
+            if (pk.EV_ATK != 0)
+                evs.Add($"{pk.EV_ATK} Atk");
+
+            if (pk.EV_DEF != 0)
+                evs.Add($"{pk.EV_DEF} Def");
+
+            if (pk.EV_SPA != 0)
+                evs.Add($"{pk.EV_SPA} SpA");
+
+            if (pk.EV_SPD != 0)
+                evs.Add($"{pk.EV_SPD} SpD");
+
+            if (pk.EV_SPE != 0)
+                evs.Add($"{pk.EV_SPE} Spe");
+
+            // Comprobar si hay EVs para agregarlos al mensaje
+            if (evs.Any())
+            {
+                leftSideContent += "**EVs**: " + string.Join(" / ", evs) + "\n";
             }
-            leftSideContent += $"**Habilidad**: {abilityName}\n" +
-                               $"**Naturaleza**: {natureName}\n" +
-                               $"**IVs**: {ivsDisplay}";
             // Add the field to the embed
-            embedBuilder.AddField("**__Informacion__**", leftSideContent, inline: true);
+            embedBuilder.AddField("**__Información__**", leftSideContent, inline: true);
             // Add a blank field to align with the 'Trainer' field on the left
             embedBuilder.AddField("\u200B", "\u200B", inline: true); // First empty field for spacing
             // 'Moves' as another inline field, ensuring it's aligned with the content on the left
@@ -388,7 +640,20 @@ public static class QueueHelper<T> where T : PKM, new()
             embedBuilder.AddField("\u200B", specialDescription, inline: false);
         }
 
-        if (!string.IsNullOrEmpty(heldItemUrl))
+        // Set thumbnail images
+        if (isCloneRequest)
+        {
+            embedBuilder.WithThumbnailUrl("https://raw.githubusercontent.com/bdawg1989/sprites/main/profoak.png");
+        }
+        else if (isDumpRequest)
+        {
+            embedBuilder.WithThumbnailUrl("https://raw.githubusercontent.com/bdawg1989/sprites/main/profoak.png");
+        }
+        else if (FixOT)
+        {
+            embedBuilder.WithThumbnailUrl("https://raw.githubusercontent.com/bdawg1989/sprites/main/profoak.png");
+        }
+        else if (!string.IsNullOrEmpty(heldItemUrl))
         {
             embedBuilder.WithThumbnailUrl(heldItemUrl);
         }
@@ -403,7 +668,7 @@ public static class QueueHelper<T> where T : PKM, new()
         if (embed == null)
         {
             Console.WriteLine("Error: Embed is null.");
-            await context.Channel.SendMessageAsync("An error occurred while preparing the trade details.");
+            await context.Channel.SendMessageAsync("Se produjo un error al preparar los detalles del trade.");
             return new TradeQueueResult(false);
         }
 
@@ -799,7 +1064,7 @@ public static class QueueHelper<T> where T : PKM, new()
                     if (!permissions.SendMessages)
                     {
                         // Nag the owner in logs.
-                        message = "You must grant me \"Send Messages\" permissions!";
+                        message = "¡Debes otorgarme permisos para \"Enviar mensajes\"!";
                         Base.LogUtil.LogError(message, "QueueHelper");
                         return;
                     }
@@ -807,14 +1072,14 @@ public static class QueueHelper<T> where T : PKM, new()
                     {
                         var app = await context.Client.GetApplicationInfoAsync().ConfigureAwait(false);
                         var owner = app.Owner.Id;
-                        message = $"<@{owner}> You must grant me \"Manage Messages\" permissions!";
+                        message = $"<@{owner}> ¡Debes otorgarme permisos de \"Administrar mensajes\"!";
                     }
                 }
                 break;
             case DiscordErrorCode.CannotSendMessageToUser:
                 {
                     // The user either has DMs turned off, or Discord thinks they do.
-                    message = context.User == trader ? "You must enable private messages in order to be queued!" : "The mentioned user must enable private messages in order for them to be queued!";
+                    message = context.User == trader ? "Debes habilitar los mensajes privados para estar en la cola.!" : "El usuario mencionado debe habilitar los mensajes privados para que estén en cola.!";
                 }
                 break;
             default:
