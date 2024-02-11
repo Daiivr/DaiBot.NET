@@ -1139,7 +1139,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             var customthumbnail = "https://i.imgur.com/DWLEXyu.png";
             string legalityReport = la.Report(verbose: false);
 
-            string responseMessage = pk.IsEgg ? $"{usr.Mention} El conjunto de showdown no válido para este huevo. Por favor revisa tu información y vuelve a intentarlo." :
+            string responseMessage = pk.IsEgg ? $"{usr.Mention} El conjunto de showdown no es válido para este huevo. Por favor revisa tu información y vuelve a intentarlo." :
                 $"✘ {usr.Mention} el archivo **{typeof(T).Name}** no es __legal__ y no puede ser tradeado.\n### He aquí la razón:\n```{legalityReport}```\n```🔊Consejo:\n• Por favor verifica detenidamente la informacion en PKHeX e intentalo de nuevo!\n• Puedes utilizar el plugin de ALM para legalizar tus pokemons y ahorrarte estos problemas.```";
 
             if (homeLegalityCfg.DisallowNonNatives && (la.EncounterOriginal.Context != pk.Context || pk.GO))
