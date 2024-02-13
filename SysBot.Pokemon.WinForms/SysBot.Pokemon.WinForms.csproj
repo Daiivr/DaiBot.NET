@@ -8,7 +8,7 @@
 
   <PropertyGroup>
     <PackageId>SysBot.Pokemon.WinForms</PackageId>
-    <AssemblyName>SysBot</AssemblyName>
+    <AssemblyName>DaiBot</AssemblyName>
     <Description>Nintendo Switch Pokémon Bot Manager</Description>
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <StartupObject>SysBot.Pokemon.WinForms.Program</StartupObject>
