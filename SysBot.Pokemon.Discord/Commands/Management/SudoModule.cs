@@ -19,7 +19,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
         var users = Context.Message.MentionedUsers;
         var objects = users.Select(GetReference);
         SysCordSettings.Settings.UserBlacklist.AddIfNew(objects);
-        await ReplyAsync("✔ Listo.").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> Listo.").ConfigureAwait(false);
     }
 
     [Command("blacklistComment")]
@@ -31,13 +31,13 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
         var obj = SysCordSettings.Settings.UserBlacklist.List.Find(z => z.ID == id);
         if (obj is null)
         {
-            await ReplyAsync($"⚠️ No se puede encontrar un usuario con ese ID: ({id}).").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> No se puede encontrar un usuario con ese ID: ({id}).").ConfigureAwait(false);
             return;
         }
 
         var oldComment = obj.Comment;
         obj.Comment = comment;
-        await ReplyAsync($"✔ Listo. Cambiado el comentario existente **({oldComment})** a **({comment})**.").ConfigureAwait(false);
+        await ReplyAsync($"<a:yes:1206485105674166292> Listo. Cambiado el comentario existente **({oldComment})** a **({comment})**.").ConfigureAwait(false);
     }
 
     [Command("unblacklist")]
@@ -60,7 +60,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
         var IDs = GetIDs(content);
         var objects = IDs.Select(GetReference);
         SysCordSettings.Settings.UserBlacklist.AddIfNew(objects);
-        await ReplyAsync("✔ Listo.").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> Listo.").ConfigureAwait(false);
     }
 
     [Command("unBlacklistId")]
@@ -70,7 +70,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
     {
         var IDs = GetIDs(content);
         SysCordSettings.Settings.UserBlacklist.RemoveAll(z => IDs.Any(o => o == z.ID));
-        await ReplyAsync("✔ Listo.").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> Listo.").ConfigureAwait(false);
     }
 
     [Command("blacklistSummary")]
@@ -95,7 +95,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
         var me = SysCord<T>.Runner;
         var hub = me.Hub;
         hub.Config.TradeAbuse.BannedIDs.AddIfNew(objects);
-        await ReplyAsync("✔ Listo.").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> Listo.").ConfigureAwait(false);
     }
 
     [Command("bannedIDComment")]
@@ -108,13 +108,13 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
         var obj = hub.Config.TradeAbuse.BannedIDs.List.Find(z => z.ID == id);
         if (obj is null)
         {
-            await ReplyAsync($"⚠️ No se puede encontrar un usuario con ese ID en línea: ({id}).").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> No se puede encontrar un usuario con ese ID en línea: ({id}).").ConfigureAwait(false);
             return;
         }
 
         var oldComment = obj.Comment;
         obj.Comment = comment;
-        await ReplyAsync($"✔ Listo. Cambiado el comentario existente **({oldComment})** a **({comment})**.").ConfigureAwait(false);
+        await ReplyAsync($"<a:yes:1206485105674166292> Listo. Cambiado el comentario existente **({oldComment})** a **({comment})**.").ConfigureAwait(false);
     }
 
     [Command("unbanID")]
@@ -126,7 +126,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
         var me = SysCord<T>.Runner;
         var hub = me.Hub;
         hub.Config.TradeAbuse.BannedIDs.RemoveAll(z => IDs.Any(o => o == z.ID));
-        await ReplyAsync("✔ Listo.").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> Listo.").ConfigureAwait(false);
     }
 
     [Command("bannedIDSummary")]
@@ -154,7 +154,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
             PokeRoutineExecutorBase.PreviousUsers.RemoveAllNID(ID);
             PokeRoutineExecutorBase.PreviousUsersDistribution.RemoveAllNID(ID);
         }
-        await ReplyAsync("✔ Listo.").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> Listo.").ConfigureAwait(false);
     }
 
     [Command("previousUserSummary")]
@@ -180,7 +180,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
             await ReplyAsync(Format.Code(msg)).ConfigureAwait(false);
         }
         if (!found)
-            await ReplyAsync("⚠️ No se han encontrado usuarios anteriores.").ConfigureAwait(false);
+            await ReplyAsync("<a:warning:1206483664939126795> No se han encontrado usuarios anteriores.").ConfigureAwait(false);
     }
 
     private RemoteControlAccess GetReference(IUser channel) => new()

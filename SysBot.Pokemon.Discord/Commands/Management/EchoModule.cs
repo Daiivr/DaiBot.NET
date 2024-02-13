@@ -28,7 +28,7 @@ public class EchoModule : ModuleBase<SocketCommandContext>
                 AddEchoChannel(c, ch.ID);
         }
 
-        EchoUtil.Echo("✔ Añadida notificación de eco a canal(es) de Discord al iniciar el Bot.");
+        EchoUtil.Echo("<a:yes:1206485105674166292> Añadida notificación de eco a canal(es) de Discord al iniciar el Bot.");
     }
 
     [Command("echoHere")]
@@ -40,7 +40,7 @@ public class EchoModule : ModuleBase<SocketCommandContext>
         var cid = c.Id;
         if (Channels.TryGetValue(cid, out _))
         {
-            await ReplyAsync("⚠️ Ya se está notificando aquí").ConfigureAwait(false);
+            await ReplyAsync("<a:warning:1206483664939126795> Ya se está notificando aquí").ConfigureAwait(false);
             return;
         }
 
@@ -48,7 +48,7 @@ public class EchoModule : ModuleBase<SocketCommandContext>
 
         // Add to discord global loggers (saves on program close)
         SysCordSettings.Settings.EchoChannels.AddIfNew(new[] { GetReference(Context.Channel) });
-        await ReplyAsync("✔ ¡Añadida la salida Eco a este canal!").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> ¡Añadida la salida Eco a este canal!").ConfigureAwait(false);
     }
 
     private static void AddEchoChannel(ISocketMessageChannel c, ulong cid)

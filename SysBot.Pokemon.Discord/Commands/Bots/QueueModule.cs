@@ -88,7 +88,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var users = Context.Message.MentionedUsers;
         if (users.Count == 0)
         {
-            await ReplyAsync("⚠️ Ningún usuario fue mencionado").ConfigureAwait(false);
+            await ReplyAsync("<a:warning:1206483664939126795> Ningún usuario fue mencionado").ConfigureAwait(false);
             return;
         }
         foreach (var u in users)
@@ -102,7 +102,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     public async Task ClearAllTradesAsync()
     {
         Info.ClearAllQueues();
-        await ReplyAsync("✔ Borrado todo en la cola de espera.").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> Borrados todo en la cola de espera.").ConfigureAwait(false);
     }
 
     [Command("queueToggle")]
@@ -113,8 +113,8 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     {
         var state = Info.ToggleQueue();
         var msg = state
-            ? "✓ **Configuración de cola modificada**: Los usuarios ahora __pueden unirse__ a la **cola**."
-            : "⚠️ **Configuración de cola modificada**: Los usuarios __**NO PUEDEN**__ unirse a la `cola` hasta que se vuelva a `habilitar`.";
+            ? "<a:yes:1206485105674166292> **Configuración de cola modificada**: Los usuarios ahora __pueden unirse__ a la **cola**."
+            : "<a:warning:1206483664939126795> **Configuración de cola modificada**: Los usuarios __**NO PUEDEN**__ unirse a la `cola` hasta que se vuelva a `habilitar`.";
 
         return Context.Channel.EchoAndReply(msg);
     }
@@ -126,7 +126,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     public async Task ChangeQueueModeAsync([Summary("Queue mode")] QueueOpening mode)
     {
         SysCord<T>.Runner.Hub.Config.Queues.QueueToggleMode = mode;
-        await ReplyAsync($"✔ Modo de cola cambiado a {mode}.").ConfigureAwait(false);
+        await ReplyAsync($"<a:yes:1206485105674166292> Modo de cola cambiado a {mode}.").ConfigureAwait(false);
     }
 
     [Command("queueList")]
@@ -165,10 +165,10 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     {
         return result switch
         {
-            QueueResultRemove.CurrentlyProcessing => "⚠️ Parece que estás siendo procesado actualmente! No se te eliminó de la lista.",
-            QueueResultRemove.CurrentlyProcessingRemoved => "⚠️ Parece que estás siendo procesado actualmente!",
-            QueueResultRemove.Removed => "✓ Te he eliminado de la lista.",
-            _ => "⚠️ Lo sentimos, actualmente no estás en la lista.",
+            QueueResultRemove.CurrentlyProcessing => "<a:warning:1206483664939126795> Parece que estás siendo procesado actualmente! No se te eliminó de la lista.",
+            QueueResultRemove.CurrentlyProcessingRemoved => "<a:warning:1206483664939126795> Parece que estás siendo procesado actualmente!",
+            QueueResultRemove.Removed => "<a:yes:1206485105674166292> Te he eliminado de la lista.",
+            _ => "<a:warning:1206483664939126795> Lo sentimos, actualmente no estás en la lista.",
         };
     }
 }

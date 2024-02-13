@@ -205,11 +205,11 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         {
             detail.IsRetry = true;
             Hub.Queues.Enqueue(type, detail, Math.Min(priority, PokeTradePriorities.Tier2));
-            detail.SendNotification(this, "⚠️ Oops! Algo ocurrio. Intentemoslo una ves mas.");
+            detail.SendNotification(this, "<a:warning:1206483664939126795> Oops! Algo ocurrio. Intentemoslo una ves mas.");
         }
         else
         {
-            detail.SendNotification(this, $"⚠️ Oops! Algo ocurrio. Cancelando el trade: **{result.GetDescription()}**.");
+            detail.SendNotification(this, $"<a:warning:1206483664939126795> Oops! Algo ocurrio. Cancelando el trade: **{result.GetDescription()}**.");
             detail.TradeCanceled(this, result);
         }
     }
@@ -847,7 +847,7 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         var laInit = new LegalityAnalysis(offered);
         if (!adOT && laInit.Valid)
         {
-            poke.SendNotification(this, "⚠️ No se detectó ningún anuncio en Apodo ni OT, y el Pokémon es legal. Saliendo del comercio.");
+            poke.SendNotification(this, "<a:no:1206485104424128593> No se detectó ningún anuncio en Apodo ni OT, y el Pokémon es legal. Saliendo del comercio.");
             return (offered, PokeTradeResult.TrainerRequestBad);
         }
 
@@ -874,7 +874,7 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
             Log($"FixOT request has detected an illegal Pokémon from {name}: {(Species)offered.Species}");
             var report = laInit.Report();
             Log(laInit.Report());
-            poke.SendNotification(this, $"⚠️ **Los Pokémon mostrados no son legales. Intentando regenerar...**\n\n```{report}```");
+            poke.SendNotification(this, $"<a:no:1206485104424128593> **Los Pokémon mostrados no son legales. Intentando regenerar...**\n\n```{report}```");
             if (DumpSetting.Dump)
                 DumpPokemon(DumpSetting.DumpFolder, "hacked", offered);
         }
@@ -895,7 +895,7 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         var la = new LegalityAnalysis(clone);
         if (!la.Valid)
         {
-            poke.SendNotification(this, "⚠️ Este Pokémon no es __**legal**__ según los controles de legalidad de __PKHeX__. No pude arreglar esto. Cancelando trade...");
+            poke.SendNotification(this, "<a:warning:1206483664939126795> Este Pokémon no es __**legal**__ según los controles de legalidad de __PKHeX__. No pude arreglar esto. Cancelando trade...");
             return (clone, PokeTradeResult.IllegalTrade);
         }
 
@@ -926,7 +926,7 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
 
         if (changed)
         {
-            poke.SendNotification(this, "⚠️ El Pokémon fue cambiado y no vuelto a cambiar. Saliendo del comercio.");
+            poke.SendNotification(this, "<a:warning:1206483664939126795> El Pokémon fue cambiado y no vuelto a cambiar. Saliendo del comercio.");
             Log("Trading partner did not wish to send away their ad-mon.");
             return (offered, PokeTradeResult.TrainerTooSlow);
         }

@@ -50,7 +50,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
         var cid = c.Id;
         if (Channels.TryGetValue(cid, out _))
         {
-            await ReplyAsync("⚠️ Ya se está registrando aquí.").ConfigureAwait(false);
+            await ReplyAsync("<a:warning:1206483664939126795> Ya se está registrando aquí.").ConfigureAwait(false);
             return;
         }
 
@@ -58,7 +58,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
 
         // Add to discord global loggers (saves on program close)
         SysCordSettings.Settings.TradeStartingChannels.AddIfNew(new[] { GetReference(Context.Channel) });
-        await ReplyAsync("✔ ¡Añadida salida de Notificación de Inicio a este canal!").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> ¡Añadida salida de Notificación de Inicio a este canal!").ConfigureAwait(false);
     }
 
     private static void AddLogChannel(ISocketMessageChannel c, ulong cid)
@@ -83,7 +83,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
         var builder = new EmbedBuilder
         {
             Color = Color.Green, // Customize the color of the embed
-            Description = $"> ✔ **{bot.Connection.Label}** ahora está tradeando con **{detail.Trainer.TrainerName}**.",
+            Description = $"> <a:yes:1206485105674166292> **{bot.Connection.Label}** ahora está tradeando con **{detail.Trainer.TrainerName}**.",
             Footer = new EmbedFooterBuilder
             {
                 Text = $"ID: {detail.ID} | {DateTime.Now:hh:mm:ss}",
@@ -115,7 +115,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
         if (Channels.TryGetValue(Context.Channel.Id, out var entry))
             Remove(entry);
         cfg.TradeStartingChannels.RemoveAll(z => z.ID == Context.Channel.Id);
-        await ReplyAsync($"✔ Inicio Notificaciones borradas del canal: {Context.Channel.Name}").ConfigureAwait(false);
+        await ReplyAsync($"<a:yes:1206485105674166292> Inicio Notificaciones borradas del canal: {Context.Channel.Name}").ConfigureAwait(false);
     }
 
     [Command("startClearAll")]
@@ -126,12 +126,12 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
         foreach (var l in Channels)
         {
             var entry = l.Value;
-            await ReplyAsync($"✔ Registro borrado de: {entry.ChannelName} ({entry.ChannelID}!").ConfigureAwait(false);
+            await ReplyAsync($"<a:yes:1206485105674166292> Registro borrado de: {entry.ChannelName} ({entry.ChannelID}!").ConfigureAwait(false);
             SysCord<T>.Runner.Hub.Queues.Forwarders.Remove(entry.Action);
         }
         Channels.Clear();
         SysCordSettings.Settings.TradeStartingChannels.Clear();
-        await ReplyAsync("✔ ¡Notificaciones de inicio borradas de todos los canales!").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> ¡Notificaciones de inicio borradas de todos los canales!").ConfigureAwait(false);
     }
 
     private RemoteControlAccess GetReference(IChannel channel) => new()

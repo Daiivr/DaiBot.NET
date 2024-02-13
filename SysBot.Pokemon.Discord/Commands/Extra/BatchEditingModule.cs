@@ -17,7 +17,7 @@ public class BatchEditingModule : ModuleBase<SocketCommandContext>
     {
         var result = BatchEditing.GetPropertyType(propertyName);
         if (string.IsNullOrWhiteSpace(result))
-            await ReplyAsync($"⚠️ No pude encuentra información sobre: {propertyName}.").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> No pude encuentra información sobre: {propertyName}.").ConfigureAwait(false);
         else
             await ReplyAsync($"{propertyName}: {result}").ConfigureAwait(false);
     }
@@ -31,7 +31,7 @@ public class BatchEditingModule : ModuleBase<SocketCommandContext>
         if (!valid)
         {
             var msg = invalid.Select(z => $"{z.PropertyName}, {z.PropertyValue}");
-            await ReplyAsync($"⚠️ Líneas no válidas detectadas:\r\n{Format.Code(string.Join(Environment.NewLine, msg))}")
+            await ReplyAsync($"<a:warning:1206483664939126795> Líneas no válidas detectadas:\r\n{Format.Code(string.Join(Environment.NewLine, msg))}")
                 .ConfigureAwait(false);
         }
         else

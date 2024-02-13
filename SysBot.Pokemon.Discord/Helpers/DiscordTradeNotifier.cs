@@ -52,14 +52,14 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
     {
         OnFinish?.Invoke(routine);
         var description = msg.GetDescription(); // Obtiene la descripción personalizada
-        Trader.SendMessageAsync($"✘ Trade __cancelado__: {description}").ConfigureAwait(false);
+        Trader.SendMessageAsync($"<a:no:1206485104424128593> Trade __cancelado__: {description}").ConfigureAwait(false);
     }
 
     public void TradeFinished(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result)
     {
         OnFinish?.Invoke(routine);
         var tradedToUser = Data.Species;
-        var message = tradedToUser != 0 ? (IsMysteryEgg ? "✓ Trade finalizado. ¡Disfruta de tu **Huevo Misterioso**!" : $"✓ Trade finalizado. Disfruta de tu **{(Species)tradedToUser}**!") : "✔ Trade finalizado!";
+        var message = tradedToUser != 0 ? (IsMysteryEgg ? "<a:yes:1206485105674166292> Trade finalizado. ¡Disfruta de tu **Huevo Misterioso**!" : $"<a:yes:1206485105674166292> Trade finalizado. Disfruta de tu **{(Species)tradedToUser}**!") : "<a:yes:1206485105674166292> Trade finalizado!";
         Trader.SendMessageAsync(message).ConfigureAwait(false);
         if (result.Species != 0 && Hub.Config.Discord.ReturnPKMs)
             Trader.SendPKMAsync(result, "▼ Aqui esta lo que me enviaste! ▼").ConfigureAwait(false);

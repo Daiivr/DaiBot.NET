@@ -18,7 +18,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
         var users = Context.Message.MentionedUsers;
         var objects = users.Select(GetReference);
         SysCordSettings.Settings.GlobalSudoList.AddIfNew(objects);
-        await ReplyAsync("✔ Listo.").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> Listo.").ConfigureAwait(false);
     }
 
     [Command("removeSudo")]
@@ -30,7 +30,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
         var users = Context.Message.MentionedUsers;
         var objects = users.Select(GetReference);
         SysCordSettings.Settings.GlobalSudoList.RemoveAll(z => objects.Any(o => o.ID == z.ID));
-        await ReplyAsync("✔ Listo.").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> Listo.").ConfigureAwait(false);
     }
 
     [Command("addChannel")]
@@ -41,7 +41,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     {
         var obj = GetReference(Context.Message.Channel);
         SysCordSettings.Settings.ChannelWhitelist.AddIfNew(new[] { obj });
-        await ReplyAsync("✔ Listo.").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> Listo.").ConfigureAwait(false);
     }
 
     [Command("removeChannel")]
@@ -52,7 +52,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     {
         var obj = GetReference(Context.Message.Channel);
         SysCordSettings.Settings.ChannelWhitelist.RemoveAll(z => z.ID == obj.ID);
-        await ReplyAsync("✔ Listo.").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> Listo.").ConfigureAwait(false);
     }
 
     [Command("leave")]
@@ -75,14 +75,14 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     {
         if (!ulong.TryParse(userInput, out ulong id))
         {
-            await ReplyAsync("⚠️ Proporcione una identificación válida de servidor!").ConfigureAwait(false);
+            await ReplyAsync("<a:warning:1206483664939126795> Proporcione una identificación válida de servidor!").ConfigureAwait(false);
             return;
         }
 
         var guild = Context.Client.Guilds.FirstOrDefault(x => x.Id == id);
         if (guild is null)
         {
-            await ReplyAsync($"✔ La entrada proporcionada ({{userInput}}) no es un ID de server válido o el bot no está en el servidor especificado.").ConfigureAwait(false);
+            await ReplyAsync($"<a:yes:1206485105674166292> La entrada proporcionada ({{userInput}}) no es un ID de server válido o el bot no está en el servidor especificado.").ConfigureAwait(false);
             return;
         }
 
@@ -96,7 +96,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     // ReSharper disable once UnusedParameter.Global
     public async Task LeaveAll()
     {
-        await ReplyAsync("✔ Abandonando todos los servidores.").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> Abandonando todos los servidores.").ConfigureAwait(false);
         foreach (var guild in Context.Client.Guilds)
         {
             await guild.LeaveAsync().ConfigureAwait(false);
@@ -110,7 +110,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     // ReSharper disable once UnusedParameter.Global
     public async Task ExitProgram()
     {
-        await Context.Channel.EchoAndReply("✔ Cerrando... ¡adiós! **Los servicios de bots se están desconectando.**").ConfigureAwait(false);
+        await Context.Channel.EchoAndReply("<a:yes:1206485105674166292> Cerrando... ¡adiós! **Los servicios de bots se están desconectando.**").ConfigureAwait(false);
         Environment.Exit(0);
     }
 

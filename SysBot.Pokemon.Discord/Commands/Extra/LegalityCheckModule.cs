@@ -44,7 +44,7 @@ public class LegalityCheckModule : ModuleBase<SocketCommandContext>
 
         builder.AddField(x =>
         {
-            x.Name = la.Valid ? "✔ Válido" : "✘ Inválido";
+            x.Name = la.Valid ? "<a:yes:1206485105674166292> Válido" : "<a:no:1206485104424128593> Inválido";
             x.Value = la.Report(verbose);
             x.IsInline = false;
         });

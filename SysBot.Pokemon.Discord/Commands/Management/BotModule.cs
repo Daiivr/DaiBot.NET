@@ -18,7 +18,7 @@ public class BotModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new(
         var bots = me.Bots.Select(z => z.Bot).OfType<PokeRoutineExecutorBase>().ToArray();
         if (bots.Length == 0)
         {
-            await ReplyAsync("⚠️ No hay bots configurados.").ConfigureAwait(false);
+            await ReplyAsync("<a:warning:1206483664939126795> No hay bots configurados.").ConfigureAwait(false);
             return;
         }
 
@@ -40,12 +40,12 @@ public class BotModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new(
         var bot = SysCord<T>.Runner.GetBot(ip);
         if (bot == null)
         {
-            await ReplyAsync($"⚠️ Ningún bot tiene esa dirección IP: ({ip}).").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> Ningún bot tiene esa dirección IP: ({ip}).").ConfigureAwait(false);
             return;
         }
 
         bot.Start();
-        await Context.Channel.EchoAndReply($"✔ El bot en **{ip} ({bot.Bot.Connection.Label})**  ha recibido la orden de Iniciar.").ConfigureAwait(false);
+        await Context.Channel.EchoAndReply($"<a:yes:1206485105674166292> El bot en **{ip} ({bot.Bot.Connection.Label})**  ha recibido la orden de Iniciar.").ConfigureAwait(false);
     }
 
     [Command("botStop")]
@@ -56,12 +56,12 @@ public class BotModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new(
         var bot = SysCord<T>.Runner.GetBot(ip);
         if (bot == null)
         {
-            await ReplyAsync($"⚠️ Ningún bot tiene esa dirección IP: ({ip}).").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> Ningún bot tiene esa dirección IP: ({ip}).").ConfigureAwait(false);
             return;
         }
 
         bot.Stop();
-        await Context.Channel.EchoAndReply($"✔ El bot en **{ip} ({bot.Bot.Connection.Label})** ha recibido la orden de Parar.").ConfigureAwait(false);
+        await Context.Channel.EchoAndReply($"<a:yes:1206485105674166292> El bot en **{ip} ({bot.Bot.Connection.Label})** ha recibido la orden de Parar.").ConfigureAwait(false);
     }
 
     [Command("botIdle")]
@@ -73,12 +73,12 @@ public class BotModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new(
         var bot = SysCord<T>.Runner.GetBot(ip);
         if (bot == null)
         {
-            await ReplyAsync($"⚠️ Ningún bot tiene esa dirección IP: ({ip}).").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> Ningún bot tiene esa dirección IP: ({ip}).").ConfigureAwait(false);
             return;
         }
 
         bot.Pause();
-        await Context.Channel.EchoAndReply($"✔ El bot en **{ip} ({bot.Bot.Connection.Label})** ha sido comandado a Idle.").ConfigureAwait(false);
+        await Context.Channel.EchoAndReply($"<a:yes:1206485105674166292>El bot en **{ip} ({bot.Bot.Connection.Label})** ha sido comandado a Idle.").ConfigureAwait(false);
     }
 
     [Command("botChange")]
@@ -89,12 +89,12 @@ public class BotModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new(
         var bot = SysCord<T>.Runner.GetBot(ip);
         if (bot == null)
         {
-            await ReplyAsync($"⚠️ Ningún bot tiene esa dirección IP: ({ip}).").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> Ningún bot tiene esa dirección IP: ({ip}).").ConfigureAwait(false);
             return;
         }
 
         bot.Bot.Config.Initialize(task);
-        await Context.Channel.EchoAndReply($"✔ El bot en **{ip} ({bot.Bot.Connection.Label})** ha recibido la orden de realizar **{task}** como su próxima tarea.").ConfigureAwait(false);
+        await Context.Channel.EchoAndReply($"<a:yes:1206485105674166292> El bot en **{ip} ({bot.Bot.Connection.Label})** ha recibido la orden de realizar **{task}** como su próxima tarea.").ConfigureAwait(false);
     }
 
     [Command("botRestart")]
@@ -108,14 +108,14 @@ public class BotModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new(
             var bot = SysCord<T>.Runner.GetBot(ip);
             if (bot == null)
             {
-                await ReplyAsync($"⚠️ Ningún bot tiene esa dirección IP: ({ip}).").ConfigureAwait(false);
+                await ReplyAsync($"<a:warning:1206483664939126795> Ningún bot tiene esa dirección IP: ({ip}).").ConfigureAwait(false);
                 return;
             }
 
             var c = bot.Bot.Connection;
             c.Reset();
             bot.Start();
-            await Context.Channel.EchoAndReply($"✔ El bot en **{ip} ({c.Label})** ha recibido la orden de Reiniciarse.").ConfigureAwait(false);
+            await Context.Channel.EchoAndReply($"<a:yes:1206485105674166292> El bot en **{ip} ({c.Label})** ha recibido la orden de Reiniciarse.").ConfigureAwait(false);
         }
     }
 }

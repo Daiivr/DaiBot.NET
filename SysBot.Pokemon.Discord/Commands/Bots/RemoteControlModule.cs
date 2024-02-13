@@ -10,6 +10,23 @@ namespace SysBot.Pokemon.Discord;
 [Summary("Remotely controls a bot.")]
 public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new()
 {
+    private string GetRunningBotIP()
+    {
+        var r = SysCord<T>.Runner;
+        var runningBot = r.Bots.Find(x => x.IsRunning);
+
+        // Check if a running bot is found
+        if (runningBot != null)
+        {
+            return runningBot.Bot.Config.Connection.IP;
+        }
+        else
+        {
+            // Default IP address or logic if no running bot is found
+            return "192.168.1.1";
+        }
+    }
+
     [Command("click")]
     [Summary("Clicks the specified button.")]
     [RequireRoleAccess(nameof(DiscordManager.RolesRemoteControl))]
@@ -18,7 +35,7 @@ public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T :
         var bot = SysCord<T>.Runner.Bots.Find(z => IsRemoteControlBot(z.Bot));
         if (bot == null)
         {
-            await ReplyAsync($"⚠️ No hay ningún bot disponible para ejecutar tu comando: {b}").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> No hay ningún bot disponible para ejecutar tu comando: {b}").ConfigureAwait(false);
             return;
         }
 
@@ -33,7 +50,7 @@ public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T :
         var bot = SysCord<T>.Runner.GetBot(ip);
         if (bot == null)
         {
-            await ReplyAsync($"⚠️ No hay ningún bot disponible para ejecutar tu comando: {b}").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> No hay ningún bot disponible para ejecutar tu comando: {b}").ConfigureAwait(false);
             return;
         }
 
@@ -48,7 +65,7 @@ public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T :
         var bot = SysCord<T>.Runner.Bots.Find(z => IsRemoteControlBot(z.Bot));
         if (bot == null)
         {
-            await ReplyAsync($"⚠️ No hay ningún bot disponible para ejecutar tu comando: {s}").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> No hay ningún bot disponible para ejecutar tu comando: {s}").ConfigureAwait(false);
             return;
         }
 
@@ -63,7 +80,7 @@ public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T :
         var bot = SysCord<T>.Runner.GetBot(ip);
         if (bot == null)
         {
-            await ReplyAsync($"⚠️ Ningún bot tiene esa dirección IP: ({ip}).").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> Ningún bot tiene esa dirección IP: ({ip}).").ConfigureAwait(false);
             return;
         }
 
@@ -74,33 +91,34 @@ public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T :
     [Alias("screenOn", "scrOn")]
     [Summary("Turns the screen on")]
     [RequireSudo]
-    public Task SetScreenOnAsync([Remainder] string ip)
+    public async Task SetScreenOnAsync()
     {
-        return SetScreen(true, ip);
+        await SetScreen(true).ConfigureAwait(false);
     }
 
     [Command("setScreenOff")]
     [Alias("screenOff", "scrOff")]
     [Summary("Turns the screen off")]
     [RequireSudo]
-    public Task SetScreenOffAsync([Remainder] string ip)
+    public async Task SetScreenOffAsync()
     {
-        return SetScreen(false, ip);
+        await SetScreen(false).ConfigureAwait(false);
     }
 
-    private async Task SetScreen(bool on, string ip)
+    private async Task SetScreen(bool on)
     {
+        string ip = GetRunningBotIP();
         var bot = GetBot(ip);
         if (bot == null)
         {
-            await ReplyAsync($"⚠️ Ningún bot tiene esa dirección IP: ({ip}).").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> Ningún bot tiene esa dirección IP: ({ip}).").ConfigureAwait(false);
             return;
         }
 
         var b = bot.Bot;
         var crlf = b is SwitchRoutineExecutor<PokeBotState> { UseCRLF: true };
         await b.Connection.SendAsync(SwitchCommand.SetScreen(on ? ScreenState.On : ScreenState.Off, crlf), CancellationToken.None).ConfigureAwait(false);
-        await ReplyAsync("✔ Estado de la pantalla ajustado a: " + (on ? "On" : "Off")).ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> Estado de la pantalla ajustado a: " + (on ? "On" : "Off")).ConfigureAwait(false);
     }
 
     private static BotSource<PokeBotState>? GetBot(string ip)
@@ -113,7 +131,7 @@ public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T :
     {
         if (!Enum.IsDefined(typeof(SwitchButton), button))
         {
-            await ReplyAsync($"⚠️ Valor del botón desconocido: {button}").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> Valor del botón desconocido: {button}").ConfigureAwait(false);
             return;
         }
 
@@ -127,7 +145,7 @@ public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T :
     {
         if (!Enum.IsDefined(typeof(SwitchStick), s))
         {
-            await ReplyAsync($"⚠️ Stick desconocido: {s}").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> Stick desconocido: {s}").ConfigureAwait(false);
             return;
         }
 

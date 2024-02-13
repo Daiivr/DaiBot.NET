@@ -69,7 +69,7 @@ public class HelpModule(CommandService Service) : ModuleBase<SocketCommandContex
 
         if (!result.IsSuccess)
         {
-            await ReplyAsync($"⚠️ Lo siento, no pude encontrar un comando como: **{command}**.").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> Lo siento, no pude encontrar un comando como: **{command}**.").ConfigureAwait(false);
             return;
         }
 

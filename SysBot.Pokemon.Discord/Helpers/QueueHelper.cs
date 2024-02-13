@@ -29,7 +29,7 @@ public static class QueueHelper<T> where T : PKM, new()
     {
         if ((uint)code > MaxTradeCode)
         {
-            await context.Channel.SendMessageAsync("⚠️ El codigo de tradeo debe ser un numero entre: 00000000-99999999!").ConfigureAwait(false);
+            await context.Channel.SendMessageAsync("<a:warning:1206483664939126795> El codigo de tradeo debe ser un numero entre: 00000000-99999999!").ConfigureAwait(false);
             return;
         }
 
@@ -38,7 +38,7 @@ public static class QueueHelper<T> where T : PKM, new()
             // Send helper message only for the first trade in a batch or for single trades
             if (!isBatchTrade || batchTradeNumber == 1)
             {
-                const string helper = "✓ Te he añadido a la __lista__! Te enviaré un __mensaje__ aquí cuando comience tu operación...";
+                const string helper = "<a:yes:1206485105674166292> Te he añadido a la __lista__! Te enviaré un __mensaje__ aquí cuando comience tu operación...";
                 IUserMessage test = await trader.SendMessageAsync(helper).ConfigureAwait(false);
 
                 // Notify in PM only once for the first trade in a batch or for single trades
