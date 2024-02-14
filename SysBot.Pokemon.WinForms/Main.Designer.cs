@@ -31,6 +31,7 @@ namespace SysBot.Pokemon.WinForms
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             TC_Main = new TabControl();
             Tab_Bots = new TabPage();
             comboBox2 = new ComboBox();
@@ -122,6 +123,7 @@ namespace SysBot.Pokemon.WinForms
             // FLP_Bots
             // 
             FLP_Bots.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            FLP_Bots.BackgroundImage = (System.Drawing.Image)resources.GetObject("FLP_Bots.BackgroundImage");
             FLP_Bots.BorderStyle = BorderStyle.FixedSingle;
             FLP_Bots.Location = new System.Drawing.Point(0, 37);
             FLP_Bots.Margin = new Padding(0);
