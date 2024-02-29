@@ -72,11 +72,11 @@ Elige un objeto popular por defecto si el usuario no lo proporciona.  Elige entr
 Si quieres proporcionar a tus increíbles miembros Legendarios,  Pokemon de Evento y Pokemons ya entrenados con rastrador home, sólo tienes que añadir los archivos a una carpeta de tu máquina local y proporcionar la ruta en la configuración en **Trade > EventsFolder/BattleReadyPKMFolder**.
 Puedes descargar de la página web los Pokémon Home Tracked y Pokemons Entrenados listos para usar.  (todos los archivos .pk9) También, ¡Gracias a todos los usuarios de discord que contribuyeron a estos!  (Maddison, Marnie, Fly, Reedy, Newfie, Joseph11024)
 
-Eventos: https://genpkm.com/tradebot/events.zip
+__**Eventos**__: https://genpkm.com/tradebot/events.zip
 
-Pokemons Entrenados:  https://genpkm.com/tradebot/battleready.zip
+__**Pokemons Entrenados**__:  https://genpkm.com/tradebot/battleready.zip
 
-Home Tracked Database (Varias generaciones proporcionadas por Joseph11024)
+__**Home Tracked Database (Varias generaciones proporcionadas por Joseph11024)**__
 https://drive.google.com/drive/folders/1-6Z2A75-MRbxxsjT3GNvgtPKubeQLXgC
 
 Para que sus usuarios soliciten, utilizarán los siguientes comandos:
@@ -85,6 +85,7 @@ Para que sus usuarios soliciten, utilizarán los siguientes comandos:
 El comando `brl` listará todos los Pokemon entrenados de tu carpeta para que los usuarios puedan elegir.  A este comando se le aplica el mismo filtro que al anterior.
 
 El usuario recibira en su MD una lista y se le dará el comando correcto con su prefijo bots para que puedan solicitarlo.
+
 ![image](https://i.imgur.com/JXNf0Vq.png)
 
 ![image](https://i.imgur.com/55Owr4v.png)
