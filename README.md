@@ -71,7 +71,9 @@ Elige un objeto popular por defecto si el usuario no lo proporciona.  Elige entr
 - __Eventos y carpeta BattleReady__
 Si quieres proporcionar a tus increíbles miembros Legendarios,  Pokemon de Evento y Pokemons ya entrenados con rastrador home, sólo tienes que añadir los archivos a una carpeta de tu máquina local y proporcionar la ruta en la configuración en **Trade > EventsFolder/BattleReadyPKMFolder**.
 Puedes descargar de la página web los Pokémon Home Tracked y Pokemons Entrenados listos para usar.  (todos los archivos .pk9) También, ¡Gracias a todos los usuarios de discord que contribuyeron a estos!  (Maddison, Marnie, Fly, Reedy, Newfie, Joseph11024)
+
 Eventos: https://genpkm.com/tradebot/events.zip
+
 Pokemons Entrenados:  https://genpkm.com/tradebot/battleready.zip
 
 Home Tracked Database (Varias generaciones proporcionadas por Joseph11024)
