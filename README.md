@@ -22,6 +22,8 @@ Este bot recibirá todas las actualizaciones que MergeBot reciba.
 
 7- Para el **Tamaño** en Visual Studio presioná `crtl+shift+f` para buscar, pegas `// Emoji for XXXS` y los cambias por tus emojis.
 
+- __PD: Si sientes que es mucho trabajo, puedes agregarme a [discord](https://discordid.netlify.app/?id=271701484922601472) y agregaré tus bots a mi servidor donde están los emojis__.
+
 # Este sysBot ofrece todas las características que puedas desear <3
 ### Soporta Los Siguientes Juegos:  SV/BDSP/PLA/SWSH/LGPE
 
@@ -58,6 +60,8 @@ Ejemplo:
 .Egg Charmander
 Shiny: Yes
 ```
+
+![image](https://i.imgur.com/u9YFVfU.png)
 
 - __Gestión y listas negras de servidores__
 ¿Compartes tu bot en varios servidores?  ¿Es tu bot un bot público en el que permites que cualquiera añada tu bot?
