@@ -80,6 +80,8 @@ __**Eventos**__: https://genpkm.com/tradebot/events.zip
 
 __**Pokemons Entrenados**__:  https://genpkm.com/tradebot/battleready.zip
 
+__**WonderCards**__: https://github.com/bdawg1989/Wondercards
+
 __**Home Tracked Database (Varias generaciones proporcionadas por Joseph11024)**__
 https://drive.google.com/drive/folders/1-6Z2A75-MRbxxsjT3GNvgtPKubeQLXgC
 
