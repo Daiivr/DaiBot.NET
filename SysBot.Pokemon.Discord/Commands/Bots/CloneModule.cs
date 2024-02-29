@@ -1,6 +1,8 @@
 using Discord;
 using Discord.Commands;
 using PKHeX.Core;
+using System;
+using System.Reflection.Emit;
 using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.Discord;
@@ -16,21 +18,39 @@ public class CloneModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireQueueRole(nameof(DiscordManager.RolesClone))]
     public async Task CloneAsync(int code)
     {
-        var sig = Context.User.GetFavor();
-        // Execute the queue addition without capturing response
-        QueueHelper<T>.AddToQueueAsync(Context, code, Context.User.Username, sig, new T(), PokeRoutineType.Clone, PokeTradeType.Clone);
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
 
-        // Optional: Send a confirmation message if needed
+            var queueEmbed = new EmbedBuilder
+            {
+                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
+        var sig = Context.User.GetFavor();
+        var lgcode = Info.GetRandomLGTradeCode();
+
+        await QueueHelper<T>.AddToQueueAsync(Context, code, Context.User.Username, sig, new T(), PokeRoutineType.Clone, PokeTradeType.Clone, Context.User, false, 1, 1, 0, false, lgcode);
+
         var confirmationMessage = await ReplyAsync("⏳ Procesando su solicitud de clonación...").ConfigureAwait(false);
 
-        // Delay for 5 seconds
-        await Task.Delay(6000).ConfigureAwait(false);
-
-        // Delete user message
-        if (Context.Message is IUserMessage userMessage)
-            await userMessage.DeleteAsync().ConfigureAwait(false);
-
-        // Delete bot confirmation message
         if (confirmationMessage != null)
             await confirmationMessage.DeleteAsync().ConfigureAwait(false);
     }
@@ -41,23 +61,40 @@ public class CloneModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireQueueRole(nameof(DiscordManager.RolesClone))]
     public async Task CloneAsync([Summary("Trade Code")][Remainder] string code)
     {
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
+
+            var queueEmbed = new EmbedBuilder
+            {
+                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
         int tradeCode = Util.ToInt32(code);
         var sig = Context.User.GetFavor();
+        var lgcode = Info.GetRandomLGTradeCode();
 
-        // Execute the queue addition without capturing response
-        QueueHelper<T>.AddToQueueAsync(Context, tradeCode == 0 ? Info.GetRandomTradeCode() : tradeCode, Context.User.Username, sig, new T(), PokeRoutineType.Clone, PokeTradeType.Clone);
+        await QueueHelper<T>.AddToQueueAsync(Context, tradeCode == 0 ? Info.GetRandomTradeCode() : tradeCode, Context.User.Username, sig, new T(), PokeRoutineType.Clone, PokeTradeType.Clone, Context.User, false, 1, 1, 0, false, lgcode);
 
-        // Optional: Send a confirmation message if needed
         var confirmationMessage = await ReplyAsync("⏳ Procesando su solicitud de clonación...").ConfigureAwait(false);
 
-        // Delay for 5 seconds
-        await Task.Delay(6000).ConfigureAwait(false);
-
-        // Delete user message
-        if (Context.Message is IUserMessage userMessage)
-            await userMessage.DeleteAsync().ConfigureAwait(false);
-
-        // Delete bot confirmation message
         if (confirmationMessage != null)
             await confirmationMessage.DeleteAsync().ConfigureAwait(false);
     }

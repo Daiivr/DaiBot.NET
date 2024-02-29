@@ -180,7 +180,7 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         {
             result = await PerformLinkCodeTrade(sav, detail, token).ConfigureAwait(false);
             if (result == PokeTradeResult.Success)
-                return;
+            return;
         }
         catch (SocketException socket)
         {
@@ -205,11 +205,11 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         {
             detail.IsRetry = true;
             Hub.Queues.Enqueue(type, detail, Math.Min(priority, PokeTradePriorities.Tier2));
-            detail.SendNotification(this, "<a:warning:1206483664939126795> Oops! Algo ocurrio. Intentemoslo una ves mas.");
+            detail.SendNotification(this, "<a:warning:1206483664939126795> Oops! Algo ocurrió. Intentemoslo una ves mas.");
         }
         else
         {
-            detail.SendNotification(this, $"<a:warning:1206483664939126795> Oops! Algo ocurrio. Cancelando el trade: **{result.GetDescription()}**.");
+            detail.SendNotification(this, $"<a:warning:1206483664939126795> Oops! Algo ocurrió. Cancelando el trade: **{result.GetDescription()}**.");
             detail.TradeCanceled(this, result);
         }
     }
@@ -273,7 +273,9 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
             if (!await IsUnionWork(UnionTalkingOffset, token).ConfigureAwait(false))
                 break;
             if (--waitPartner <= 0)
+            {
                 return PokeTradeResult.TrainerTooSlow;
+            }
         }
         Log("Entering the box...");
 
@@ -282,7 +284,9 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
 
         // Can happen if they quit out of talking to us.
         if (!await IsPartnerParamLoaded(token).ConfigureAwait(false))
+        {
             return PokeTradeResult.TrainerTooSlow;
+        }
 
         var tradePartner = await GetTradePartnerInfo(token).ConfigureAwait(false);
         var trainerNID = GetFakeNID(tradePartner.TrainerName, tradePartner.TrainerID);
@@ -326,8 +330,9 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         // Wait for user input... Needs to be different from the previously offered Pokémon.
         var tradeOffered = await ReadUntilChanged(LinkTradePokemonOffset, lastOffered, 25_000, 1_000, false, true, token).ConfigureAwait(false);
         if (!tradeOffered)
+        {
             return PokeTradeResult.TrainerTooSlow;
-
+        }
 
         List<PB8> ls = new List<PB8>();
             ls.Add(poke.TradeData);
@@ -346,7 +351,9 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
             // If we detected a change, they offered something.
             offered = await ReadPokemon(LinkTradePokemonOffset, BoxFormatSlotSize, token).ConfigureAwait(false);
             if (offered.Species == 0 || !offered.ChecksumValid)
+            {
                 return PokeTradeResult.TrainerTooSlow;
+            }
             //lastOffered = await SwitchConnection.ReadBytesAbsoluteAsync(LinkTradePokemonOffset, 8, token).ConfigureAwait(false);
             if (Hub.Config.Legality.UseTradePartnerInfo)
             {
@@ -363,7 +370,9 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
                 return tradeResult;
 
             if (token.IsCancellationRequested)
+            {
                 return PokeTradeResult.RoutineCancel;
+            }
         }
         // Trade was Successful!
         var received = await ReadPokemon(BoxStartOffset, BoxFormatSlotSize, token).ConfigureAwait(false);
@@ -398,7 +407,6 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
 
         // Sometimes they offered another mon, so store that immediately upon leaving Union Room.
         lastOffered = await SwitchConnection.ReadBytesAbsoluteAsync(LinkTradePokemonOffset, 8, token).ConfigureAwait(false);
-
         return PokeTradeResult.Success;
     }
     private static ulong GetFakeNID(string trainerName, uint trainerID)
@@ -420,9 +428,11 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         if (DumpSetting.Dump && !string.IsNullOrEmpty(DumpSetting.DumpFolder))
         {
             var subfolder = poke.Type.ToString().ToLower();
+            var service = poke.Notifier.GetType().ToString().ToLower();
+            var tradedFolder = service.Contains("twitch") ? Path.Combine("traded", "twitch") : service.Contains("discord") ? Path.Combine("traded", "discord") : "traded";
             DumpPokemon(DumpSetting.DumpFolder, subfolder, received); // received by bot
             if (poke.Type is PokeTradeType.Specific or PokeTradeType.FixOT)
-                DumpPokemon(DumpSetting.DumpFolder, "traded", toSend); // sent to partner
+                DumpPokemon(DumpSetting.DumpFolder, tradedFolder, toSend); // sent to partner
         }
     }
 
@@ -770,7 +780,9 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         cln.TrainerSID7 = offered.TrainerSID7;
         cln.Language = offered.Language;
         cln.OT_Name = tradePartner;
-        cln.ClearNickname();
+
+        if (!toSend.IsNicknamed)
+            cln.ClearNickname();
 
         if (toSend.IsShiny)
             cln.SetShiny();

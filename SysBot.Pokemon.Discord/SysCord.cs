@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PKHeX.Core;
 using SysBot.Base;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -208,12 +209,40 @@ public sealed class SysCord<T> where T : PKM, new()
             var cfg = mgr.Config;
             if (cfg.ConvertPKMToShowdownSet && (cfg.ConvertPKMReplyAnyChannel || mgr.CanUseCommandChannel(msg.Channel.Id)))
             {
-                if (msg is SocketUserMessage userMessage) // Cast to SocketUserMessage
+                if (msg is SocketUserMessage userMessage)
                 {
                     foreach (var att in msg.Attachments)
-                        await msg.Channel.RepostPKMAsShowdownAsync(att, userMessage).ConfigureAwait(false); // Pass userMessage
+                        await msg.Channel.RepostPKMAsShowdownAsync(att, userMessage).ConfigureAwait(false);
                 }
             }
+        }
+        // fun little trick for users that like to thank the bot after a trade
+        string thanksText = msg.Content.ToLower();
+        if (thanksText.Contains("thank") || thanksText.Contains("thx"))
+        {
+            var channel = msg.Channel;
+            await channel.TriggerTypingAsync();
+            await Task.Delay(1_500);
+
+            var responses = new List<string>
+        {
+            "De nada! ❤️",
+            "No hay problema!",
+            "En cualquier momento, encantado de ayudar.!",
+            "Es un placer! ❤️",
+            "No hay problema. De nada!",
+            "Siempre a su disposición.",
+            "Me alegra haber podido ayudar.",
+            "¡Feliz de servir!",
+            "Por supuesto. No hay de qué.",
+            "¡Claro que sí!"
+        };
+
+            var randomResponse = responses[new Random().Next(responses.Count)];
+            var finalResponse = $"{randomResponse}";
+
+            await msg.Channel.SendMessageAsync(finalResponse).ConfigureAwait(false);
+            return;
         }
     }
 
@@ -226,13 +255,13 @@ public sealed class SysCord<T> where T : PKM, new()
         var mgr = Manager;
         if (!mgr.CanUseCommandUser(msg.Author.Id))
         {
-            await msg.Channel.SendMessageAsync("You are not permitted to use this command.").ConfigureAwait(false);
+            await msg.Channel.SendMessageAsync("<a:warning:1206483664939126795> No está permitido utilizar este comando.").ConfigureAwait(false);
             return true;
         }
         if (!mgr.CanUseCommandChannel(msg.Channel.Id) && msg.Author.Id != mgr.Owner)
         {
             if (Hub.Config.Discord.ReplyCannotUseCommandInChannel)
-                await msg.Channel.SendMessageAsync("You can't use that command here.").ConfigureAwait(false);
+                await msg.Channel.SendMessageAsync("<a:warning:1206483664939126795> No puedes usar ese comando aquí.").ConfigureAwait(false);
             return true;
         }
 

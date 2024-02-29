@@ -3,6 +3,8 @@ using PKHeX.Core.Searching;
 using SysBot.Base;
 using SysBot.Pokemon.Helpers;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -172,7 +174,7 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
         {
             result = await PerformLinkCodeTrade(sav, detail, token).ConfigureAwait(false);
             if (result == PokeTradeResult.Success)
-                return;
+            return;
         }
         catch (SocketException socket)
         {
@@ -197,11 +199,11 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
         {
             detail.IsRetry = true;
             Hub.Queues.Enqueue(type, detail, Math.Min(priority, PokeTradePriorities.Tier2));
-            detail.SendNotification(this, "<a:warning:1206483664939126795> Oops! Algo ocurrio. Intentemoslo una ves mas.");
+            detail.SendNotification(this, "<a:warning:1206483664939126795> Oops! Algo ocurrió. Intentemoslo una ves mas.");
         }
         else
         {
-            detail.SendNotification(this, $"<a:warning:1206483664939126795> Oops! Algo ocurrio. Cancelando el trade: **{result.GetDescription()}**.");
+            detail.SendNotification(this, $"<a:warning:1206483664939126795> Oops! Algo ocurrió. Cancelando el trade: **{result.GetDescription()}**.");
             detail.TradeCanceled(this, result);
         }
     }
@@ -381,9 +383,11 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
         if (DumpSetting.Dump && !string.IsNullOrEmpty(DumpSetting.DumpFolder))
         {
             var subfolder = poke.Type.ToString().ToLower();
+            var service = poke.Notifier.GetType().ToString().ToLower();
+            var tradedFolder = service.Contains("twitch") ? Path.Combine("traded", "twitch") : service.Contains("discord") ? Path.Combine("traded", "discord") : "traded";
             DumpPokemon(DumpSetting.DumpFolder, subfolder, received); // received by bot
             if (poke.Type is PokeTradeType.Specific or PokeTradeType.Clone or PokeTradeType.FixOT)
-                DumpPokemon(DumpSetting.DumpFolder, "traded", toSend); // sent to partner
+                DumpPokemon(DumpSetting.DumpFolder, tradedFolder, toSend); // sent to partner
         }
     }
 
@@ -806,7 +810,9 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
         cln.TrainerSID7 = uint.Parse(tradePartner.SID7);
         cln.Language = tradePartner.Language;
         cln.OT_Name = tradePartner.TrainerName;
-        cln.ClearNickname();
+
+        if (!toSend.IsNicknamed)
+            cln.ClearNickname();
 
         if (toSend.IsShiny)
             cln.SetShiny();

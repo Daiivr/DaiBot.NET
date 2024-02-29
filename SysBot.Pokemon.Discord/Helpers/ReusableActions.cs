@@ -66,7 +66,7 @@ public static class ReusableActions
         var botMessage = await channel.SendMessageAsync(txt).ConfigureAwait(false); // Capture the bot's message
 
         // Send a warning message
-        var warningMessage = await channel.SendMessageAsync("This message will self-destruct in 15 seconds. Please copy your data.").ConfigureAwait(false);
+        var warningMessage = await channel.SendMessageAsync("<a:loading:1210133423050719283> Este mensaje se autodestruirá en 15 segundos. Por favor copie sus datos.").ConfigureAwait(false);
 
         // Wait for 2 seconds
         await Task.Delay(2000).ConfigureAwait(false);

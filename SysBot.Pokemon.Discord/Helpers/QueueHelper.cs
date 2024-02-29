@@ -14,7 +14,11 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.IO;
 using SysBot.Pokemon.Helpers;
+using PKHeX.Core.AutoMod;
+using PKHeX.Drawing.PokeSprite;
 using System.Text.RegularExpressions;
+using static System.Net.Mime.MediaTypeNames;
+
 namespace SysBot.Pokemon.Discord;
 
 public static class QueueHelper<T> where T : PKM, new()
@@ -22,10 +26,10 @@ public static class QueueHelper<T> where T : PKM, new()
     private const uint MaxTradeCode = 9999_9999;
 
     // A dictionary to hold batch trade file paths and their deletion status
-    private static Dictionary<int, List<string>> batchTradeFiles = new Dictionary<int, List<string>>();
-    private static Dictionary<ulong, int> userBatchTradeMaxDetailId = new Dictionary<ulong, int>();
+    private static readonly Dictionary<int, List<string>> batchTradeFiles = [];
+    private static readonly Dictionary<ulong, int> userBatchTradeMaxDetailId = [];
 
-    public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, int formArgument = 0, bool isMysteryEgg = false)
+    public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, int formArgument = 0, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
     {
         if ((uint)code > MaxTradeCode)
         {
@@ -35,19 +39,26 @@ public static class QueueHelper<T> where T : PKM, new()
 
         try
         {
-            // Send helper message only for the first trade in a batch or for single trades
             if (!isBatchTrade || batchTradeNumber == 1)
             {
                 const string helper = "<a:yes:1206485105674166292> Te he añadido a la __lista__! Te enviaré un __mensaje__ aquí cuando comience tu operación...";
                 IUserMessage test = await trader.SendMessageAsync(helper).ConfigureAwait(false);
-
-                // Notify in PM only once for the first trade in a batch or for single trades
-                await trader.SendMessageAsync($"Tu codigo de tradeo sera: **{code:0000 0000}**.").ConfigureAwait(false);
+                if (trade is PB7 && lgcode != null)
+                {
+                    var (thefile, lgcodeembed) = CreateLGLinkCodeSpriteEmbed(lgcode);
+                    await trader.SendFileAsync(thefile, $"Tu codigo de tradeo sera: ", embed: lgcodeembed).ConfigureAwait(false);
+                }
+                else
+                {
+                    await trader.SendMessageAsync($"Tu codigo de tradeo sera: **{code:0000 0000}**").ConfigureAwait(false);
+                }
             }
 
             // Add to trade queue and get the result
-            var result = await AddToTradeQueue(context, trade, code, trainer, sig, routine, type, trader, isBatchTrade, batchTradeNumber, totalBatchTrades, formArgument, isMysteryEgg);
-
+            var result = await AddToTradeQueue(context, trade, code, trainer, sig, routine, type, trader, isBatchTrade, batchTradeNumber, totalBatchTrades, formArgument, isMysteryEgg, lgcode).ConfigureAwait(false);
+            // Delete the user's join message for privacy
+            if (!context.IsPrivate)
+                await context.Message.DeleteAsync(RequestOptions.Default).ConfigureAwait(false);
         }
         catch (HttpException ex)
         {
@@ -60,15 +71,15 @@ public static class QueueHelper<T> where T : PKM, new()
         return AddToQueueAsync(context, code, trainer, sig, trade, routine, type, context.User);
     }
 
-    private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, int formArgument = 0, bool isMysteryEgg = false)
+    private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, int formArgument = 0, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
     {
         var user = trader;
         var userID = user.Id;
         var name = user.Username;
 
         var trainer = new PokeTradeTrainerInfo(trainerName, userID);
-        var notifier = new DiscordTradeNotifier<T>(pk, trainer, code, trader, batchTradeNumber, totalBatchTrades, isMysteryEgg);
-        var detail = new PokeTradeDetail<T>(pk, trainer, notifier, t, code, sig == RequestSignificance.Favored);
+        var notifier = new DiscordTradeNotifier<T>(pk, trainer, code, trader, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode);
+        var detail = new PokeTradeDetail<T>(pk, trainer, notifier, t, code, sig == RequestSignificance.Favored, lgcode, batchTradeNumber, totalBatchTrades, isMysteryEgg);
         var trade = new TradeEntry<T>(detail, userID, type, name);
         var strings = GameInfo.GetStrings(1);
         var hub = SysCord<T>.Runner.Hub;
@@ -215,7 +226,7 @@ public static class QueueHelper<T> where T : PKM, new()
         var fireMoves = new List<string> { "WillOWisp", "FirePunch", "Ember", "Flamethrower", "FireSpin", "FireBlast", "FlameWheel", "SacredFire", "SunnyDay", "HeatWave", "Eruption", "BlazeKick", "BlastBurn", "Overheat", "FlareBlitz", "FireFang", "LavaPlume", "MagmaStorm", "FlameBurst", "FlameCharge", "Incinerate", "Inferno", "FirePledge", "HeatCrash", "SearingShot", "BlueFlare", "FieryDance", "V-create", "FusionFlare", "MysticalFire", "InfernoOverdrive", "InfernoOverdrive", "FireLash", "BurnUp", "ShellTrap", "MindBlown", "SizzlySlide", "MaxFlare", "PyroBall", "BurningJealousy", "RagingFury", "TorchSong", "ArmorCannon", "BitterBlade", "BlazingTorque", "BurningBulwark", "TemperFlare" };
         var electricMoves = new List<string> { "ThunderPunch", "ThunderShock", "Thunderbolt", "ThunderWave", "Thunder", "ZapCannon", "Spark", "Charge", "VoltTackle", "ShockWave", "MagnetRise", "ThunderFang", "Discharge", "ChargeBeam", "ElectroBall", "VoltSwitch", "Electroweb", "WildCharge", "BoltStrike", "FusionBolt", "IonDeluge", "ParabolicCharge", "Electrify", "EerieImpulse", "MagneticFlux", "ElectricTerrain", "Nuzzle", "GigavoltHavoc", "GigavoltHavoc", "Catastropika", "StokedSparksurfer", "ZingZap", "10,000,000VoltThunderbolt", "PlasmaFists", "ZippyZap", "PikaPapow", "BuzzyBuzz", "BoltBeak", "MaxLightning", "AuraWheel", "Overdrive", "RisingVoltage", "ThunderCage", "WildboltStorm", "ElectroDrift", "DoubleShock", "ElectroShot", "Thunderclap", "SupercellSlam" };
         var bugEmojiMoves = new List<string> { "XScissor", "Uturn", "Twineedle", "PinMissile", "StringShot", "LeechLife", "SpiderWeb", "FuryCutter", "Megahorn", "TailGlow", "SilverWind", "SignalBeam", "U-turn", "X-Scissor", "BugBuzz", "BugBite", "AttackOrder", "DefendOrder", "HealOrder", "RagePowder", "QuiverDance", "StruggleBug", "Steamroller", "StickyWeb", "FellStinger", "Powder", "Infestation", "SavageSpin-Out", "SavageSpin-Out", "FirstImpression", "PollenPuff", "Lunge", "MaxFlutterby", "SkitterSmack", "SilkTrap", "Pounce", };
-        var darkMoves = new List<string> { "Bite", "Thief", "FeintAttack", "Pursuit", "Crunch", "BeatUp", "Torment", "Flatter", "Memento", "Taunt", "KnockOff", "Snatch", "FakeTears", "Payback", "Assurance", "Embargo", "Fling", "Punishment", "SuckerPunch", "DarkPulse", "NightSlash", "Switcheroo", "NastyPlot", "DarkVoid", "HoneClaws", "FoulPlay", "Quash", "NightDaze", "Snarl", "PartingShot", "Topsy-Turvy", "HyperspaceFury", "BlackHoleEclipse", "BlackHoleEclipse", "DarkestLariat", "ThroatChop", "PowerTrip", "BrutalSwing", "MaliciousMoonsault", "BaddyBad", "JawLock", "MaxDarkness", "Obstruct", "FalseSurrender", "LashOut", "WickedBlow", "FieryWrath", "CeaselessEdge", "KowtowCleave", "Ruination", "Comeuppance", "WickedTorque" };
+        var darkMoves = new List<string> { "Bite", "Thief", "FeintAttack", "Pursuit", "Crunch", "BeatUp", "Torment", "Flatter", "Memento", "Taunt", "KnockOff", "Snatch", "FakeTears", "Payback", "Assurance", "Embargo", "Fling", "Punishment", "SuckerPunch", "DarkPulse", "NightSlash", "Switcheroo", "NastyPlot", "DarkVoid", "HoneClaws", "FoulPlay", "Quash", "NightDaze", "Snarl", "PartingShot", "Topsy-Turvy", "HyperspaceFury", "BlackHoleEclipse", "BlackHoleEclipse", "DarkestLariat", "ThroatChop", "PowerTrip", "BrutalSwing", "MaliciousMoonsault", "BaddyBad", "JawLock", "MaxDarkness", "Obstruct", "FalseSurrender", "LashOut", "WickedBlow", "FieryWrath", "CeaselessEdge", "KowtowCleave", "Ruination", "Comeuppance", "WickedTorque", "TopsyTurvy" };
         var ghostMoves = new List<string> { "NightShade", "ConfuseRay", "Lick", "Nightmare", "Curse", "Spite", "DestinyBond", "ShadowBall", "Grudge", "Astonish", "ShadowPunch", "ShadowClaw", "ShadowSneak", "OminousWind", "ShadowForce", "Hex", "PhantomForce", "Trick-or-Treat", "Never-EndingNightmare", "Never-EndingNightmare", "SpiritShackle", "SinisterArrowRaid", "Soul-Stealing7-StarStrike", "ShadowBone", "SpectralThief", "MoongeistBeam", "MenacingMoonrazeMaelstrom", "MaxPhantasm", "Poltergeist", "AstralBarrage", "BitterMalice", "InfernalParade", "LastRespects", "RageFist" };
         var poisonMoves = new List<string> { "PoisonSting", "Acid", "PoisonPowder", "Toxic", "Smog", "Sludge", "PoisonGas", "AcidArmor", "SludgeBomb", "PoisonFang", "PoisonTail", "GastroAcid", "ToxicSpikes", "PoisonJab", "CrossPoison", "GunkShot", "Venoshock", "SludgeWave", "Coil", "AcidSpray", "ClearSmog", "Belch", "VenomDrench", "AcidDownpour", "AcidDownpour", "BanefulBunker", "ToxicThread", "Purify", "MaxOoze", "ShellSideArm", "CorrosiveGas", "DireClaw", "BarbBarrage", "MortalSpin", "NoxiousTorque", "MalignantChain" };
         var iceMoves = new List<string> { "FreezeDry", "IcePunch", "Mist", "IceBeam", "Blizzard", "AuroraBeam", "Haze", "PowderSnow", "IcyWind", "Hail", "IceBall", "SheerCold", "IcicleSpear", "Avalanche", "IceShard", "IceFang", "FrostBreath", "Glaciate", "FreezeShock", "IceBurn", "IcicleCrash", "Freeze-Dry", "SubzeroSlammer", "SubzeroSlammer", "IceHammer", "AuroraVeil", "FreezyFrost", "MaxHailstorm", "TripleAxel", "GlacialLance", "MountainGale", "IceSpinner", "ChillyReception", "Snowscape" };
@@ -224,7 +235,7 @@ public static class QueueHelper<T> where T : PKM, new()
         var groundMoves = new List<string> { "MudSlap", "SandAttack", "Earthquake", "Fissure", "Dig", "BoneClub", "Bonemerang", "Mud-Slap", "Spikes", "BoneRush", "Magnitude", "MudSport", "SandTomb", "MudShot", "EarthPower", "MudBomb", "Bulldoze", "DrillRun", "Rototiller", "ThousandArrows", "ThousandWaves", "Land'sWrath", "PrecipiceBlades", "TectonicRage", "TectonicRage", "ShoreUp", "HighHorsepower", "StompingTantrum", "MaxQuake", "ScorchingSands", "HeadlongRush", "SandsearStorm" };
         var fairyMoves = new List<string> { "BabyDollEyes", "SweetKiss", "Charm", "Moonlight", "DisarmingVoice", "DrainingKiss", "CraftyShield", "FlowerShield", "MistyTerrain", "PlayRough", "FairyWind", "Moonblast", "FairyLock", "AromaticMist", "Geomancy", "DazzlingGleam", "Baby-DollEyes", "LightofRuin", "TwinkleTackle", "TwinkleTackle", "FloralHealing", "GuardianofAlola", "FleurCannon", "Nature'sMadness", "Let'sSnuggleForever", "SparklySwirl", "MaxStarfall", "Decorate", "SpiritBreak", "StrangeSteam", "MistyExplosion", "SpringtideStorm", "MagicalTorque", "AlluringVoice" };
         var grassMoves = new List<string> { "VineWhip", "Absorb", "MegaDrain", "LeechSeed", "RazorLeaf", "SolarBeam", "StunSpore", "SleepPowder", "PetalDance", "Spore", "CottonSpore", "GigaDrain", "Synthesis", "Ingrain", "NeedleArm", "Aromatherapy", "GrassWhistle", "BulletSeed", "FrenzyPlant", "MagicalLeaf", "LeafBlade", "WorrySeed", "SeedBomb", "EnergyBall", "LeafStorm", "PowerWhip", "GrassKnot", "WoodHammer", "SeedFlare", "GrassPledge", "HornLeech", "LeafTornado", "CottonGuard", "Forest'sCurse", "PetalBlizzard", "GrassyTerrain", "SpikyShield", "BloomDoom", "BloomDoom", "StrengthSap", "SolarBlade", "Leafage", "TropKick", "SappySeed", "MaxOvergrowth", "DrumBeating", "SnapTrap", "BranchPoke", "AppleAcid", "GravApple", "GrassyGlide", "JungleHealing", "Chloroblast", "SpicyExtract", "FlowerTrick", "Trailblaze", "MatchaGotcha", "SyrupBomb", "IvyCudgel" };
-        var fightingMoves = new List<string> { "KarateChop", "DoubleKick", "JumpKick", "RollingKick", "Submission", "LowKick", "Counter", "SeismicToss", "HighJumpKick", "TripleKick", "Reversal", "MachPunch", "Detect", "DynamicPunch", "VitalThrow", "CrossChop", "RockSmash", "FocusPunch", "Superpower", "Revenge", "BrickBreak", "ArmThrust", "SkyUppercut", "BulkUp", "Wake-UpSlap", "HammerArm", "CloseCombat", "ForcePalm", "AuraSphere", "DrainPunch", "VacuumWave", "FocusBlast", "StormThrow", "LowSweep", "QuickGuard", "CircleThrow", "FinalGambit", "SacredSword", "SecretSword", "FlyingPress", "MatBlock", "Power-UpPunch", "All-OutPummeling", "All-OutPummeling", "NoRetreat", "Octolock", "MaxKnuckle", "BodyPress", "MeteorAssault", "Coaching", "ThunderousKick", "VictoryDance", "TripleArrows", "AxeKick", "CollisionCourse", "CombatTorque", "UpperHand" };
+        var fightingMoves = new List<string> { "KarateChop", "DoubleKick", "JumpKick", "RollingKick", "Submission", "LowKick", "Counter", "SeismicToss", "HighJumpKick", "TripleKick", "Reversal", "MachPunch", "Detect", "DynamicPunch", "VitalThrow", "CrossChop", "RockSmash", "FocusPunch", "Superpower", "Revenge", "BrickBreak", "ArmThrust", "SkyUppercut", "BulkUp", "Wake-UpSlap", "HammerArm", "CloseCombat", "ForcePalm", "AuraSphere", "DrainPunch", "VacuumWave", "FocusBlast", "StormThrow", "LowSweep", "QuickGuard", "CircleThrow", "FinalGambit", "SacredSword", "SecretSword", "FlyingPress", "MatBlock", "Power-UpPunch", "All-OutPummeling", "All-OutPummeling", "NoRetreat", "Octolock", "MaxKnuckle", "BodyPress", "MeteorAssault", "Coaching", "ThunderousKick", "VictoryDance", "TripleArrows", "AxeKick", "CollisionCourse", "CombatTorque", "UpperHand", "PowerUpPunch" };
         var normalMoves = new List<string> { "SelfDestruct", "SoftBoiled", "LockOn", "DoubleEdge", "Pound", "DoubleSlap", "CometPunch", "MegaPunch", "PayDay", "Scratch", "ViseGrip", "Guillotine", "RazorWind", "SwordsDance", "Cut", "Whirlwind", "Bind", "Slam", "Stomp", "MegaKick", "Headbutt", "HornAttack", "FuryAttack", "HornDrill", "Tackle", "BodySlam", "Wrap", "TakeDown", "Thrash", "Double-Edge", "TailWhip", "Leer", "Growl", "Roar", "Sing", "Supersonic", "SonicBoom", "Disable", "HyperBeam", "Strength", "Growth", "QuickAttack", "Rage", "Mimic", "Screech", "DoubleTeam", "Recover", "Harden", "Minimize", "Smokescreen", "DefenseCurl", "FocusEnergy", "Bide", "Metronome", "Self-Destruct", "EggBomb", "Swift", "SkullBash", "SpikeCannon", "Constrict", "Soft-Boiled", "Glare", "Barrage", "LovelyKiss", "Transform", "DizzyPunch", "Flash", "Splash", "Explosion", "FurySwipes", "HyperFang", "Sharpen", "Conversion", "TriAttack", "SuperFang", "Slash", "Substitute", "Struggle", "Sketch", "MindReader", "Snore", "Flail", "Conversion2", "Protect", "ScaryFace", "BellyDrum", "Foresight", "PerishSong", "Lock-On", "Endure", "FalseSwipe", "Swagger", "MilkDrink", "MeanLook", "Attract", "SleepTalk", "HealBell", "Return", "Present", "Frustration", "Safeguard", "PainSplit", "BatonPass", "Encore", "RapidSpin", "SweetScent", "MorningSun", "HiddenPower", "PsychUp", "ExtremeSpeed", "FakeOut", "Uproar", "Stockpile", "SpitUp", "Swallow", "Facade", "SmellingSalts", "FollowMe", "NaturePower", "HelpingHand", "Wish", "Assist", "Recycle", "Yawn", "Endeavor", "Refresh", "SecretPower", "Camouflage", "TeeterDance", "SlackOff", "HyperVoice", "CrushClaw", "WeatherBall", "OdorSleuth", "Tickle", "Block", "Howl", "Covet", "NaturalGift", "Feint", "Acupressure", "TrumpCard", "WringOut", "LuckyChant", "MeFirst", "Copycat", "LastResort", "GigaImpact", "RockClimb", "Captivate", "Judgment", "DoubleHit", "CrushGrip", "SimpleBeam", "Entrainment", "AfterYou", "Round", "EchoedVoice", "ChipAway", "ShellSmash", "ReflectType", "Retaliate", "Bestow", "WorkUp", "TailSlap", "HeadCharge", "TechnoBlast", "RelicSong", "NobleRoar", "Boomburst", "PlayNice", "Confide", "HappyHour", "Celebrate", "HoldHands", "HoldBack", "BreakneckBlitz", "BreakneckBlitz", "Spotlight", "LaserFocus", "RevelationDance", "PulverizingPancake", "ExtremeEvoboost", "TearfulLook", "Multi-Attack", "VeeveeVolley", "MaxGuard", "StuffCheeks", "Teatime", "CourtChange", "MaxStrike", "TerrainPulse", "PowerShift", "TeraBlast", "PopulationBomb", "RevivalBlessing", "Doodle", "FilletAway", "RagingBull", "ShedTail", "TidyUp", "HyperDrill", "BloodMoon", "TeraStarstorm" };
         var dragonMoves = new List<string> { "DragonRage", "Outrage", "DragonBreath", "Twister", "DragonClaw", "DragonDance", "DragonPulse", "DragonRush", "DracoMeteor", "RoarofTime", "SpacialRend", "DragonTail", "DualChop", "DevastatingDrake", "DevastatingDrake", "CoreEnforcer", "ClangingScales", "DragonHammer", "ClangorousSoulblaze", "", "DynamaxCannon", "DragonDarts", "MaxWyrmwind", "ClangorousSoul", "BreakingSwipe", "Eternabeam", "ScaleShot", "DragonEnergy", "OrderUp", "GlaiveRush", "FickleBeam", "DragonCheer" };
         var flyingMoves = new List<string> { "Gust", "WingAttack", "Fly", "Peck", "DrillPeck", "MirrorMove", "SkyAttack", "Aeroblast", "FeatherDance", "AirCutter", "AerialAce", "Bounce", "Roost", "Pluck", "Tailwind", "AirSlash", "BraveBird", "Defog", "Chatter", "SkyDrop", "Acrobatics", "Hurricane", "OblivionWing", "DragonAscent", "SupersonicSkystrike", "SupersonicSkystrike", "BeakBlast", "FloatyFall", "MaxAirstream", "DualWingbeat", "BleakwindStorm" };
@@ -415,12 +426,12 @@ public static class QueueHelper<T> where T : PKM, new()
         {
             ushort moveId = moves[i];
             if (moveId == 0) continue; // Skip if no move is assigned to this slot
-            string moveName = GameInfo.MoveDataSource.FirstOrDefault(m => m.Value == moveId)?.Text ?? "Unknown Move";
+            string moveName = GameInfo.MoveDataSource.FirstOrDefault(m => m.Value == moveId)?.Text ?? "";
         }
 
         string movesDisplay = string.Join("\n", moveNamesList);
-        string abilityName = GameInfo.AbilityDataSource.FirstOrDefault(a => a.Value == pk.Ability)?.Text ?? "Unknown Ability";
-        string natureName = GameInfo.NatureDataSource.FirstOrDefault(n => n.Value == pk.Nature)?.Text ?? "Unknown Nature";
+        string abilityName = GameInfo.AbilityDataSource.FirstOrDefault(a => a.Value == pk.Ability)?.Text ?? "";
+        string natureName = GameInfo.NatureDataSource.FirstOrDefault(n => n.Value == pk.Nature)?.Text ?? "";
         string teraTypeString;
         if (pk is PK9 pk9)
         {
@@ -428,7 +439,7 @@ public static class QueueHelper<T> where T : PKM, new()
         }
         else
         {
-            teraTypeString = "Unknown"; // or another default value as needed
+            teraTypeString = ""; // or another default value as needed
         }
         int level = pk.CurrentLevel;
         string speciesName = GameInfo.GetStrings(1).Species[pk.Species];
@@ -440,13 +451,14 @@ public static class QueueHelper<T> where T : PKM, new()
         string formDecoration = "";
         if (pk.Species == (int)Species.Alcremie && formArgument != 0)
         {
-            formDecoration = $"{((AlcremieDecoration)formArgument).ToString()}";
+            formDecoration = $"{(AlcremieDecoration)formArgument}";
         }
 
         // Determine if this is a clone or dump request
         bool isCloneRequest = type == PokeRoutineType.Clone;
         bool isDumpRequest = type == PokeRoutineType.Dump;
         bool FixOT = type == PokeRoutineType.FixOT;
+        bool isSpecialRequest = type == PokeRoutineType.SeedCheck;
 
         // Check if the Pokémon is shiny and prepend the shiny emoji
         string shinyEmoji = pk.IsShiny ? "✨ " : "";
@@ -455,7 +467,7 @@ public static class QueueHelper<T> where T : PKM, new()
 
         if (isMysteryEgg)
         {
-            tradeTitle = "✨ Huevo misterioso Shiny ✨ de";
+            tradeTitle = "✨ Huevo Misterioso Shiny ✨ de";
         }
         else if (isBatchTrade)
         {
@@ -465,9 +477,13 @@ public static class QueueHelper<T> where T : PKM, new()
         {
             tradeTitle = $"Solicitud de FixOT de ";
         }
+        else if (isSpecialRequest)
+        {
+            tradeTitle = $"Solicitud Especial de";
+        }
         else if (isCloneRequest)
         {
-            tradeTitle = "¡Capsula de Clonación activada! para";
+            tradeTitle = "Capsula de Clonación activada para";
         }
         else if (isDumpRequest)
         {
@@ -494,6 +510,10 @@ public static class QueueHelper<T> where T : PKM, new()
         {
             embedImageUrl = "https://i.imgur.com/aSTCjUn.png"; // URL for clone request
         }
+        else if (isSpecialRequest)
+        {
+            embedImageUrl = "https://i.imgur.com/EI1BHr5.png"; // URL for clone request
+        }
         else if (FixOT)
         {
             embedImageUrl = "https://i.imgur.com/gRZGFIi.png"; // URL for fixot request
@@ -515,7 +535,7 @@ public static class QueueHelper<T> where T : PKM, new()
         string authorName;
 
         // Determine the author's name based on trade type
-        if (isMysteryEgg || FixOT || isCloneRequest || isDumpRequest || isBatchTrade)
+        if (isMysteryEgg || FixOT || isCloneRequest || isDumpRequest || isSpecialRequest || isBatchTrade)
         {
             authorName = $"{tradeTitle} {userName}";
         }
@@ -529,7 +549,7 @@ public static class QueueHelper<T> where T : PKM, new()
             .WithFooter($"Posición actual: {position.Position}\n{etaMessage}")
             .WithAuthor(new EmbedAuthorBuilder()
                 .WithName(authorName)
-                .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()));              
+                .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()));
 
         // Add the additional text at the top as its own field
         string additionalText = string.Join("\n", SysCordSettings.Settings.AdditionalEmbedText);
@@ -539,7 +559,7 @@ public static class QueueHelper<T> where T : PKM, new()
         }
 
         // Conditionally add the 'Trainer' and 'Moves' fields based on trade type
-        if (!isMysteryEgg && !isCloneRequest && !isDumpRequest && !FixOT)
+        if (!isMysteryEgg && !isCloneRequest && !isDumpRequest && !FixOT && !isSpecialRequest)
         {
             // Prepare the left side content
             string leftSideContent = $"**Entrenador**: {user.Mention}\n" +
@@ -635,21 +655,13 @@ public static class QueueHelper<T> where T : PKM, new()
         else
         {
             // For special cases, add only the special description
-            string specialDescription = $"**Trainer**: {user.Mention}\n" +
-                                        (isMysteryEgg ? "Huevo Misterioso" : isCloneRequest ? "Solicitud de clonación" : FixOT ? "Solicitud de FixOT" : "Solicitud de Dump");
+            string specialDescription = $"**Entrenador**: {user.Mention}\n" +
+                                        (isMysteryEgg ? "Huevo Misterioso" : isSpecialRequest ? "Solicitud Especial" : isCloneRequest ? "Solicitud de clonación" : FixOT ? "Solicitud de FixOT" : "Solicitud de Dump");
             embedBuilder.AddField("\u200B", specialDescription, inline: false);
         }
 
         // Set thumbnail images
-        if (isCloneRequest)
-        {
-            embedBuilder.WithThumbnailUrl("https://raw.githubusercontent.com/bdawg1989/sprites/main/profoak.png");
-        }
-        else if (isDumpRequest)
-        {
-            embedBuilder.WithThumbnailUrl("https://raw.githubusercontent.com/bdawg1989/sprites/main/profoak.png");
-        }
-        else if (FixOT)
+        if (isCloneRequest || isSpecialRequest || isDumpRequest || FixOT)
         {
             embedBuilder.WithThumbnailUrl("https://raw.githubusercontent.com/bdawg1989/sprites/main/profoak.png");
         }
@@ -1090,5 +1102,59 @@ public static class QueueHelper<T> where T : PKM, new()
                 break;
         }
         await context.Channel.SendMessageAsync(message).ConfigureAwait(false);
+    }
+
+    public static (string, Embed) CreateLGLinkCodeSpriteEmbed(List<Pictocodes> lgcode)
+    {
+        int codecount = 0;
+        List<System.Drawing.Image> spritearray = new();
+        foreach (Pictocodes cd in lgcode)
+        {
+
+
+            var showdown = new ShowdownSet(cd.ToString());
+            var sav = SaveUtil.GetBlankSAV(EntityContext.Gen7b, "pip");
+            PKM pk = sav.GetLegalFromSet(showdown).Created;
+            System.Drawing.Image png = pk.Sprite();
+            var destRect = new Rectangle(-40, -65, 137, 130);
+            var destImage = new Bitmap(137, 130);
+
+            destImage.SetResolution(png.HorizontalResolution, png.VerticalResolution);
+
+            using (var graphics = Graphics.FromImage(destImage))
+            {
+                graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+                graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+                graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                graphics.DrawImage(png, destRect, 0, 0, png.Width, png.Height, GraphicsUnit.Pixel);
+
+            }
+            png = destImage;
+            spritearray.Add(png);
+            codecount++;
+        }
+        int outputImageWidth = spritearray[0].Width + 20;
+
+        int outputImageHeight = spritearray[0].Height - 65;
+
+        Bitmap outputImage = new Bitmap(outputImageWidth, outputImageHeight, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+        using (Graphics graphics = Graphics.FromImage(outputImage))
+        {
+            graphics.DrawImage(spritearray[0], new Rectangle(0, 0, spritearray[0].Width, spritearray[0].Height),
+                new Rectangle(new Point(), spritearray[0].Size), GraphicsUnit.Pixel);
+            graphics.DrawImage(spritearray[1], new Rectangle(50, 0, spritearray[1].Width, spritearray[1].Height),
+                new Rectangle(new Point(), spritearray[1].Size), GraphicsUnit.Pixel);
+            graphics.DrawImage(spritearray[2], new Rectangle(100, 0, spritearray[2].Width, spritearray[2].Height),
+                new Rectangle(new Point(), spritearray[2].Size), GraphicsUnit.Pixel);
+        }
+        System.Drawing.Image finalembedpic = outputImage;
+        var filename = $"{System.IO.Directory.GetCurrentDirectory()}//finalcode.png";
+        finalembedpic.Save(filename);
+        filename = System.IO.Path.GetFileName($"{System.IO.Directory.GetCurrentDirectory()}//finalcode.png");
+        Embed returnembed = new EmbedBuilder().WithTitle($"{lgcode[0]}, {lgcode[1]}, {lgcode[2]}").WithImageUrl($"attachment://{filename}").Build();
+        return (filename, returnembed);
     }
 }

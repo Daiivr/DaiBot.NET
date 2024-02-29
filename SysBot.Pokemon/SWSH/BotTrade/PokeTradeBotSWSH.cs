@@ -3,6 +3,8 @@ using PKHeX.Core.Searching;
 using SysBot.Base;
 using SysBot.Pokemon.Helpers;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -19,6 +21,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
     private readonly TradeSettings TradeSettings = hub.Config.Trade;
     private readonly PokeTradeHub<PK8> Hub;
     private readonly TradeAbuseSettings AbuseSettings = hub.Config.TradeAbuse;
+
     public ICountSettings Counts => TradeSettings;
 
     /// <summary>
@@ -168,7 +171,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         {
             result = await PerformLinkCodeTrade(sav, detail, token).ConfigureAwait(false);
             if (result == PokeTradeResult.Success)
-                return;
+            return;
         }
         catch (SocketException socket)
         {
@@ -193,11 +196,11 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         {
             detail.IsRetry = true;
             hub.Queues.Enqueue(type, detail, Math.Min(priority, PokeTradePriorities.Tier2));
-            detail.SendNotification(this, "<a:warning:1206483664939126795> Oops! Algo ocurrio. Intentemoslo una ves mas.");
+            detail.SendNotification(this, "<a:warning:1206483664939126795> Oops! Algo ocurrió. Intentemoslo una ves mas.");
         }
         else
         {
-            detail.SendNotification(this, $"<a:warning:1206483664939126795> Oops! Algo ocurrio. Cancelando el trade: **{result.GetDescription()}**.");
+            detail.SendNotification(this, $"<a:warning:1206483664939126795> Oops! Algo ocurrió. Cancelando el trade: **{result.GetDescription()}**.");
             detail.TradeCanceled(this, result);
         }
     }
@@ -293,7 +296,9 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         var partnerFound = await WaitForTradePartnerOffer(token).ConfigureAwait(false);
 
         if (token.IsCancellationRequested)
+        {
             return PokeTradeResult.RoutineCancel;
+        }
         if (!partnerFound)
         {
             await ResetTradePosition(token).ConfigureAwait(false);
@@ -424,9 +429,11 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         if (DumpSetting.Dump && !string.IsNullOrEmpty(DumpSetting.DumpFolder))
         {
             var subfolder = poke.Type.ToString().ToLower();
+            var service = poke.Notifier.GetType().ToString().ToLower();
+            var tradedFolder = service.Contains("twitch") ? Path.Combine("traded", "twitch") : service.Contains("discord") ? Path.Combine("traded", "discord") : "traded";
             DumpPokemon(DumpSetting.DumpFolder, subfolder, received); // received by bot
             if (poke.Type is PokeTradeType.Specific or PokeTradeType.Clone or PokeTradeType.FixOT)
-                DumpPokemon(DumpSetting.DumpFolder, "traded", toSend); // sent to partner
+                DumpPokemon(DumpSetting.DumpFolder, tradedFolder, toSend); // sent to partner
         }
     }
 
@@ -1084,7 +1091,9 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         cln.TrainerSID7 = tidsid / 1_000_000;
         cln.Language = data[5];
         cln.OT_Name = trainerName;
-        cln.ClearNickname();
+
+        if (!toSend.IsNicknamed)
+            cln.ClearNickname();
 
         if (toSend.IsShiny)
             cln.SetShiny();

@@ -130,6 +130,7 @@ namespace SysBot.Pokemon.WinForms
             FLP_Bots.Name = "FLP_Bots";
             FLP_Bots.Size = new System.Drawing.Size(670, 355);
             FLP_Bots.TabIndex = 9;
+            FLP_Bots.Paint += FLP_Bots_Paint;
             FLP_Bots.Resize += FLP_Bots_Resize;
             // 
             // TB_IP

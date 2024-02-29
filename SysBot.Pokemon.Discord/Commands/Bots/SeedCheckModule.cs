@@ -1,6 +1,7 @@
 using Discord;
 using Discord.Commands;
 using PKHeX.Core;
+using System;
 using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.Discord;
@@ -11,34 +12,112 @@ public class SeedCheckModule<T> : ModuleBase<SocketCommandContext> where T : PKM
     private static TradeQueueInfo<T> Info => SysCord<T>.Runner.Hub.Queues.Info;
 
     [Command("seedCheck")]
-    [Alias("checkMySeed", "checkSeed", "seed", "s", "sc")]
+    [Alias("checkMySeed", "checkSeed", "seed", "s", "sc", "specialrequest", "sr")]
     [Summary("Checks the seed for a Pokémon.")]
     [RequireQueueRole(nameof(DiscordManager.RolesSeed))]
-    public Task SeedCheckAsync(int code)
+    public async Task SeedCheckAsync(int code)
     {
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
+
+            var queueEmbed = new EmbedBuilder
+            {
+                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
         var sig = Context.User.GetFavor();
-        return QueueHelper<T>.AddToQueueAsync(Context, code, Context.User.Username, sig, new T(), PokeRoutineType.SeedCheck, PokeTradeType.Seed);
+        await QueueHelper<T>.AddToQueueAsync(Context, code, Context.User.Username, sig, new T(), PokeRoutineType.SeedCheck, PokeTradeType.Seed).ConfigureAwait(false);
     }
 
     [Command("seedCheck")]
-    [Alias("checkMySeed", "checkSeed", "seed", "s", "sc")]
+    [Alias("checkMySeed", "checkSeed", "seed", "s", "sc", "specialrequest", "sr")]
     [Summary("Checks the seed for a Pokémon.")]
     [RequireQueueRole(nameof(DiscordManager.RolesSeed))]
-    public Task SeedCheckAsync([Summary("Trade Code")][Remainder] string code)
+    public async Task SeedCheckAsync([Summary("Trade Code")][Remainder] string code)
     {
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
+
+            var queueEmbed = new EmbedBuilder
+            {
+                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
         int tradeCode = Util.ToInt32(code);
         var sig = Context.User.GetFavor();
-        return QueueHelper<T>.AddToQueueAsync(Context, tradeCode == 0 ? Info.GetRandomTradeCode() : tradeCode, Context.User.Username, sig, new T(), PokeRoutineType.SeedCheck, PokeTradeType.Seed);
+        await QueueHelper<T>.AddToQueueAsync(Context, tradeCode == 0 ? Info.GetRandomTradeCode() : tradeCode, Context.User.Username, sig, new T(), PokeRoutineType.SeedCheck, PokeTradeType.Seed).ConfigureAwait(false);
     }
 
     [Command("seedCheck")]
-    [Alias("checkMySeed", "checkSeed", "seed", "s", "sc")]
+    [Alias("checkMySeed", "checkSeed", "seed", "s", "sc", "specialrequest", "sr")]
     [Summary("Checks the seed for a Pokémon.")]
     [RequireQueueRole(nameof(DiscordManager.RolesSeed))]
-    public Task SeedCheckAsync()
+    public async Task SeedCheckAsync()
     {
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
+
+            var queueEmbed = new EmbedBuilder
+            {
+                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
         var code = Info.GetRandomTradeCode();
-        return SeedCheckAsync(code);
+        await SeedCheckAsync(code).ConfigureAwait(false);
     }
 
     [Command("seedList")]

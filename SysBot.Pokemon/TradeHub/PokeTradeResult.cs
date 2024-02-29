@@ -38,7 +38,7 @@ public static class PokeTradeResultExtensions
             case PokeTradeResult.TrainerLeft:
                 return "__El entrenador abandonó el intercambio__";
             case PokeTradeResult.TrainerOfferCanceledQuick:
-                return "__El entrenador canceló la oferta rápidamente__";
+                return "__El entrenador canceló la oferta demasiado rapido__";
             case PokeTradeResult.TrainerRequestBad:
                 return "__Solicitud del entrenador inválida__";
             case PokeTradeResult.IllegalTrade:

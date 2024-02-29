@@ -19,11 +19,17 @@ public class InfoModule : ModuleBase<SocketCommandContext>
     private const string repo = "https://github.com/kwsch/SysBot.NET";
     private const string gengar = "https://github.com/bdawg1989/MergeBot";
     private const string daifork = "https://github.com/Daiivr/SysBot.NET";
+    private const ulong DisallowedUserId = 195756980873199618;
 
     [Command("info")]
     [Alias("about", "whoami", "owner")]
     public async Task InfoAsync()
     {
+        if (Context.User.Id == DisallowedUserId)
+        {
+            await ReplyAsync("<a:no:1206485104424128593> No permitimos que personas turbias usen este comando.").ConfigureAwait(false);
+            return;
+        }
         var app = await Context.Client.GetApplicationInfoAsync().ConfigureAwait(false);
 
         var builder = new EmbedBuilder
@@ -33,7 +39,6 @@ public class InfoModule : ModuleBase<SocketCommandContext>
         };
 
         builder.AddField("Info",
-            $"- [Código fuente del SySBot Original]({repo})\n" +
             $"- [Código fuente de Mergebot]({gengar})\n" +
             $"- [Codigo Fuente de este Bot]({daifork})\n" +
             $"- {Format.Bold("Propietario")}: {app.Owner} ({app.Owner.Id})\n" +

@@ -148,7 +148,7 @@ public abstract class PokeRoutineExecutor<T>(IConsoleBotManaged<IConsoleConnecti
             if (AbuseSettings.BlockDetectedBannedUser && bot is PokeRoutineExecutor8SWSH)
                 await BlockUser(token).ConfigureAwait(false);
 
-            var msg = $"{user.TrainerName}{useridmsg} is a banned user, and was encountered in-game using OT: {TrainerName}.";
+            var msg = $"<a:warning:1206483664939126795> {user.TrainerName}{useridmsg} es un usuario baneado, y fue encontrado en el juego usando el OT: **{TrainerName}**.";
             if (!string.IsNullOrWhiteSpace(entry.Comment))
                 msg += $"\nUser was banned for: {entry.Comment}";
             if (!string.IsNullOrWhiteSpace(AbuseSettings.BannedIDMatchEchoMention))
@@ -169,8 +169,8 @@ public abstract class PokeRoutineExecutor<T>(IConsoleBotManaged<IConsoleConnecti
             if (cd != 0 && TimeSpan.FromMinutes(cd) > delta)
             {
                 var wait = TimeSpan.FromMinutes(cd) - delta;
-                poke.Notifier.SendNotification(bot, poke, $"You are still on trade cooldown, and cannot trade for another {wait.TotalMinutes:F1} minute(s).");
-                var msg = $"Found {user.TrainerName}{useridmsg} ignoring the {cd} minute trade cooldown. Last encountered {delta.TotalMinutes:F1} minutes ago.";
+                poke.Notifier.SendNotification(bot, poke, $"<a:no:1206485104424128593> Sigues en tiempo de reutilización y no puedes intercambiar por otros **{wait.TotalMinutes:F1}** minuto(s).");
+                var msg = $"<a:warning:1206483664939126795> Encontre a **{user.TrainerName}{useridmsg}** ignorando el enfriamiento de tradeo de **{cd}** minutos. Encontrado por última vez hace **{delta.TotalMinutes:F1}** minutos.";
                 if (AbuseSettings.EchoNintendoOnlineIDCooldown)
                     msg += $"\nID: {TrainerNID}";
                 if (!string.IsNullOrWhiteSpace(AbuseSettings.CooldownAbuseEchoMention))
@@ -190,14 +190,14 @@ public abstract class PokeRoutineExecutor<T>(IConsoleBotManaged<IConsoleConnecti
                         await BlockUser(token).ConfigureAwait(false);
                         if (AbuseSettings.BanIDWhenBlockingUser || bot is not PokeRoutineExecutor8SWSH) // Only ban ID if blocking in SWSH, always in other games.
                         {
-                            AbuseSettings.BannedIDs.AddIfNew(new[] { GetReference(TrainerName, TrainerNID, "in-game block for multiple accounts") });
+                            AbuseSettings.BannedIDs.AddIfNew(new[] { GetReference(TrainerName, TrainerNID, "🚫 Bloqueo en el juego por el uso de varias cuentas") });
                             Log($"Added {TrainerNID} to the BannedIDs list.");
                         }
                     }
                     quit = true;
                 }
 
-                var msg = $"Found {user.TrainerName}{useridmsg} using multiple accounts.\nPreviously traded with {previous.Name} ({previous.RemoteID}) {delta.TotalMinutes:F1} minutes ago on OT: {TrainerName}.";
+                var msg = $"<a:warning:1206483664939126795> Encontre a **{user.TrainerName}{useridmsg}** usando __varias cuentas__.\nEncontrado anteriormente **{previous.Name} ({previous.RemoteID})** hace **{delta.TotalMinutes:F1}** minutos con el __OT__: **{TrainerName}**.";
                 if (AbuseSettings.EchoNintendoOnlineIDMulti)
                     msg += $"\nID: {TrainerNID}";
                 if (!string.IsNullOrWhiteSpace(AbuseSettings.MultiAbuseEchoMention))
@@ -220,14 +220,14 @@ public abstract class PokeRoutineExecutor<T>(IConsoleBotManaged<IConsoleConnecti
                         await BlockUser(token).ConfigureAwait(false);
                         if (AbuseSettings.BanIDWhenBlockingUser || bot is not PokeRoutineExecutor8SWSH) // Only ban ID if blocking in SWSH, always in other games.
                         {
-                            AbuseSettings.BannedIDs.AddIfNew(new[] { GetReference(TrainerName, TrainerNID, "in-game block for sending to multiple in-game players") });
+                            AbuseSettings.BannedIDs.AddIfNew(new[] { GetReference(TrainerName, TrainerNID, "🚫 Bloqueado en el juego por enviar a varios jugadores dentro de el juego") });
                             Log($"Added {TrainerNID} to the BannedIDs list.");
                         }
                     }
                     quit = true;
                 }
 
-                var msg = $"Found {user.TrainerName}{useridmsg} sending to multiple in-game players. Previous OT: {previous_remote.Name}, Current OT: {TrainerName}";
+                var msg = $"<a:warning:1206483664939126795> Encontre a **{user.TrainerName}{useridmsg}** enviando a varios jugadores dentro del juego. __OT Anterior__: **{previous_remote.Name}**, __OT Actual__: **{TrainerName}**";
                 if (AbuseSettings.EchoNintendoOnlineIDMultiRecipients)
                     msg += $"\nID: {TrainerNID}";
                 if (!string.IsNullOrWhiteSpace(AbuseSettings.MultiRecipientEchoMention))
