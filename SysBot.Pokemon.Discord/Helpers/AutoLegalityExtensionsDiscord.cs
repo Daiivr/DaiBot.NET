@@ -4,6 +4,7 @@ using PKHeX.Core;
 using SysBot.Base;
 using SysBot.Pokemon.Helpers;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.Discord;
@@ -47,38 +48,12 @@ public static class AutoLegalityExtensionsDiscord
                 return;
             }
 
+
             var speciesName = GameInfo.Strings.Species[template.Species];
-            var successMsg = $"Aqui esta tu **{speciesName}** legalizado.";
+            var successMsg = $" Aqui esta tu **{speciesName}** legalizado.";
             var showdownText = ReusableActions.GetFormattedShowdownText(pkm);
-            string pokeImgUrl = "https://i.imgur.com/MlkpDow.gif"; // Replace with a suitable default image URL
-
-            if (pkm is PK8 pk8)
-            {
-                pokeImgUrl = AbstractTrade<PK8>.PokeImg(pk8, false, false);
-            }
-            else if (pkm is PK9 pk9)
-            {
-                pokeImgUrl = AbstractTrade<PK9>.PokeImg(pk9, false, false);
-            }
-            else if (pkm is PB8 pb8)
-            {
-                pokeImgUrl = AbstractTrade<PB8>.PokeImg(pb8, false, false);
-            }
-            else if (pkm is PB7 pb7)
-            {   
-                pokeImgUrl = AbstractTrade<PB8>.PokeImg(pb7, false, false);
-            }
-            else if (pkm is PA8 pa8)
-            {
-                pokeImgUrl = AbstractTrade<PB8>.PokeImg(pa8, false, false);
-            }
-
-            if (pokeImgUrl == null)
-            {
-                // Handle the case where the type is not recognized
-                await channel.SendMessageAsync("Tipo de Pokémon no reconocido para obtener la imagen.").ConfigureAwait(false);
-                return;
-            }
+            bool canGmax = pkm is PK8 pk8 && pk8.CanGigantamax;
+            var speciesImageUrl = AbstractTrade<PK9>.PokeImg(pkm, canGmax, false);
 
             var embed = new EmbedBuilder()
                 .WithDescription(successMsg)
@@ -88,11 +63,11 @@ public static class AutoLegalityExtensionsDiscord
                     Name = "Legalización Exitosa",
                     IconUrl = "https://www.opvakantienaar.com/wp-content/themes/yootheme/cache/Yes-Sign-c182f662.png" // Replace with the URL of the success icon
                 })
-                .WithThumbnailUrl(pokeImgUrl) // Use the Pokémon image URL from pokeImgUrl
-                .AddField("Especie", spec, true)
-                .AddField("Tipo de encuentro", la.EncounterOriginal.Name, true)
-                .AddField("Resultado", result, true)
-                .AddField("Detalles:", showdownText)
+                .WithThumbnailUrl(speciesImageUrl) // Use the Pokémon image URL from pokeImgUrl
+                .AddField("__**Especie**__", spec, true)
+                .AddField("__**Tipo de encuentro**__", la.EncounterOriginal.Name, true)
+                .AddField("__**Resultado**__", result, true)
+                .AddField("__**Detalles**__:", showdownText)
                 .Build();
 
             await channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
@@ -144,45 +119,6 @@ public static class AutoLegalityExtensionsDiscord
         }
 
         var pkm = download.Data!;
-        var legalityAnalysis = new LegalityAnalysis(pkm);
-        if (legalityAnalysis.Valid)
-        {
-            var embedLegal = new EmbedBuilder()
-                .WithDescription($"{download.SanitizedFileName}: **Ya es legal**.")
-                .WithColor(Color.Green)
-                .WithAuthor(new EmbedAuthorBuilder
-                {
-                    Name = "Advertencia!",
-                    IconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg" // Replace with the URL of the success icon
-                })
-                .WithThumbnailUrl("https://i.imgur.com/DWLEXyu.png")
-                .Build();
-
-            await channel.SendMessageAsync(embed: embedLegal).ConfigureAwait(false);
-            return;
-        }
-
-        var legal = pkm.LegalizePokemon();
-        var legalityAnalysisLegal = new LegalityAnalysis(legal);
-        if (!legalityAnalysisLegal.Valid)
-        {
-            var embedNotLegal = new EmbedBuilder()
-                .WithDescription($"{download.SanitizedFileName}: **No se puede legalizar**.")
-                .WithColor(Color.Red)
-                .WithAuthor(new EmbedAuthorBuilder
-                {
-                    Name = "Error de Legalización",
-                    IconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg" // Replace with the URL of the author's icon
-                })
-                .WithThumbnailUrl("https://i.imgur.com/DWLEXyu.png")
-                .Build();
-
-            await channel.SendMessageAsync(embed: embedNotLegal).ConfigureAwait(false);
-            return;
-        }
-
-        legal.RefreshChecksum();
-
         string pokeImgUrl = "https://i.imgur.com/MlkpDow.gif"; // Replace with a suitable default image URL
 
         if (pkm is PK8 pk8)
@@ -208,8 +144,52 @@ public static class AutoLegalityExtensionsDiscord
             await channel.SendMessageAsync("Tipo de Pokémon no reconocido para obtener la imagen.").ConfigureAwait(false);
             return;
         }
+        var legalityAnalysis = new LegalityAnalysis(pkm);
+        if (legalityAnalysis.Valid)
+        {
+            var embedLegal = new EmbedBuilder()
+                .WithColor(Color.Green)
+                .WithAuthor(new EmbedAuthorBuilder
+                {
+                    Name = "Advertencia!",
+                    IconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg" // Replace with the URL of the success icon
+                })
+                .WithThumbnailUrl("https://i.imgur.com/DWLEXyu.png")
+                .WithImageUrl(pokeImgUrl)
+                .AddField("__**Estado**__", "Fallo al Legalizar.", true)
+                .AddField("__**Razón**__", "Ya es legal.", true)
+                .AddField("__**Información**__:", $"El archivo **{download.SanitizedFileName}** ya es legal.")
+                .Build();
+
+            await channel.SendMessageAsync(embed: embedLegal).ConfigureAwait(false);
+            return;
+        }
+
+        var legal = pkm.LegalizePokemon();
+        var legalityAnalysisLegal = new LegalityAnalysis(legal);
+        if (!legalityAnalysisLegal.Valid)
+        {
+            var embedNotLegal = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithAuthor(new EmbedAuthorBuilder
+                {
+                    Name = "Error de Legalización",
+                    IconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg" // Replace with the URL of the author's icon
+                })
+                .WithThumbnailUrl("https://i.imgur.com/DWLEXyu.png")
+                .WithImageUrl(pokeImgUrl)
+                .AddField("__**Estado**__", "Fallo al Legalizar.", true)
+                .AddField("__**Razón**__", "No puede ser legalizado.", true)
+                .AddField("__**Información**__:", $"El archivo **{download.SanitizedFileName}** no se puede legalizar.")
+                .Build();
+
+            await channel.SendMessageAsync(embed: embedNotLegal).ConfigureAwait(false);
+            return;
+        }
+
+        legal.RefreshChecksum();
+
         var embed = new EmbedBuilder()
-        .WithDescription($"Aquí está su PKM legalizado: **{download.SanitizedFileName}**!")
         .WithColor(Color.Green)
         .WithAuthor(new EmbedAuthorBuilder
         {
@@ -217,7 +197,9 @@ public static class AutoLegalityExtensionsDiscord
             IconUrl = "https://www.opvakantienaar.com/wp-content/themes/yootheme/cache/Yes-Sign-c182f662.png" // Replace with the URL of the success icon
         })
         .WithThumbnailUrl(pokeImgUrl) // Use the Pokémon image URL from pokeImgUrl
-        .AddField("Showdown Text", ReusableActions.GetFormattedShowdownText(legal))
+        .AddField("__**Estado**__", "Legalización exitosa.", true)
+        .AddField("__**Información**__:", $"Aquí está su PKM legalizado: **{download.SanitizedFileName}**!")
+        .AddField("__**Showdown Text**__:", ReusableActions.GetFormattedShowdownText(legal))
         .Build();
 
         await channel.SendMessageAsync(embed: embed).ConfigureAwait(false);

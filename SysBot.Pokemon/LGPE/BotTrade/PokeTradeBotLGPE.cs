@@ -272,18 +272,18 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
         var tradepartnersav = new SAV7b();
         var tradepartnersav2 = new SAV7b();
         var tpsarray = await SwitchConnection.ReadBytesAsync(TradePartnerData, 0x168, token);
-        tpsarray.CopyTo(tradepartnersav.Blocks.Status.Data, tradepartnersav.Blocks.Status.Offset);
+        tpsarray.CopyTo(tradepartnersav.Blocks.Status.Data);
         var tpsarray2 = await SwitchConnection.ReadBytesAsync(TradePartnerData2, 0x168, token);
-        tpsarray2.CopyTo(tradepartnersav2.Blocks.Status.Data, tradepartnersav2.Blocks.Status.Offset);
+        tpsarray2.CopyTo(tradepartnersav2.Blocks.Status.Data);
 
         if (tradepartnersav.OT != sav.OT)
         {
-            Log($"Found Link Trade Partner: {tradepartnersav.OT}, TID: {tradepartnersav.TID16}, SID: {tradepartnersav.SID16}, Game: {(GameVersion)tradepartnersav.Game}");
+            Log($"Found Link Trade Partner: {tradepartnersav.OT}, TID: {tradepartnersav.TID16}, SID: {tradepartnersav.SID16}, Game: {tradepartnersav.Version}");
             var modifiedPokemon = await SetPkmWithTradePartnerDetails(toSend, tradepartnersav, token);
             if (modifiedPokemon != null)
             {
                 poke.TradeData = modifiedPokemon; // Update the Pokémon to be traded with the modified version
-                poke.SendNotification(this, $"Entrenador encontrado: **{tradepartnersav.OT}**,\n\n▼\n Aqui esta tu Informacion\n **TID**: __{tradepartnersav.TID16}__\n **SID**: __{tradepartnersav.SID16}__\n **Juego**: __{(GameVersion)tradepartnersav.Game}__\n▲");
+                poke.SendNotification(this, $"Entrenador encontrado: **{tradepartnersav.OT}**,\n\n▼\n Aqui esta tu Informacion\n **TID**: __{tradepartnersav.TID16}__\n **SID**: __{tradepartnersav.SID16}__\n **Juego**: __{tradepartnersav.Version}__\n▲");
             }
         }
 
@@ -294,7 +294,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
             if (modifiedPokemon != null)
             {
                 poke.TradeData = modifiedPokemon; // Update the Pokémon to be traded with the modified version
-                poke.SendNotification(this, $"Entrenador encontrado: **{tradepartnersav2.OT}**,\n\n▼\n Aqui esta tu Informacion\n **TID**: __{tradepartnersav2.TID16}__\n **SID**: __{tradepartnersav2.SID16}__\n **Juego**: __{(GameVersion)tradepartnersav.Game}__\n▲");
+                poke.SendNotification(this, $"Entrenador encontrado: **{tradepartnersav2.OT}**,\n\n▼\n Aqui esta tu Informacion\n **TID**: __{tradepartnersav2.TID16}__\n **SID**: __{tradepartnersav2.SID16}__\n **Juego**: __{tradepartnersav.Version}__\n▲");
             }
         }
 
@@ -503,18 +503,18 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
         var tradepartnersav = new SAV7b();
         var tradepartnersav2 = new SAV7b();
         var tpsarray = await SwitchConnection.ReadBytesAsync(TradePartnerData, 0x168, token);
-        tpsarray.CopyTo(tradepartnersav.Blocks.Status.Data, tradepartnersav.Blocks.Status.Offset);
+        tpsarray.CopyTo(tradepartnersav.Blocks.Status.Data);
         var tpsarray2 = await SwitchConnection.ReadBytesAsync(TradePartnerData2, 0x168, token);
-        tpsarray2.CopyTo(tradepartnersav2.Blocks.Status.Data, tradepartnersav2.Blocks.Status.Offset);
+        tpsarray2.CopyTo(tradepartnersav2.Blocks.Status.Data);
         if (tradepartnersav.OT != sav.OT)
         {
-            Log($"Found Link Trade Parter: {tradepartnersav.OT}, TID: {tradepartnersav.DisplayTID}, SID: {tradepartnersav.DisplaySID},Game: {(GameVersion)tradepartnersav.Game}");
-            detail.SendNotification(this, $"Entrenador encontrado: **{tradepartnersav.OT}**.\n\n▼\n Aqui esta tu Informacion\n **TID**: __{tradepartnersav.DisplayTID}__\n **SID**: __{tradepartnersav.DisplaySID}__\n **Juego**: __{(GameVersion)tradepartnersav.Game}__\n▲");
+            Log($"Found Link Trade Parter: {tradepartnersav.OT}, TID: {tradepartnersav.DisplayTID}, SID: {tradepartnersav.DisplaySID},Game: {tradepartnersav.Version}");
+            detail.SendNotification(this, $"Entrenador encontrado: **{tradepartnersav.OT}**.\n\n▼\n Aqui esta tu Informacion\n **TID**: __{tradepartnersav.DisplayTID}__\n **SID**: __{tradepartnersav.DisplaySID}__\n **Juego**: __{tradepartnersav.Version}__\n▲");
         }
         if (tradepartnersav2.OT != sav.OT)
         {
             Log($"Found Link Trade Parter: {tradepartnersav2.OT}, TID: {tradepartnersav2.DisplayTID}, SID: {tradepartnersav2.DisplaySID}");
-            detail.SendNotification(this, $"Entrenador encontrado: **{tradepartnersav2.OT}**.\n\n▼\n Aqui esta tu Informacion\n **TID**: __{tradepartnersav2.DisplayTID}__\n **SID**: __{tradepartnersav2.DisplaySID}__\n **Juego**: __{(GameVersion)tradepartnersav.Game}__\n▲");
+            detail.SendNotification(this, $"Entrenador encontrado: **{tradepartnersav2.OT}**.\n\n▼\n Aqui esta tu Informacion\n **TID**: __{tradepartnersav2.DisplayTID}__\n **SID**: __{tradepartnersav2.DisplaySID}__\n **Juego**: __{tradepartnersav.Version}__\n▲");
         }
         foreach (var t in clonelist)
         {
@@ -689,7 +689,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
     {
         var cln = (PB7)toSend.Clone();
 
-        cln.OT_Name = tradePartnerSav.OT;
+        cln.OriginalTrainerName = tradePartnerSav.OT;
         cln.TID16 = tradePartnerSav.TID16;
         cln.SID16 = tradePartnerSav.SID16;
         cln.Language = tradePartnerSav.Language;

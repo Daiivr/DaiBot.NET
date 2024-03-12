@@ -2,6 +2,7 @@ using Discord;
 using Discord.WebSocket;
 using PKHeX.Core;
 using SysBot.Base;
+using SysBot.Pokemon.Helpers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -63,21 +64,21 @@ public static class ReusableActions
     public static async Task SendPKMAsShowdownSetAsync(this ISocketMessageChannel channel, PKM pkm, SocketUserMessage userMessage)
     {
         var txt = GetFormattedShowdownText(pkm);
-        var botMessage = await channel.SendMessageAsync(txt).ConfigureAwait(false); // Capture the bot's message
+        bool canGmax = pkm is PK8 pk8 && pk8.CanGigantamax;
+        var speciesImageUrl = AbstractTrade<PK9>.PokeImg(pkm, canGmax, false);
 
-        // Send a warning message
+        var embed = new EmbedBuilder()
+            .WithTitle("Pokémon Showdown Set")
+            .WithDescription(txt)
+            .WithColor(Color.Blue)
+            .WithThumbnailUrl(speciesImageUrl)
+            .Build();
+
+        var botMessage = await channel.SendMessageAsync(embed: embed).ConfigureAwait(false); // Send the embed
         var warningMessage = await channel.SendMessageAsync("<a:loading:1210133423050719283> Este mensaje se autodestruirá en 15 segundos. Por favor copie sus datos.").ConfigureAwait(false);
-
-        // Wait for 2 seconds
         await Task.Delay(2000).ConfigureAwait(false);
-
-        // Delete the user's message
         await userMessage.DeleteAsync().ConfigureAwait(false);
-
-        // Wait for another 13 seconds (total 15 seconds)
-        await Task.Delay(13000).ConfigureAwait(false);
-
-        // Delete the bot's messages
+        await Task.Delay(20000).ConfigureAwait(false);
         await botMessage.DeleteAsync().ConfigureAwait(false);
         await warningMessage.DeleteAsync().ConfigureAwait(false);
     }
@@ -101,7 +102,7 @@ public static class ReusableActions
             else newShowdown[index] = "Shiny: Star\r";
         }
 
-        newShowdown.InsertRange(1, new string[] { $"OT: {pkm.OT_Name}", $"TID: {pkm.DisplayTID}", $"SID: {pkm.DisplaySID}", $"OTGender: {(Gender)pkm.OT_Gender}", $"Language: {(LanguageID)pkm.Language}" });
+        newShowdown.InsertRange(1, new string[] { $"OT: {pkm.OriginalTrainerName}", $"TID: {pkm.DisplayTID}", $"SID: {pkm.DisplaySID}", $"OTGender: {(Gender)pkm.OriginalTrainerGender}", $"Language: {(LanguageID)pkm.Language}" });
         return Format.Code(string.Join("\n", newShowdown).TrimEnd());
     }
 

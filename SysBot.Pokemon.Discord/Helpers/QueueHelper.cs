@@ -26,14 +26,14 @@ public static class QueueHelper<T> where T : PKM, new()
     private const uint MaxTradeCode = 9999_9999;
 
     // A dictionary to hold batch trade file paths and their deletion status
-    private static readonly Dictionary<int, List<string>> batchTradeFiles = [];
-    private static readonly Dictionary<ulong, int> userBatchTradeMaxDetailId = [];
+    private static Dictionary<int, List<string>> batchTradeFiles = new Dictionary<int, List<string>>();
+    private static Dictionary<ulong, int> userBatchTradeMaxDetailId = new Dictionary<ulong, int>();
 
     public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, int formArgument = 0, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
     {
         if ((uint)code > MaxTradeCode)
         {
-            await context.Channel.SendMessageAsync("<a:warning:1206483664939126795> El codigo de tradeo debe ser un numero entre: 00000000-99999999!").ConfigureAwait(false);
+            await context.Channel.SendMessageAsync($"<a:warning:1206483664939126795> {context.User.Mention} El código de tradeo debe ser un numero entre: **00000000-99999999**!").ConfigureAwait(false);
             return;
         }
 
@@ -46,11 +46,11 @@ public static class QueueHelper<T> where T : PKM, new()
                 if (trade is PB7 && lgcode != null)
                 {
                     var (thefile, lgcodeembed) = CreateLGLinkCodeSpriteEmbed(lgcode);
-                    await trader.SendFileAsync(thefile, $"Tu codigo de tradeo sera: ", embed: lgcodeembed).ConfigureAwait(false);
+                    await trader.SendFileAsync(thefile, $"Tu código de tradeo sera: ", embed: lgcodeembed).ConfigureAwait(false);
                 }
                 else
                 {
-                    await trader.SendMessageAsync($"Tu codigo de tradeo sera: **{code:0000 0000}**").ConfigureAwait(false);
+                    await trader.SendMessageAsync($"Tu código de tradeo sera: **{code:0000 0000}**").ConfigureAwait(false);
                 }
             }
 
@@ -418,20 +418,9 @@ public static class QueueHelper<T> where T : PKM, new()
             }
         }
 
-        // Fetch the Pokémon's moves and their PP
-        ushort[] moves = new ushort[4];
-        pk.GetMoves(moves.AsSpan());
-
-        for (int i = 0; i < moves.Length; i++)
-        {
-            ushort moveId = moves[i];
-            if (moveId == 0) continue; // Skip if no move is assigned to this slot
-            string moveName = GameInfo.MoveDataSource.FirstOrDefault(m => m.Value == moveId)?.Text ?? "";
-        }
-
         string movesDisplay = string.Join("\n", moveNamesList);
         string abilityName = GameInfo.AbilityDataSource.FirstOrDefault(a => a.Value == pk.Ability)?.Text ?? "";
-        string natureName = GameInfo.NatureDataSource.FirstOrDefault(n => n.Value == pk.Nature)?.Text ?? "";
+        string natureName = GameInfo.NatureDataSource.FirstOrDefault(n => n.Value == (int)pk.Nature)?.Text ?? "";
         string teraTypeString;
         if (pk is PK9 pk9)
         {
@@ -567,7 +556,7 @@ public static class QueueHelper<T> where T : PKM, new()
                                      $"**Nivel**: {level}\n";
 
             // Add Tera Type information if the Pokémon is PK9 and the game version supports it
-            if (pk is PK9 pk9Instance && (pk.Version == (int)GameVersion.SL || pk.Version == (int)GameVersion.VL))
+            if (pk is PK9 pk9Instance && (pk.Version == GameVersion.SL || pk.Version == GameVersion.VL))
             {
                 var tera = pk9Instance.TeraType.ToString();
                 Dictionary<string, string> teraEmojis = new Dictionary<string, string>

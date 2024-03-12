@@ -583,9 +583,13 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
             var pkm = sav.GetLegal(template, out var result);
-
+            if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
+            {
+                if (pkm is ITechRecord tr)
+                    tr.SetRecordFlagsAll();
+            }
             // Check if the Pokémon is from "Legends: Arceus"
-            bool isLegendsArceus = pkm.Version == (int)GameVersion.PLA;
+            bool isLegendsArceus = pkm.Version == GameVersion.PLA;
 
             if (!isLegendsArceus && pkm.HeldItem == 0 && !pkm.IsEgg)
             {
@@ -802,7 +806,11 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             // Get the trainer information and generate the Pokémon
             var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
             var pkm = sav.GetLegal(template, out var result);
-
+            if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
+            {
+                if (pkm is ITechRecord tr)
+                    tr.SetRecordFlagsAll();
+            }
             // Perform legality analysis
             var la = new LegalityAnalysis(pkm);
             var spec = GameInfo.Strings.Species[template.Species];
@@ -1204,16 +1212,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             return;
         }
 
-        var settings = SysCord<T>.Runner.Hub.Config.Legality;
-        var defTrainer = new SimpleTrainerInfo()
-        {
-            OT = settings.GenerateOT,
-            TID16 = settings.GenerateTID16,
-            SID16 = settings.GenerateSID16,
-            Language = (int)settings.GenerateLanguage,
-        };
-
-        var att = await NetUtil.DownloadPKMAsync(attachment, defTrainer).ConfigureAwait(false);
+        var att = await NetUtil.DownloadPKMAsync(attachment).ConfigureAwait(false);
         var pk = GetRequest(att);
         if (pk == null)
         {
@@ -1274,8 +1273,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             var clone = (T)pk.Clone();
 
-            clone.HT_Name = pk.OT_Name;
-            clone.HT_Gender = pk.OT_Gender;
+            clone.HandlingTrainerName = pk.OriginalTrainerName;
+            clone.HandlingTrainerGender = pk.OriginalTrainerGender;
 
             if (clone is PK8 or PA8 or PB8 or PK9)
                 ((dynamic)clone).HT_Language = (byte)pk.Language;

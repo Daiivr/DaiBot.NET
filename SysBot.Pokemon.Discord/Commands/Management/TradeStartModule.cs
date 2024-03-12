@@ -135,7 +135,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                 .WithColor(embedColor)
                 .WithThumbnailUrl(embedImageUrl)
                 .WithAuthor(new EmbedAuthorBuilder()
-                    .WithName($"Procesando: {user.Username}'s {tradeTitle}")
+                    .WithName($"Procesando: {tradeTitle} de {user.Username}")
                     .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()))
                 .WithDescription($"# Tradeando ahora: {tradeTitle}")
                 .WithFooter($"Trade #{detail.ID}")
