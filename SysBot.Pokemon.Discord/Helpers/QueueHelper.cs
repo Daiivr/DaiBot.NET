@@ -57,7 +57,7 @@ public static class QueueHelper<T> where T : PKM, new()
             // Add to trade queue and get the result
             var result = await AddToTradeQueue(context, trade, code, trainer, sig, routine, type, trader, isBatchTrade, batchTradeNumber, totalBatchTrades, formArgument, isMysteryEgg, lgcode).ConfigureAwait(false);
             // Delete the user's join message for privacy
-            if (!context.IsPrivate)
+            if(!isBatchTrade && !context.IsPrivate)
                 await context.Message.DeleteAsync(RequestOptions.Default).ConfigureAwait(false);
         }
         catch (HttpException ex)

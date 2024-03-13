@@ -8,6 +8,7 @@ using SysBot.Pokemon.Helpers;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -864,6 +865,128 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
     }
 
+    [Command("batchtradezip")]
+    [Alias("btz")]
+    [Summary("Makes the bot trade multiple Pokémon from the provided .zip file, up to a maximum of 6 trades.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public async Task BatchTradeZipAsync()
+    {
+        // First, check if batch trades are allowed
+        if (!SysCord<T>.Runner.Config.Trade.TradeConfiguration.AllowBatchTrades)
+        {
+            await ReplyAsync($"<a:no:1206485104424128593> {Context.User.Mention} Los intercambios por lotes están actualmente deshabilitados.").ConfigureAwait(false);
+            return;
+        }
+
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
+
+            var queueEmbed = new EmbedBuilder
+            {
+                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif")
+                 .WithFooter(footer =>
+                 {
+                     footer.Text = $"{Context.User.Username} • {formattedTime}";
+                     footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
+                 });
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
+
+        var attachment = Context.Message.Attachments.FirstOrDefault();
+        if (attachment == default)
+        {
+            await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention} No se proporciona ningún archivo adjunto!").ConfigureAwait(false);
+            return;
+        }
+
+        if (!attachment.Filename.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention} Formato de archivo inválido. Proporcione un archivo `.zip.`").ConfigureAwait(false);
+            return;
+        }
+
+        var zipBytes = await new HttpClient().GetByteArrayAsync(attachment.Url);
+        using var zipStream = new MemoryStream(zipBytes);
+        using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
+
+        var entries = archive.Entries.ToList();
+        var maxTradesAllowed = 6; // for full team in the zip created
+
+        // Check if batch mode is allowed and if the number of trades exceeds the limit
+        if (maxTradesAllowed < 1 || entries.Count > maxTradesAllowed)
+        {
+            await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention} Sólo puedes procesar hasta {maxTradesAllowed} operaciones a la vez. Por favor, reduce el número de Pokémon en tu archivo `.zip`.").ConfigureAwait(false);
+
+            await Task.Delay(5000);
+            await Context.Message.DeleteAsync();
+            return;
+        }
+
+        var batchTradeCode = Info.GetRandomTradeCode();
+        int batchTradeNumber = 1;
+        _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
+
+        foreach (var entry in entries)
+        {
+            using var entryStream = entry.Open();
+            var pkBytes = await TradeModule<T>.ReadAllBytesAsync(entryStream).ConfigureAwait(false);
+            var pk = EntityFormat.GetFromBytes(pkBytes);
+
+            if (pk is T)
+            {
+                await ProcessSingleTradeAsync((T)pk, batchTradeCode, true, batchTradeNumber, entries.Count);
+                batchTradeNumber++;
+            }
+        }
+    }
+
+    private static async Task<byte[]> ReadAllBytesAsync(Stream stream)
+    {
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream).ConfigureAwait(false);
+        return memoryStream.ToArray();
+    }
+
+    private async Task ProcessSingleTradeAsync(T pk, int batchTradeCode, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades)
+    {
+        try
+        {
+            var la = new LegalityAnalysis(pk);
+            var spec = GameInfo.Strings.Species[pk.Species];
+
+            if (!la.Valid)
+            {
+                await ReplyAsync($"The {spec} in the provided file is not legal.").ConfigureAwait(false);
+                return;
+            }
+
+            pk.ResetPartyStats();
+
+            var code = Info.GetRandomTradeCode();
+            var lgcode = Info.GetRandomLGTradeCode();
+
+            // Add the trade to the queue
+            var sig = Context.User.GetFavor();
+            await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            LogUtil.LogSafe(ex, nameof(TradeModule<T>));
+        }
+    }
+
     [Command("listevents")]
     [Alias("le")]
     [Summary("Lists available event files, filtered by a specific letter or substring, and sends the list via DM.")]
@@ -1277,7 +1400,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             clone.HandlingTrainerGender = pk.OriginalTrainerGender;
 
             if (clone is PK8 or PA8 or PB8 or PK9)
-                ((dynamic)clone).HT_Language = (byte)pk.Language;
+                ((dynamic)clone).HandlingTrainerLanguage = (byte)pk.Language;
 
             clone.CurrentHandler = 1;
 
