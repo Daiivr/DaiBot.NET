@@ -21,38 +21,38 @@ public class DiscordSettings
     private const string Users = nameof(Users);
     private const string Servers = nameof(Servers);
 
-    public override string ToString() => "Discord Integration Settings";
+    public override string ToString() => "Configuración de integración de Discord";
 
     // Startup
 
-    [Category(Startup), Description("Bot login token.")]
+    [Category(Startup), Description("Token de inicio de sesión del bot.")]
     public string Token { get; set; } = string.Empty;
 
-    [Category(Startup), Description("Bot command prefix.")]
+    [Category(Startup), Description("Prefijo de comando del bot.")]
     public string CommandPrefix { get; set; } = "$";
 
-    [Category(Startup), Description("List of modules that will not be loaded when the bot is started (comma separated).")]
+    [Category(Startup), Description("Lista de módulos que no se cargarán cuando se inicie el bot (separados por comas).")]
     public string ModuleBlacklist { get; set; } = string.Empty;
 
-    [Category(Startup), Description("Toggle to handle commands asynchronously or synchronously.")]
+    [Category(Startup), Description("Alternar para manejar comandos de forma asincrónica o sincrónica.")]
     public bool AsyncCommands { get; set; }
 
-    [Category(Startup), Description("Custom Status for playing a game.")]
+    [Category(Startup), Description("Estado personalizado del bot.")]
     public string BotGameStatus { get; set; } = "SysBot.NET: Pokémon";
 
-    [Category(Startup), Description("Indicates the Discord presence status color only considering bots that are Trade-type.")]
+    [Category(Startup), Description("Indica el color del estado de presencia de Discord solo considerando los bots que son de tipo Trade.")]
     public bool BotColorStatusTradeOnly { get; set; } = true;
 
-    [Category(Operation), Description("Additional text to add to the beginning of the embed description.")]
+    [Category(Operation), Description("Texto adicional para agregar al comienzo del Embed.")]
     public string[] AdditionalEmbedText { get; set; } = Array.Empty<string>();
 
-    [Category(Operation), Description("Custom message the bot will reply with when a user says hello to it. Use string formatting to mention the user in the reply.")]
+    [Category(Operation), Description("Mensaje personalizado con el que el bot responderá cuando un usuario lo salude. Utilice formato de cadena para mencionar al usuario en la respuesta.")]
     public string HelloResponse { get; set; } = "Hi {0}!";
 
-    [Category(Operation), Description("Stream link.")]
+    [Category(Operation), Description("Enlace de transmisión.")]
     public string StreamLink { get; set; } = string.Empty;
 
-    [Category(Operation), Description("Icon option for the stream.")]
+    [Category(Operation), Description("Opción de icono para la transmisión.")]
     public StreamIconOption StreamIcon { get; set; } = StreamIconOption.Twitch;
 
     // URLs for the stream icons
@@ -64,70 +64,73 @@ public class DiscordSettings
             { StreamIconOption.Kick, "https://i.imgur.com/HH8AAJY.jpg" }
         };
 
-    [Category(Operation), Description("Donation link.")]
+    [Category(Operation), Description("Enlace de donación.")]
     public string DonationLink { get; set; } = string.Empty;
 
     // Whitelists
 
-    [Category(Roles), Description("Users with this role are allowed to enter the Trade queue.")]
+    [Category(Roles), Description("Los usuarios con este rol pueden ingresar a la cola de Trade.")]
     public RemoteControlAccessList RoleCanTrade { get; set; } = new() { AllowIfEmpty = false };
 
-    [Category(Roles), Description("Users with this role are allowed to enter the Seed Check/Special Request queue.")]
+    [Category(Roles), Description("Los usuarios con esta función pueden utilizar las funciones Trade Adicionales.")]
+    public RemoteControlAccessList RoleCanTradePlus { get; set; } = new() { AllowIfEmpty = false };
+
+    [Category(Roles), Description("Los usuarios con este rol pueden ingresar a la cola de verificación de semillas/solicitudes especiales.")]
     public RemoteControlAccessList RoleCanSeedCheckorSpecialRequest { get; set; } = new() { AllowIfEmpty = false };
 
-    [Category(Roles), Description("Users with this role are allowed to enter the Clone queue.")]
+    [Category(Roles), Description("Los usuarios con este rol pueden ingresar a la cola de clonación.")]
     public RemoteControlAccessList RoleCanClone { get; set; } = new() { AllowIfEmpty = false };
 
-    [Category(Roles), Description("Users with this role are allowed to enter the Dump queue.")]
+    [Category(Roles), Description("Los usuarios con esta función pueden ingresar a la cola de Dump.")]
     public RemoteControlAccessList RoleCanDump { get; set; } = new() { AllowIfEmpty = false };
 
-    [Category(Roles), Description("Users with this role are allowed to enter the FixOT queue.")]
+    [Category(Roles), Description("Los usuarios con este rol pueden ingresar a la cola Fix OT.")]
     public RemoteControlAccessList RoleCanFixOT { get; set; } = new() { AllowIfEmpty = false };
 
-    [Category(Roles), Description("Users with this role are allowed to remotely control the console (if running as Remote Control Bot.")]
+    [Category(Roles), Description("Los usuarios con este rol pueden controlar de forma remota la consola (si la ejecutan como Remote Control Bot.")]
     public RemoteControlAccessList RoleRemoteControl { get; set; } = new() { AllowIfEmpty = false };
 
-    [Category(Roles), Description("Users with this role are allowed to bypass command restrictions.")]
+    [Category(Roles), Description("Los usuarios con este rol pueden omitir las restricciones de comandos.")]
     public RemoteControlAccessList RoleSudo { get; set; } = new() { AllowIfEmpty = false };
 
     // Operation
 
-    [Category(Roles), Description("Users with this role are allowed to join the queue with a better position.")]
+    [Category(Roles), Description("Los usuarios con este rol pueden unirse a la cola con una mejor posición.")]
     public RemoteControlAccessList RoleFavored { get; set; } = new() { AllowIfEmpty = false };
 
-    [Category(Servers), Description("Servers with these IDs will not be able to use the bot, and it will leave the server.")]
+    [Category(Servers), Description("Los servidores con estos ID no podrán utilizar el bot abandonará el servidor.")]
     public RemoteControlAccessList ServerBlacklist { get; set; } = new() { AllowIfEmpty = false };
 
-    [Category(Users), Description("Users with these user IDs cannot use the bot.")]
+    [Category(Users), Description("Los usuarios con estos ID de usuario no pueden utilizar el bot.")]
     public RemoteControlAccessList UserBlacklist { get; set; } = new();
 
-    [Category(Channels), Description("Channels with these IDs are the only channels where the bot acknowledges commands.")]
+    [Category(Channels), Description("Los canales con estos ID son los únicos canales donde el bot reconoce comandos.")]
     public RemoteControlAccessList ChannelWhitelist { get; set; } = new();
 
-    [Category(Users), Description("Comma separated Discord user IDs that will have sudo access to the Bot Hub.")]
+    [Category(Users), Description("ID de usuario de Discord separados por comas que tendrán acceso sudo al Bot Hub.")]
     public RemoteControlAccessList GlobalSudoList { get; set; } = new();
 
-    [Category(Users), Description("Disabling this will remove global sudo support.")]
+    [Category(Users), Description("Deshabilitar esto eliminará la compatibilidad global con sudo.")]
     public bool AllowGlobalSudo { get; set; } = true;
 
-    [Category(Channels), Description("Channel IDs that will echo the log bot data.")]
+    [Category(Channels), Description("ID de canal que harán eco de los datos del bot de registro.")]
     public RemoteControlAccessList LoggingChannels { get; set; } = new();
 
-    [Category(Channels), Description("Logger channels that will log trade start messages.")]
+    [Category(Channels), Description("Canales de registro que registrarán mensajes de inicio de operaciones.")]
     public RemoteControlAccessList TradeStartingChannels { get; set; } = new();
 
-    [Category(Channels), Description("Echo channels that will log special messages.")]
+    [Category(Channels), Description("Canales de eco que registrarán mensajes especiales.")]
     public RemoteControlAccessList EchoChannels { get; set; } = new();
 
-    [Category(Operation), Description("Returns PKMs of Pokémon shown in the trade to the user.")]
+    [Category(Operation), Description("Devuelve al usuario los archivos PKM de Pokémon mostrados en el intercambio.")]
     public bool ReturnPKMs { get; set; } = true;
 
-    [Category(Operation), Description("Replies to users if they are not allowed to use a given command in the channel. When false, the bot will silently ignore them instead.")]
+    [Category(Operation), Description("Responde a los usuarios si no se les permite utilizar un comando determinado en el canal. Cuando es falso, el bot los ignorará silenciosamente.")]
     public bool ReplyCannotUseCommandInChannel { get; set; } = true;
 
-    [Category(Operation), Description("Bot listens to channel messages to reply with a ShowdownSet whenever a PKM file is attached (not with a command).")]
+    [Category(Operation), Description("Bot escucha los mensajes del canal para responder con un Showdown Set cada vez que se adjunta un archivo PKM (no con un comando).")]
     public bool ConvertPKMToShowdownSet { get; set; } = true;
 
-    [Category(Operation), Description("Bot can reply with a ShowdownSet in Any channel the bot can see, instead of only channels the bot has been whitelisted to run in. Only make this true if you want the bot to serve more utility in non-bot channels.")]
+    [Category(Operation), Description("El bot puede responder con un conjunto de showdown en cualquier canal que el bot pueda ver, en lugar de solo los canales en los que el bot ha sido incluido en la lista blanca para ejecutarse. Haga esto solo si desea que el bot tenga más utilidad en canales que no son de bot.")]
     public bool ConvertPKMReplyAnyChannel { get; set; }
 }

@@ -19,6 +19,7 @@ public class DiscordManager(DiscordSettings Config)
 
     public RemoteControlAccessList RolesClone => Config.RoleCanClone;
     public RemoteControlAccessList RolesTrade => Config.RoleCanTrade;
+    public RemoteControlAccessList RolesTradePlus => Config.RoleCanTradePlus;
     public RemoteControlAccessList RolesSeed => Config.RoleCanSeedCheckorSpecialRequest;
     public RemoteControlAccessList RolesDump => Config.RoleCanDump;
     public RemoteControlAccessList RolesFixOT => Config.RoleCanFixOT;
@@ -53,6 +54,7 @@ public class DiscordManager(DiscordSettings Config)
     {
         nameof(RolesClone) => RolesClone,
         nameof(RolesTrade) => RolesTrade,
+        nameof(RolesTradePlus) => RolesTradePlus,
         nameof(RolesSeed) => RolesSeed,
         nameof(RolesDump) => RolesDump,
         nameof(RolesFixOT) => RolesFixOT,

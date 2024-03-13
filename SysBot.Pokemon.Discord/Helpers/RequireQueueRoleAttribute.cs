@@ -34,7 +34,7 @@ public sealed class RequireQueueRoleAttribute(string RoleName) : PreconditionAtt
             return Task.FromResult(PreconditionResult.FromError("<a:no:1206485104424128593> Lo siento, actualmente no acepto solicitudes para entrar en la cola."));
 
         if (!mgr.GetHasRoleAccess(RoleName, roles.Select(z => z.Name)))
-            return Task.FromResult(PreconditionResult.FromError("<a:warning:1206483664939126795> No tienes el rol requerido para ejecutar este comando."));
+            return Task.FromResult(PreconditionResult.FromError($"<a:warning:1206483664939126795> {context.User.Mention} No tienes el rol requerido para ejecutar este comando."));
 
         return Task.FromResult(PreconditionResult.FromSuccess());
     }

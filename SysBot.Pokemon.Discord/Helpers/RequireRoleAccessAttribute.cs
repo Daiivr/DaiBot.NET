@@ -30,7 +30,7 @@ public sealed class RequireRoleAccessAttribute(string RoleName) : PreconditionAt
             return Task.FromResult(PreconditionResult.FromSuccess());
 
         if (!mgr.GetHasRoleAccess(RoleName, roles.Select(z => z.Name)))
-            return Task.FromResult(PreconditionResult.FromError("<a:no:1206485104424128593> No tienes el rol requerido para ejecutar este comando."));
+            return Task.FromResult(PreconditionResult.FromError($"<a:no:1206485104424128593> {context.User.Mention} No tienes el rol requerido para ejecutar este comando."));
 
         return Task.FromResult(PreconditionResult.FromSuccess());
     }
