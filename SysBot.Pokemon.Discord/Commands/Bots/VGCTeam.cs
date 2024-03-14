@@ -38,7 +38,7 @@ namespace SysBot.Pokemon.Discord
         }
 
         [Command("vgcteam")]
-        [Alias("vt", "Vt", "VGCTeam", "victoryroadteam")]
+        [Alias("vt", "Vt", "VGCTeam")]
         [Summary("Generates a random VGC team from VictoryRoad and sends it as files via DM.")]
         public async Task GenerateVGCTeamAsync([Remainder] string trainerName = "")
         {
@@ -52,8 +52,6 @@ namespace SysBot.Pokemon.Discord
                     await ReplyAsync($"<a:warning:1206483664939126795> No se encontró un pokepaste para el entrenador: {trainerName}");
                     return;
                 }
-
-                var format = 9; // Scarlet/Violet format
 
                 var namer = new GengarNamer();
                 var pokemonImages = new List<System.Drawing.Image>();
@@ -130,10 +128,6 @@ namespace SysBot.Pokemon.Discord
                     var titleMatch = titleRegex.Match(pokePasteHtml);
                     var title = titleMatch.Success ? HttpUtility.HtmlDecode(titleMatch.Groups[1].Value) : "Desconocido";
 
-                    var dateRegex = new Regex(@"<h1>.*?(\(\d{1,2} \w{3} \d{4}\))</h1>");
-                    var dateMatch = dateRegex.Match(pokePasteHtml);
-                    var date = dateMatch.Success ? HttpUtility.HtmlDecode(dateMatch.Groups[1].Value) : "Desconocido";
-
                     // Send the combined image file with an embed to the channel
                     var embedBuilder = new EmbedBuilder()
                         .WithColor(GetTypeColor())
@@ -149,8 +143,7 @@ namespace SysBot.Pokemon.Discord
                         .WithCurrentTimestamp()
                         .AddField("Conjunto de regulación", regulationSet)
                         .AddField("Jugador", player)
-                        .AddField("Título del campeonato", title)
-                        .AddField("Fecha", date);
+                        .AddField("Título", title);
 
                     var embed = embedBuilder.Build();
 
@@ -232,19 +225,118 @@ namespace SysBot.Pokemon.Discord
             return pokePasteData;
         }
 
-        private static List<string> ExtractPokePasteUrls(string html)
+        [Command("pokepaste")]
+        [Alias("pp", "Pokepaste", "PP")]
+        [Summary("Generates a team from a specified pokepaste URL and sends it as files via DM.")]
+        public async Task GenerateVGCTeamFromUrlAsync(string pokePasteUrl)
         {
-            var pokePasteUrls = new List<string>();
-
-            // Use regex to extract the pokepaste URLs from the HTML
-            var regex = new Regex(@"https://pokepast\.es/\w+");
-            var matches = regex.Matches(html);
-            foreach (Match match in matches)
+            var generatingMessage = await ReplyAsync($"<a:loading:1210133423050719283> {Context.User.Mention} Generating and sending your Pokepaste team. Please wait...");
+            try
             {
-                pokePasteUrls.Add(match.Value);
-            }
+                var showdownSets = await GetShowdownSetsFromPokePasteUrl(pokePasteUrl);
 
-            return pokePasteUrls;
+                if (showdownSets.Count == 0)
+                {
+                    await ReplyAsync($"<a1206483664939126795> {Context.User.Mention} No se encontraron conjuntos de enfrentamiento válidos en la URL de pokepaste: {pokePasteUrl}");
+                    return;
+                }
+
+                var namer = new GengarNamer();
+                var pokemonImages = new List<System.Drawing.Image>();
+
+                using var memoryStream = new MemoryStream();
+                using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+                {
+                    foreach (var set in showdownSets)
+                    {
+                        try
+                        {
+                            var template = AutoLegalityWrapper.GetTemplate(set);
+                            var sav = AutoLegalityWrapper.GetTrainerInfo<PK9>();
+                            var pkm = sav.GetLegal(template, out var result);
+
+                            if (pkm is not PK9 pk || !new LegalityAnalysis(pkm).Valid)
+                            {
+                                var reason = result == "Timeout" ? $"<a:warning:1206483664939126795> Ese conjunto {GameInfo.Strings.Species[template.Species]} tardó demasiado en generarse." :
+                                             result == "Failed" ? $"<a:warning:1206483664939126795> No he podido crear un {GameInfo.Strings.Species[template.Species]} a partir de ese conjunto." :
+                                             "Un error desconocido ocurrió.";
+
+                                await ReplyAsync($"<a:warning:1206483664939126795> Fallo al crear {GameInfo.Strings.Species[template.Species]}: {reason}");
+                                continue;
+                            }
+
+                            var speciesName = GameInfo.GetStrings("en").Species[set.Species];
+                            var fileName = namer.GetName(pk); // Use GengarNamer to generate the file name
+                            var entry = archive.CreateEntry($"{fileName}.{pk.Extension}");
+                            using var entryStream = entry.Open();
+                            await entryStream.WriteAsync(pk.Data.AsMemory(0, pk.Data.Length));
+
+                            string speciesImageUrl = AbstractTrade<PK9>.PokeImg(pk, false, false);
+                            var speciesImage = System.Drawing.Image.FromStream(await new HttpClient().GetStreamAsync(speciesImageUrl));
+                            pokemonImages.Add(speciesImage);
+                        }
+                        catch (Exception ex)
+                        {
+                            var speciesName = GameInfo.GetStrings("en").Species[set.Species];
+                            await ReplyAsync($"<a:warning:1206483664939126795> Se produjo un error durante el procesamiento de {speciesName}: {ex.Message}");
+                        }
+                    }
+                }
+
+                var combinedImage = CombineImages(pokemonImages);
+
+                memoryStream.Position = 0;
+
+                // Send the ZIP file to the user's DM
+                await Context.User.SendFileAsync(memoryStream, $"pokepasteteam.zip");
+
+                // Save the combined image as a file
+                combinedImage.Save("pokepasteteam.png");
+                using (var imageStream = new MemoryStream())
+                {
+                    combinedImage.Save(imageStream, System.Drawing.Imaging.ImageFormat.Png);
+                    imageStream.Position = 0;
+
+                    // Send the combined image file with an embed to the channel
+                    var embedBuilder = new EmbedBuilder()
+                        .WithColor(GetTypeColor())
+                        .WithAuthor(
+                            author =>
+                            {
+                                author
+                                    .WithName($"Equipo generado para {Context.User.Username}")
+                                    .WithIconUrl(Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl());
+                            })
+                        .WithImageUrl($"attachment://pokepasteteam.png")
+                        .WithFooter($"Equipo Legalizado Enviado al MD de {Context.User.Username}")
+                        .WithCurrentTimestamp();
+
+                    var embed = embedBuilder.Build();
+
+                    var embedMessage = await Context.Channel.SendFileAsync(imageStream, "pokepasteteam.png", embed: embed);
+
+                    // Clean up the messages after 10 seconds
+                    await Task.Delay(10000);
+                    await generatingMessage.DeleteAsync();
+                    if (Context.Message is IUserMessage userMessage)
+                        await userMessage.DeleteAsync().ConfigureAwait(false);
+                }
+
+                // Clean up the temporary image file
+                File.Delete("vgcteam.png");
+            }
+            catch (Exception ex)
+            {
+                await ReplyAsync($"<a:warning:1206483664939126795> Error al generar el equipo VGC: {ex.Message}");
+            }
+        }
+
+        private static async Task<List<ShowdownSet>> GetShowdownSetsFromPokePasteUrl(string pokePasteUrl)
+        {
+            var httpClient = new HttpClient();
+            var pokePasteHtml = await httpClient.GetStringAsync(pokePasteUrl);
+            var showdownSets = ParseShowdownSets(pokePasteHtml);
+            return showdownSets;
         }
 
         private static List<ShowdownSet> ParseShowdownSets(string pokePasteHtml)

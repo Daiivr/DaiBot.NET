@@ -476,7 +476,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             var context = new EntityContext();
             var eggEncounter = new EncounterEgg(speciesId, 0, 1, 9, GameVersion.SV, context);
             var pk = eggEncounter.ConvertToPKM(sav);
-            SetPerfectIVsAndShiny(pk);
+            TradeModule<T>.SetPerfectIVsAndShiny(pk);
 
             if (pk is not T pkT)
             {
@@ -498,7 +498,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     }
 
-    private void SetPerfectIVsAndShiny(PKM pk)
+    private static void SetPerfectIVsAndShiny(PKM pk)
     {
         // Set IVs to perfect
         pk.IVs = [31, 31, 31, 31, 31, 31];
@@ -522,7 +522,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Alias("t")]
     [Summary("Makes the bot trade you a Pokémon converted from the provided Showdown Set.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-    public async Task TradeAsync(int code, string content)
+    public async Task TradeAsync([Summary("Trade Code")] int code, [Summary("Showdown Set")][Remainder] string content)
     {
         var lgcode = Info.GetRandomLGTradeCode();
         // Check if the user is already in the queue
