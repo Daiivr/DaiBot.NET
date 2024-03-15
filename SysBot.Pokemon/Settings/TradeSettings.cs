@@ -107,6 +107,8 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         [Category(EmbedSettings), Description("Will show Move Type Icons next to moves in trade embed (Discord only).")]
         public bool MoveTypeEmojis { get; set; } = true;
 
+        [Category(EmbedSettings), Description("Will show Gender Icons in trade embed (Discord only).")]
+        public bool GenderEmojis { get; set; } = true;
     }
 
     [Category(VGCPastesConfig), TypeConverter(typeof(CategoryConverter<VGCPastesCategory>))]

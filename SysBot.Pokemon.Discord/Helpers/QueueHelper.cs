@@ -87,6 +87,7 @@ public static class QueueHelper<T> where T : PKM, new()
         var canAddMultiple = isBatchTrade || sig == RequestSignificance.Owner;
         var added = Info.AddToTradeQueue(trade, userID, canAddMultiple);
         bool useTypeEmojis = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MoveTypeEmojis;
+        bool useGenderIcons = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.GenderEmojis;
 
         if (added == QueueResultAdd.AlreadyInQueue)
         {
@@ -245,8 +246,12 @@ public static class QueueHelper<T> where T : PKM, new()
         }
         int level = pk.CurrentLevel;
         string speciesName = GameInfo.GetStrings(1).Species[pk.Species];
+        string shinySymbol = pk.ShinyXor == 0 ? "<:square:1134580807529398392> " : pk.IsShiny ? "<:shiny:1134580552926777385> " : string.Empty;
+        string genderSymbol = GameInfo.GenderSymbolASCII[pk.Gender];
+        string displayGender = genderSymbol == "M" ? (useGenderIcons ? "<:male:1218234107796918462>" : "(M)") :
+                               genderSymbol == "F" ? (useGenderIcons ? "<:female:1218234131046203503>" : "(F)") : "";
         string formName = ShowdownParsing.GetStringFromForm(pk.Form, strings, pk.Species, pk.Context);
-        string speciesAndForm = $"{speciesName}{(string.IsNullOrEmpty(formName) ? "" : $"-{formName}")}";
+        string speciesAndForm = $"**{shinySymbol}{speciesName}{(string.IsNullOrEmpty(formName) ? "" : $"-{formName}")} {displayGender}**";
         string heldItemName = strings.itemlist[pk.HeldItem];
         string ballName = strings.balllist[pk.Ball];
 
@@ -332,7 +337,6 @@ public static class QueueHelper<T> where T : PKM, new()
         // Check if the image URL is a local file path
         bool isLocalFile = File.Exists(embedImageUrl);
         string userName = user.Username;
-        var gender = pk.Gender == 0 ? "<:Males:1134568420843728917> " : pk.Gender == 1 ? "<:Females:1134568421787435069> " : "";
         string isPkmShiny = pk.IsShiny ? "✨" : "";
         // Build the embed with the author title image
         string authorName;
@@ -365,7 +369,7 @@ public static class QueueHelper<T> where T : PKM, new()
         if (!isMysteryEgg && !isCloneRequest && !isDumpRequest && !FixOT && !isSpecialRequest)
         {
             // Prepare the left side content
-            string leftSideContent = $"**Pokémon**: {gender}{speciesAndForm}\n" +
+            string leftSideContent = $"{speciesAndForm}\n" +
                                      $"**Entrenador**: {user.Mention}\n" +
                                      $"**Nivel**: {level}\n";
 
@@ -449,7 +453,7 @@ public static class QueueHelper<T> where T : PKM, new()
                 leftSideContent += "**EVs**: " + string.Join(" / ", evs) + "\n";
             }
             // Add the field to the embed
-            embedBuilder.AddField("**__Información__**", leftSideContent, inline: true);
+            embedBuilder.AddField($"__**Información**__", leftSideContent, inline: true);
             // Add a blank field to align with the 'Trainer' field on the left
             embedBuilder.AddField("\u200B", "\u200B", inline: true); // First empty field for spacing
             // 'Moves' as another inline field, ensuring it's aligned with the content on the left

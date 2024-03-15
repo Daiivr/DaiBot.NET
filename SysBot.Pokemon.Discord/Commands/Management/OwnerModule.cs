@@ -46,6 +46,36 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
         await ReplyAsync("<a:yes:1206485105674166292> Listo.").ConfigureAwait(false);
     }
 
+    [Command("syncChannels")]
+    [Alias("sch", "syncchannels")]
+    [Summary("Copies all channels from ChannelWhitelist to AnnouncementChannel.")]
+    [RequireOwner]
+    public async Task SyncChannels()
+    {
+        var whitelist = SysCordSettings.Settings.ChannelWhitelist.List;
+        var announcementList = SysCordSettings.Settings.AnnouncementChannels.List;
+
+        bool changesMade = false;
+
+        foreach (var channel in whitelist)
+        {
+            if (!announcementList.Any(x => x.ID == channel.ID))
+            {
+                announcementList.Add(channel);
+                changesMade = true;
+            }
+        }
+
+        if (changesMade)
+        {
+            await ReplyAsync("<a:yes:1206485105674166292> La lista blanca de canales se ha sincronizado correctamente con los canales de anuncios.").ConfigureAwait(false);
+        }
+        else
+        {
+            await ReplyAsync("<a:warning:1206483664939126795> Todos los canales de la lista blanca ya están en los canales de anuncios, no se realizaron cambios.").ConfigureAwait(false);
+        }
+    }
+
     [Command("removeChannel")]
     [Summary("Removes a channel from the list of channels that are accepting commands.")]
     [RequireOwner]
