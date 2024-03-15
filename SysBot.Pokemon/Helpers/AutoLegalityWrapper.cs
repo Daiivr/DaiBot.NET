@@ -167,10 +167,10 @@ public static class AutoLegalityWrapper
         var result = sav.GetLegalFromSet(set);
         res = result.Status switch
         {
-            LegalizationResult.Regenerated => "Regenerado",
-            LegalizationResult.Failed => "Fallido",
-            LegalizationResult.Timeout => "Se acabó el tiempo",
-            LegalizationResult.VersionMismatch => "Versión no Coincide",
+            LegalizationResult.Regenerated => "Regenerated",
+            LegalizationResult.Failed => "Failed",
+            LegalizationResult.Timeout => "Timeout",
+            LegalizationResult.VersionMismatch => "VersionMismatch",
             _ => "",
         };
         return result.Created;
