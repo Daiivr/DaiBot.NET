@@ -96,6 +96,13 @@ El usuario recibira en su MD una lista y se le dará el comando correcto con su 
 
 ![image](https://i.imgur.com/55Owr4v.png)
 
+# Utilización de los comandos del bot VGCPastes
+Esta guía está diseñada para ayudar a los usuarios a utilizar eficientemente los comandos introducidos en nuestras últimas versiónes. Con estos comandos, los usuarios pueden generar Equipos Aleatorios VGC directamente desde VGCPastes, mejorando su experiencia de combate Pokémon.
+# Generar un equipo aleatorio de VGC
+## Comando:
+- `.randomteam` o `.rt`
+## Descripción:
+Genera un equipo VGC aleatorio a partir de [VGCPastes spreadsheet](https://docs.google.com/spreadsheets/d/1axlwmzPA49rYkqXh7zHvAtSP-TKbM0ijGYBPRflLSWw/edit#gid=1837599752). El bot creará un embed con información detallada sobre el equipo, incluida la descripción del equipo, el nombre del entrenador, la fecha en que se compartió y una visualización condicional del código de alquiler, si está disponible.
 
 # Licencia
 Consulte el archivo `License.md` para obtener más información sobre las licencias.
