@@ -215,7 +215,7 @@ public static class QueueHelper<T> where T : PKM, new()
         ushort[] moves = new ushort[4];
         pk.GetMoves(moves.AsSpan());
         int[] movePPs = [pk.Move1_PP, pk.Move2_PP, pk.Move3_PP, pk.Move4_PP];
-        List<string> moveNames = new List<string> { "" };
+        List<string> moveNames = [""];
         for (int i = 0; i < moves.Length; i++)
         {
             if (moves[i] == 0) continue;
@@ -246,10 +246,14 @@ public static class QueueHelper<T> where T : PKM, new()
         }
         int level = pk.CurrentLevel;
         string speciesName = GameInfo.GetStrings(1).Species[pk.Species];
+        string alphaMarkSymbol = pk is IRibbonSetMark9 && (pk as IRibbonSetMark9).RibbonMarkAlpha ? "<:alpha_mark:1218324796534816848> " : string.Empty;
+        string mightyMarkSymbol = pk is IRibbonSetMark9 && (pk as IRibbonSetMark9).RibbonMarkMightiest ? "<:mightiestmark:1218062829803012198> " : string.Empty;
+        string alphaSymbol = pk is IAlpha alpha && alpha.IsAlpha ? "<:alpha:1218321310288183437> " : string.Empty;
         string shinySymbol = pk.ShinyXor == 0 ? "<:square:1134580807529398392> " : pk.IsShiny ? "<:shiny:1134580552926777385> " : string.Empty;
         string genderSymbol = GameInfo.GenderSymbolASCII[pk.Gender];
-        string displayGender = genderSymbol == "M" ? (useGenderIcons ? "<:male:1218234107796918462>" : "(M)") :
-                               genderSymbol == "F" ? (useGenderIcons ? "<:female:1218234131046203503>" : "(F)") : "";
+        string displayGender = (genderSymbol == "M" ? (useGenderIcons ? "<:male:1218234107796918462>" : "M") :
+                                genderSymbol == "F" ? (useGenderIcons ? "<:female:1218234131046203503>" : "F") : "") +
+                               alphaSymbol + mightyMarkSymbol + alphaMarkSymbol;
         string formName = ShowdownParsing.GetStringFromForm(pk.Form, strings, pk.Species, pk.Context);
         string speciesAndForm = $"**{shinySymbol}{speciesName}{(string.IsNullOrEmpty(formName) ? "" : $"-{formName}")} {displayGender}**";
         string heldItemName = strings.itemlist[pk.HeldItem];
