@@ -88,6 +88,9 @@ public static class QueueHelper<T> where T : PKM, new()
         var added = Info.AddToTradeQueue(trade, userID, canAddMultiple);
         bool useTypeEmojis = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MoveTypeEmojis;
         bool useGenderIcons = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.GenderEmojis;
+        bool showAlphaMark = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.AlphaMarkEmoji;
+        bool showMightiesMark = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MightiesMarkEmoji;
+        bool showMysteryGift = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MysteryGiftEmoji;
 
         if (added == QueueResultAdd.AlreadyInQueue)
         {
@@ -246,14 +249,15 @@ public static class QueueHelper<T> where T : PKM, new()
         }
         int level = pk.CurrentLevel;
         string speciesName = GameInfo.GetStrings(1).Species[pk.Species];
-        string alphaMarkSymbol = pk is IRibbonSetMark9 && (pk as IRibbonSetMark9).RibbonMarkAlpha ? "<:alpha_mark:1218324796534816848> " : string.Empty;
-        string mightyMarkSymbol = pk is IRibbonSetMark9 && (pk as IRibbonSetMark9).RibbonMarkMightiest ? "<:mightiestmark:1218062829803012198> " : string.Empty;
+        string alphaMarkSymbol = pk is IRibbonSetMark9 && (pk as IRibbonSetMark9).RibbonMarkAlpha && showAlphaMark ? "<:alpha_mark:1218324796534816848> " : string.Empty;
+        string mightyMarkSymbol = pk is IRibbonSetMark9 && (pk as IRibbonSetMark9).RibbonMarkMightiest && showMightiesMark ? "<:mightiestmark:1218062829803012198> " : string.Empty;
         string alphaSymbol = pk is IAlpha alpha && alpha.IsAlpha ? "<:alpha:1218321310288183437> " : string.Empty;
         string shinySymbol = pk.ShinyXor == 0 ? "<:square:1134580807529398392> " : pk.IsShiny ? "<:shiny:1134580552926777385> " : string.Empty;
         string genderSymbol = GameInfo.GenderSymbolASCII[pk.Gender];
-        string displayGender = (genderSymbol == "M" ? (useGenderIcons ? "<:male:1218234107796918462>" : "M") :
-                                genderSymbol == "F" ? (useGenderIcons ? "<:female:1218234131046203503>" : "F") : "") +
-                               alphaSymbol + mightyMarkSymbol + alphaMarkSymbol;
+        string mysteryGiftEmoji = pk.FatefulEncounter && showMysteryGift ? "<:Mystery_Gift:1218345449942028388> " : "";
+        string displayGender = (genderSymbol == "M" ? (useGenderIcons ? "<:male:1218234107796918462>" : "(M)") :
+               genderSymbol == "F" ? (useGenderIcons ? "<:female:1218234131046203503>" : "(F)") : "") +
+               alphaSymbol + mightyMarkSymbol + alphaMarkSymbol + mysteryGiftEmoji;
         string formName = ShowdownParsing.GetStringFromForm(pk.Form, strings, pk.Species, pk.Context);
         string speciesAndForm = $"**{shinySymbol}{speciesName}{(string.IsNullOrEmpty(formName) ? "" : $"-{formName}")} {displayGender}**";
         string heldItemName = strings.itemlist[pk.HeldItem];
