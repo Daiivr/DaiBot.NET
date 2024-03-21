@@ -15,7 +15,19 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Summary("Checks the user's position in the queue.")]
     public async Task GetTradePositionAsync()
     {
-        var msg = Context.User.Mention + " - " + Info.GetPositionString(Context.User.Id);
+        var userID = Context.User.Id;
+        var tradeEntry = Info.GetDetail(userID);
+
+        string msg;
+        if (tradeEntry != null)
+        {
+            var uniqueTradeID = tradeEntry.UniqueTradeID;
+            msg = Context.User.Mention + " - " + Info.GetPositionString(userID, uniqueTradeID);
+        }
+        else
+        {
+            msg = Context.User.Mention + " - Actualmente no estás en la cola.";
+        }
 
         // Send the reply and capture the response message
         var response = await ReplyAsync(msg).ConfigureAwait(false);
@@ -157,18 +169,42 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     private static string ClearTrade(ulong userID)
     {
-        var result = Info.ClearTrade(userID);
-        return GetClearTradeMessage(result);
-    }
+        var userEntries = Info.GetIsUserQueued(entry => entry.UserID == userID);
 
-    private static string GetClearTradeMessage(QueueResultRemove result)
-    {
-        return result switch
+        if (userEntries.Count == 0)
+            return "Sorry, you are not currently in the queue.";
+
+        bool removedAll = true;
+        bool currentlyProcessing = false;
+        bool removedPending = false;
+
+        foreach (var entry in userEntries)
         {
-            QueueResultRemove.CurrentlyProcessing => "<a:warning:1206483664939126795> Parece que estás siendo procesado actualmente! No se te eliminó de la lista.",
-            QueueResultRemove.CurrentlyProcessingRemoved => "<a:warning:1206483664939126795> Parece que estás siendo procesado actualmente!",
-            QueueResultRemove.Removed => "<a:yes:1206485105674166292> Te he eliminado de la lista.",
-            _ => "<a:warning:1206483664939126795> Lo sentimos, actualmente no estás en la lista.",
-        };
+            if (entry.Trade.IsProcessing)
+            {
+                currentlyProcessing = true;
+                if (!Info.Hub.Config.Queues.CanDequeueIfProcessing)
+                {
+                    removedAll = false;
+                    continue;
+                }
+            }
+            else
+            {
+                Info.Remove(entry);
+                removedPending = true;
+            }
+        }
+
+        if (!removedAll && currentlyProcessing && !removedPending)
+            return "<a:warning:1206483664939126795> Parece que estás siendo procesado actualmente! No se te eliminó de la lista.";
+
+        if (currentlyProcessing && removedPending)
+            return "<a:warning:1206483664939126795> Parece que tiene operaciones en proceso. Se han eliminado otras operaciones pendientes de la cola.";
+
+        if (removedPending)
+            return "<a:yes:1206485105674166292> Te he eliminado de la lista.";
+
+        return "<a:warning:1206483664939126795> Lo sentimos, actualmente no estás en la lista.";
     }
 }

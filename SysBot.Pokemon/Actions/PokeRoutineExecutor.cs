@@ -8,7 +8,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using static SysBot.Base.SwitchButton;
 
+
 namespace SysBot.Pokemon;
+
 
 public abstract class PokeRoutineExecutor<T>(IConsoleBotManaged<IConsoleConnection, IConsoleConnectionAsync> Config)
     : PokeRoutineExecutorBase(Config)

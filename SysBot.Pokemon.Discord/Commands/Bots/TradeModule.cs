@@ -976,7 +976,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             if (!la.Valid)
             {
-                await ReplyAsync($"The {spec} in the provided file is not legal.").ConfigureAwait(false);
+                await ReplyAsync($"<a:warning:1206483664939126795> el {spec} en el archivo proporcionado no es legal.").ConfigureAwait(false);
                 return;
             }
 
@@ -1368,10 +1368,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     private async Task AddTradeToQueueAsync(int code, string trainerName, T pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, int formArgument = 0, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
     {
-        if (lgcode == null)
-        {
-            lgcode = GenerateRandomPictocodes(3);
-        }
+        lgcode ??= TradeModule<T>.GenerateRandomPictocodes(3);
         if (!pk.CanBeTraded())
         {
             var errorMessage = $"<a:no:1206485104424128593> {usr.Mention} revisa el conjunto enviado, algun dato esta bloqueando el intercambio.\n\n```📝Soluciones:\n• Revisa detenidamente cada detalle del conjunto y vuelve a intentarlo!```";
@@ -1397,25 +1394,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
         var homeLegalityCfg = Info.Hub.Config.Trade.HomeLegalitySettings;
         var la = new LegalityAnalysis(pk);
-
-        // handle past gen file requests
-        // thanks manu https://github.com/Manu098vm/SysBot.NET/commit/d8c4b65b94f0300096704390cce998940413cc0d
-        if (!la.Valid && la.Results.Any(m => m.Identifier is CheckIdentifier.Memory))
-        {
-            var clone = (T)pk.Clone();
-
-            clone.HandlingTrainerName = pk.OriginalTrainerName;
-            clone.HandlingTrainerGender = pk.OriginalTrainerGender;
-
-            if (clone is PK8 or PA8 or PB8 or PK9)
-                ((dynamic)clone).HandlingTrainerLanguage = (byte)pk.Language;
-
-            clone.CurrentHandler = 1;
-
-            la = new LegalityAnalysis(clone);
-
-            if (la.Valid) pk = clone;
-        }
 
         if (!la.Valid)
         {
@@ -1494,12 +1472,31 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             return;
         }
 
+        // handle past gen file requests
+        // thanks manu https://github.com/Manu098vm/SysBot.NET/commit/d8c4b65b94f0300096704390cce998940413cc0d
+        if (!la.Valid && la.Results.Any(m => m.Identifier is CheckIdentifier.Memory))
+        {
+            var clone = (T)pk.Clone();
+
+            clone.HandlingTrainerName = pk.OriginalTrainerName;
+            clone.HandlingTrainerGender = pk.OriginalTrainerGender;
+
+            if (clone is PK8 or PA8 or PB8 or PK9)
+                ((dynamic)clone).HandlingTrainerLanguage = (byte)pk.Language;
+
+            clone.CurrentHandler = 1;
+
+            la = new LegalityAnalysis(clone);
+
+            if (la.Valid) pk = clone;
+        }
+
         await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, PokeTradeType.Specific, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, formArgument, isMysteryEgg, lgcode).ConfigureAwait(false);
     }
-    private List<Pictocodes> GenerateRandomPictocodes(int count)
+    private static List<Pictocodes> GenerateRandomPictocodes(int count)
     {
-        Random rnd = new Random();
-        List<Pictocodes> randomPictocodes = new List<Pictocodes>();
+        Random rnd = new();
+        List<Pictocodes> randomPictocodes = [];
         Array pictocodeValues = Enum.GetValues(typeof(Pictocodes));
 
         for (int i = 0; i < count; i++)

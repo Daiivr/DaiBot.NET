@@ -26,8 +26,8 @@ public static class QueueHelper<T> where T : PKM, new()
     private const uint MaxTradeCode = 9999_9999;
 
     // A dictionary to hold batch trade file paths and their deletion status
-    private static Dictionary<int, List<string>> batchTradeFiles = new Dictionary<int, List<string>>();
-    private static Dictionary<ulong, int> userBatchTradeMaxDetailId = new Dictionary<ulong, int>();
+    private static Dictionary<int, List<string>> batchTradeFiles = [];
+    private static Dictionary<ulong, int> userBatchTradeMaxDetailId = [];
 
     public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, int formArgument = 0, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
     {
@@ -79,25 +79,24 @@ public static class QueueHelper<T> where T : PKM, new()
 
         var trainer = new PokeTradeTrainerInfo(trainerName, userID);
         var notifier = new DiscordTradeNotifier<T>(pk, trainer, code, trader, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode);
-        var detail = new PokeTradeDetail<T>(pk, trainer, notifier, t, code, sig == RequestSignificance.Favored, lgcode, batchTradeNumber, totalBatchTrades, isMysteryEgg);
-        var trade = new TradeEntry<T>(detail, userID, type, name);
+        var uniqueTradeID = GenerateUniqueTradeID();
+        var detail = new PokeTradeDetail<T>(pk, trainer, notifier, t, code, sig == RequestSignificance.Favored, lgcode, batchTradeNumber, totalBatchTrades, isMysteryEgg, uniqueTradeID);
+        var trade = new TradeEntry<T>(detail, userID, type, name, uniqueTradeID);
         var strings = GameInfo.GetStrings(1);
         var hub = SysCord<T>.Runner.Hub;
         var Info = hub.Queues.Info;
-        var canAddMultiple = isBatchTrade || sig == RequestSignificance.Owner;
+        var canAddMultiple = isBatchTrade || sig == RequestSignificance.None;
         var added = Info.AddToTradeQueue(trade, userID, canAddMultiple);
         bool useTypeEmojis = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MoveTypeEmojis;
-        bool useGenderIcons = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.GenderEmojis;
-        bool showAlphaMark = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.AlphaMarkEmoji;
-        bool showMightiesMark = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MightiesMarkEmoji;
-        bool showMysteryGift = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MysteryGiftEmoji;
+        string maleEmojiString = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MaleEmoji.EmojiString;
+        string femaleEmojiString = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.FemaleEmoji.EmojiString;
 
         if (added == QueueResultAdd.AlreadyInQueue)
         {
             return new TradeQueueResult(false);
         }
 
-        var position = Info.CheckPosition(userID, type);
+        var position = Info.CheckPosition(userID, uniqueTradeID, type);
         var botct = Info.Hub.Bots.Count;
         var etaMessage = "";
         if (position.Position > botct)
@@ -189,27 +188,12 @@ public static class QueueHelper<T> where T : PKM, new()
             }
         }
 
-        var typeEmojis = new Dictionary<MoveType, string>
-        {
-            [MoveType.Bug] = "<:move_bug:1135381533750984794>",
-            [MoveType.Fire] = "<:move_fire:1135381665028522025>",
-            [MoveType.Flying] = "<:move_flying:1135381678429315262>",
-            [MoveType.Ground] = "<:move_ground:1135381748360954027>",
-            [MoveType.Water] = "<:move_water:1135381853675716728>",
-            [MoveType.Grass] = "<:move_grass:1135381703796469780>",
-            [MoveType.Ice] = "<:move_ice:1135381764223799356>",
-            [MoveType.Rock] = "<:move_rock:1135381815889252432>",
-            [MoveType.Ghost] = "<:move_ghost:1135381691465203733>",
-            [MoveType.Steel] = "<:move_steel:1135381836823011408>",
-            [MoveType.Fighting] = "<:move_fighting:1135381642878398464>",
-            [MoveType.Electric] = "<:move_electric:1135381611748270211>",
-            [MoveType.Dragon] = "<:move_dragon:1135381595935752375>",
-            [MoveType.Psychic] = "<:move_psychic:1135381805290229770>",
-            [MoveType.Dark] = "<:move_dark:1135381573588496414>",
-            [MoveType.Normal] = "<:move_normal:1135381779247804447>",
-            [MoveType.Poison] = "<:move_poison:1135381791788765255>",
-            [MoveType.Fairy] = "<:move_fairy:1135381627053297704>",
-        };
+        var typeEmojis = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.CustomTypeEmojis
+                             .Where(e => !string.IsNullOrEmpty(e.EmojiName) && !string.IsNullOrEmpty(e.ID))
+                             .ToDictionary(
+                                 e => e.MoveType,
+                                 e => $"<:{e.EmojiName}:{e.ID}>"
+                             );
 
         // Format IVs for display
         int[] ivs = pk.IVs;
@@ -217,8 +201,8 @@ public static class QueueHelper<T> where T : PKM, new()
 
         ushort[] moves = new ushort[4];
         pk.GetMoves(moves.AsSpan());
-        int[] movePPs = [pk.Move1_PP, pk.Move2_PP, pk.Move3_PP, pk.Move4_PP];
-        List<string> moveNames = [""];
+        List<int> movePPs = [pk.Move1_PP, pk.Move2_PP, pk.Move3_PP, pk.Move4_PP];
+        List<string> moveNames = [];
         for (int i = 0; i < moves.Length; i++)
         {
             if (moves[i] == 0) continue;
@@ -226,12 +210,11 @@ public static class QueueHelper<T> where T : PKM, new()
             byte moveTypeId = MoveInfo.GetType(moves[i], default);
             MoveType moveType = (MoveType)moveTypeId;
             string formattedMove = $"{moveName} ({movePPs[i]}pp)";
-            if (useTypeEmojis)
+            if (useTypeEmojis && typeEmojis.TryGetValue(moveType, out var moveEmoji))
             {
-                string typeEmoji = typeEmojis.TryGetValue(moveType, out var moveEmoji) ? moveEmoji : string.Empty;
-                formattedMove = $"{typeEmoji} {formattedMove}";
+                formattedMove = $"{moveEmoji} {formattedMove}";
             }
-            moveNames.Add($"- {formattedMove}");
+            moveNames.Add($"- {formattedMove}"); // Adding a zero-width space for formatting purposes if needed
         }
 
 
@@ -249,15 +232,24 @@ public static class QueueHelper<T> where T : PKM, new()
         }
         int level = pk.CurrentLevel;
         string speciesName = GameInfo.GetStrings(1).Species[pk.Species];
-        string alphaMarkSymbol = pk is IRibbonSetMark9 && (pk as IRibbonSetMark9).RibbonMarkAlpha && showAlphaMark ? "<:alpha_mark:1218324796534816848> " : string.Empty;
-        string mightyMarkSymbol = pk is IRibbonSetMark9 && (pk as IRibbonSetMark9).RibbonMarkMightiest && showMightiesMark ? "<:mightiestmark:1218062829803012198> " : string.Empty;
-        string alphaSymbol = pk is IAlpha alpha && alpha.IsAlpha ? "<:alpha:1218321310288183437> " : string.Empty;
+        string alphaMarkSymbol = string.Empty;
+        string mightyMarkSymbol = string.Empty;
+        if (pk is IRibbonSetMark9 ribbonSetMark)
+        {
+            alphaMarkSymbol = ribbonSetMark.RibbonMarkAlpha ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.AlphaMarkEmoji.EmojiString : string.Empty;
+            mightyMarkSymbol = ribbonSetMark.RibbonMarkMightiest ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MightiestMarkEmoji.EmojiString : string.Empty;
+        }
+        string alphaSymbol = (pk is IAlpha alpha && alpha.IsAlpha) ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.AlphaPLAEmoji.EmojiString : string.Empty;
         string shinySymbol = pk.ShinyXor == 0 ? "<:square:1134580807529398392> " : pk.IsShiny ? "<:shiny:1134580552926777385> " : string.Empty;
         string genderSymbol = GameInfo.GenderSymbolASCII[pk.Gender];
-        string mysteryGiftEmoji = pk.FatefulEncounter && showMysteryGift ? "<:Mystery_Gift:1218345449942028388> " : "";
-        string displayGender = (genderSymbol == "M" ? (useGenderIcons ? "<:male:1218234107796918462>" : "(M)") :
-               genderSymbol == "F" ? (useGenderIcons ? "<:female:1218234131046203503>" : "(F)") : "") +
-               alphaSymbol + mightyMarkSymbol + alphaMarkSymbol + mysteryGiftEmoji;
+        string displayGender = genderSymbol switch
+        {
+            "M" => !string.IsNullOrEmpty(maleEmojiString) ? maleEmojiString : "(M) ",
+            "F" => !string.IsNullOrEmpty(femaleEmojiString) ? femaleEmojiString : "(F) ",
+            _ => ""
+        };
+        string mysteryGiftEmoji = pk.FatefulEncounter ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MysteryGiftEmoji.EmojiString : "";
+        displayGender += alphaSymbol + mightyMarkSymbol + alphaMarkSymbol + mysteryGiftEmoji;
         string formName = ShowdownParsing.GetStringFromForm(pk.Form, strings, pk.Species, pk.Context);
         string speciesAndForm = $"**{shinySymbol}{speciesName}{(string.IsNullOrEmpty(formName) ? "" : $"-{formName}")} {displayGender}**";
         string heldItemName = strings.itemlist[pk.HeldItem];
@@ -535,6 +527,14 @@ public static class QueueHelper<T> where T : PKM, new()
         return new TradeQueueResult(true);
     }
 
+    private static int GenerateUniqueTradeID()
+    {
+        long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        int randomValue = new Random().Next(1000);
+        int uniqueTradeID = (int)(timestamp % int.MaxValue) * 1000 + randomValue;
+        return uniqueTradeID;
+    }
+
     private static string GetImageFolderPath()
     {
         // Get the base directory where the executable is located
@@ -760,7 +760,7 @@ public static class QueueHelper<T> where T : PKM, new()
             // If this is part of a batch trade, add the file path to the dictionary
             if (!batchTradeFiles.ContainsKey(batchTradeId))
             {
-                batchTradeFiles[batchTradeId] = new List<string>();
+                batchTradeFiles[batchTradeId] = [];
             }
 
             batchTradeFiles[batchTradeId].Add(filePath);
@@ -922,7 +922,7 @@ public static class QueueHelper<T> where T : PKM, new()
     public static (string, Embed) CreateLGLinkCodeSpriteEmbed(List<Pictocodes> lgcode)
     {
         int codecount = 0;
-        List<System.Drawing.Image> spritearray = new();
+        List<System.Drawing.Image> spritearray = [];
         foreach (Pictocodes cd in lgcode)
         {
 
