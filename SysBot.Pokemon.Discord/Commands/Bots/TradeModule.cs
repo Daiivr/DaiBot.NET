@@ -23,6 +23,10 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 {
     private static TradeQueueInfo<T> Info => SysCord<T>.Runner.Hub.Queues.Info;
 
+    private static readonly char[] separator = [' '];
+    private static readonly char[] separatorArray = [' '];
+    private static readonly char[] separatorArray0 = [' '];
+
     [Command("listguilds")]
     [Alias("lg", "servers", "listservers")]
     [Summary("Lists all guilds the bot is part of.")]
@@ -85,7 +89,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         var newServerAccess = new RemoteControlAccess { ID = serverId, Name = server.Name, Comment = "Servidor en lista negra" };
 
-        settings.ServerBlacklist.AddIfNew(new[] { newServerAccess });
+        settings.ServerBlacklist.AddIfNew([newServerAccess]);
 
         await server.LeaveAsync();
         await ReplyAsync($"<a:yes:1206485105674166292> Deje el servidor '{server.Name}' y lo agregue a la lista negra.");
@@ -995,6 +999,247 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
     }
 
+    [Command("specialrequestpokemon")]
+    [Alias("srp")]
+    [Summary("Lists available wondercard events from the specified generation or game and sends the list via DM.")]
+    public async Task ListSpecialEventsAsync(string generationOrGame, [Remainder] string args = "")
+    {
+        const int itemsPerPage = 25; // discord limit
+        var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
+
+        int page = 1;
+        var parts = args.Split(separatorArray0, StringSplitOptions.RemoveEmptyEntries);
+
+        var pagePart = parts.FirstOrDefault(p => p.StartsWith("page", StringComparison.OrdinalIgnoreCase));
+        if (pagePart != null)
+        {
+            if (int.TryParse(pagePart.AsSpan(4), out int pageNumber))
+            {
+                page = pageNumber;
+            }
+        }
+        else if (parts.Length > 0 && int.TryParse(parts.Last(), out int parsedPage))
+        {
+            page = parsedPage;
+        }
+
+        MysteryGift[] eventData;
+
+        switch (generationOrGame.ToLowerInvariant())
+        {
+            case "3":
+            case "gen3":
+                eventData = EncounterEvent.MGDB_G3;
+                break;
+            case "4":
+            case "gen4":
+                eventData = EncounterEvent.MGDB_G4;
+                break;
+            case "5":
+            case "gen5":
+                eventData = EncounterEvent.MGDB_G5;
+                break;
+            case "6":
+            case "gen6":
+                eventData = EncounterEvent.MGDB_G6;
+                break;
+            case "7":
+            case "gen7":
+                eventData = EncounterEvent.MGDB_G7;
+                break;
+            case "gg":
+            case "lgpe":
+                eventData = EncounterEvent.MGDB_G7GG;
+                break;
+            case "swsh":
+                eventData = EncounterEvent.MGDB_G8;
+                break;
+            case "pla":
+            case "la":
+                eventData = EncounterEvent.MGDB_G8A;
+                break;
+            case "bdsp":
+                eventData = EncounterEvent.MGDB_G8B;
+                break;
+            case "9":
+            case "gen9":
+                eventData = EncounterEvent.MGDB_G9;
+                break;
+            default:
+                await ReplyAsync($"<a:warning:1206483664939126795> Generación o juego no válido: {generationOrGame}");
+                return;
+        }
+
+        // get and filter event data
+        var allEvents = eventData
+            .Where(gift => gift.IsEntity && !gift.IsItem)
+            .Select(gift =>
+            {
+                string speciesName = GameInfo.Strings.Species[gift.Species];
+                string levelInfo = $"(Lv. {gift.Level})";
+                string formName = ShowdownParsing.GetStringFromForm(gift.Form, GameInfo.Strings, gift.Species, gift.Context);
+                formName = !string.IsNullOrEmpty(formName) ? $"-{formName}" : formName;
+                return new
+                {
+                    CardNumber = gift.CardID,
+                    EventInfo = $"{gift.CardHeader} - {speciesName}{formName} {levelInfo}"
+                };
+            })
+            .ToList();
+
+        var groupedEvents = allEvents
+            .Select((evt, index) => new { Index = index + 1, evt.CardNumber, evt.EventInfo })
+            .ToList();
+
+        IUserMessage replyMessage;
+
+        if (groupedEvents.Count == 0)
+        {
+            replyMessage = await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention} No se encontraron eventos para: {generationOrGame}.");
+        }
+        else
+        {
+            var pageCount = (int)Math.Ceiling(groupedEvents.Count / (double)itemsPerPage);
+            page = Math.Clamp(page, 1, pageCount); // make sure page number is in range
+
+            var pageItems = groupedEvents.Skip((page - 1) * itemsPerPage).Take(itemsPerPage);
+
+            var embed = new EmbedBuilder()
+                .WithTitle($"Available Events - {generationOrGame.ToUpperInvariant()}")
+                .WithDescription($"Page {page} of {pageCount}")
+                .WithColor(Color.Blue);
+
+            foreach (var item in pageItems)
+            {
+                embed.AddField($"{item.Index}. {item.EventInfo}", $"Usa `{botPrefix}srp {generationOrGame} {item.Index}` en el canal correspondiente para solicitar este evento.");
+            }
+
+            if (Context.User is IUser user)
+            {
+                try
+                {
+                    var dmChannel = await user.CreateDMChannelAsync();
+                    await dmChannel.SendMessageAsync(embed: embed.Build());
+                    replyMessage = await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention}, Te envié un DM con la lista de eventos.");
+                }
+                catch (HttpException ex) when (ex.HttpCode == HttpStatusCode.Forbidden)
+                {
+                    replyMessage = await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, No puedo enviarte un DM. Por favor verifique su **Configuración de privacidad del servidor**.");
+                }
+            }
+            else
+            {
+                replyMessage = await ReplyAsync("<a:warning:1206483664939126795> **Error**: No se puede enviar un DM. Por favor verifique su **Configuración de Privacidad del Servidor**.");
+            }
+        }
+
+        await Task.Delay(10_000);
+        if (Context.Message is IUserMessage userMessage)
+        {
+            await userMessage.DeleteAsync().ConfigureAwait(false);
+        }
+        await replyMessage.DeleteAsync().ConfigureAwait(false);
+    }
+
+    [Command("specialrequestpokemon")]
+    [Alias("srp")]
+    [Summary("Downloads wondercard event attachments from the specified generation and adds to trade queue.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public async Task SpecialEventRequestAsync(string generationOrGame, int index)
+    {
+        try
+        {
+            MysteryGift[] eventData;
+
+            switch (generationOrGame.ToLowerInvariant())
+            {
+                case "3":
+                case "gen3":
+                    eventData = EncounterEvent.MGDB_G3;
+                    break;
+                case "4":
+                case "gen4":
+                    eventData = EncounterEvent.MGDB_G4;
+                    break;
+                case "5":
+                case "gen5":
+                    eventData = EncounterEvent.MGDB_G5;
+                    break;
+                case "6":
+                case "gen6":
+                    eventData = EncounterEvent.MGDB_G6;
+                    break;
+                case "7":
+                case "gen7":
+                    eventData = EncounterEvent.MGDB_G7;
+                    break;
+                case "gg":
+                case "lgpe":
+                    eventData = EncounterEvent.MGDB_G7GG;
+                    break;
+                case "swsh":
+                    eventData = EncounterEvent.MGDB_G8;
+                    break;
+                case "pla":
+                case "la":
+                    eventData = EncounterEvent.MGDB_G8A;
+                    break;
+                case "bdsp":
+                    eventData = EncounterEvent.MGDB_G8B;
+                    break;
+                case "9":
+                case "gen9":
+                    eventData = EncounterEvent.MGDB_G9;
+                    break;
+                default:
+                    await ReplyAsync($"<a:warning:1206483664939126795> Generación o juego no válido: {generationOrGame}");
+                    return;
+            }
+
+            var entityEvents = eventData
+                .Where(gift => gift.IsEntity && !gift.IsItem)
+                .ToArray();
+
+            if (index < 1 || index > entityEvents.Length)
+            {
+                await ReplyAsync($"<a:warning:1206483664939126795> Índice de eventos no válido. Utilice un número de evento válido del comando `{SysCord<T>.Runner.Config.Discord.CommandPrefix}srp {generationOrGame}`");
+                return;
+            }
+
+            var selectedEvent = entityEvents[index - 1];
+
+            var download = new Download<PKM>
+            {
+                Data = selectedEvent.ConvertToPKM(new SimpleTrainerInfo(), EncounterCriteria.Unrestricted),
+                Success = true
+            };
+
+            if (download.Data is null)
+            {
+                await ReplyAsync($"<a:warning:1206483664939126795> No se pudieron convertir los datos de Wondercard al tipo PKM requerido.");
+                return;
+            }
+
+            var pk = GetRequest(download);
+
+            if (pk is null)
+            {
+                await ReplyAsync("<a:warning:1206483664939126795> Los datos de Wondercard proporcionados no son compatibles con este módulo!");
+                return;
+            }
+
+            var code = Info.GetRandomTradeCode();
+            var lgcode = Info.GetRandomLGTradeCode();
+            var sig = Context.User.GetFavor();
+            await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention} Solicitud de evento especial agregada a la cola.");
+            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, lgcode: lgcode);
+        }
+        catch (Exception ex)
+        {
+            await ReplyAsync($"<a:yes:1206485105674166292> Ocurrió un error: {ex.Message}");
+        }
+    }
+
     [Command("listevents")]
     [Alias("le")]
     [Summary("Lists available event files, filtered by a specific letter or substring, and sends the list via DM.")]
@@ -1167,7 +1412,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         // Parsing the arguments to separate filter and page number
         string filter = "";
         int page = 1;
-        var parts = args.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        var parts = args.Split(separator, StringSplitOptions.RemoveEmptyEntries);
 
         if (parts.Length > 0)
         {
