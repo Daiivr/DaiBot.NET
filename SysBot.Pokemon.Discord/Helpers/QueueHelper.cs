@@ -19,6 +19,8 @@ using PKHeX.Drawing.PokeSprite;
 using System.Text.RegularExpressions;
 using static System.Net.Mime.MediaTypeNames;
 using static TeraTypeDictionaries;
+using static MovesTranslationDictionary;
+using static AbilityTranslationDictionary;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -204,9 +206,10 @@ public static class QueueHelper<T> where T : PKM, new()
         {
             if (moves[i] == 0) continue;
             string moveName = GameInfo.MoveDataSource.FirstOrDefault(m => m.Value == moves[i])?.Text ?? "";
+            string translatedMoveName = MovesTranslation.ContainsKey(moveName) ? MovesTranslation[moveName] : moveName;
             byte moveTypeId = MoveInfo.GetType(moves[i], default);
             MoveType moveType = (MoveType)moveTypeId;
-            string formattedMove = $"{moveName} ({movePPs[i]}pp)";
+            string formattedMove = $"{translatedMoveName} ({movePPs[i]}pp)";
             if (useTypeEmojis && typeEmojis.TryGetValue(moveType, out var moveEmoji))
             {
                 formattedMove = $"{moveEmoji} {formattedMove}";
@@ -214,9 +217,9 @@ public static class QueueHelper<T> where T : PKM, new()
             moveNames.Add($"{formattedMove}"); // Adding a zero-width space for formatting purposes if needed
         }
 
-
         string movesDisplay = string.Join("\n", moveNames);
         string abilityName = GameInfo.AbilityDataSource.FirstOrDefault(a => a.Value == pk.Ability)?.Text ?? "";
+        string translatedAbility = AbilityTranslation.ContainsKey(abilityName) ? AbilityTranslation[abilityName] : abilityName;
         string natureName = GameInfo.NatureDataSource.FirstOrDefault(n => n.Value == (int)pk.Nature)?.Text ?? "";
         string teraTypeString;
         if (pk is PK9 pk9)
@@ -395,7 +398,7 @@ public static class QueueHelper<T> where T : PKM, new()
                     leftSideContent += $"**Tera Tipo**: {tera}\n";
                 }
             }
-            leftSideContent += $"**Habilidad**: {abilityName}\n";
+            leftSideContent += $"**Habilidad**: {translatedAbility}\n";
             if (!(pk is PB7)) // Exclude scale for PB7 type
             {
                 leftSideContent += $"{scale}\n";
