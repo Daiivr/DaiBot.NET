@@ -136,13 +136,17 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             var queueEmbed = new EmbedBuilder
             {
-                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
                 Color = Color.Red,
                 ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
                 ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
             };
 
             queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
 
             queueEmbed.Footer = new EmbedFooterBuilder
             {
@@ -176,13 +180,17 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             var queueEmbed = new EmbedBuilder
             {
-                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
                 Color = Color.Red,
                 ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
                 ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
             };
 
             queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
 
             queueEmbed.Footer = new EmbedFooterBuilder
             {
@@ -241,13 +249,17 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             var queueEmbed = new EmbedBuilder
             {
-                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
                 Color = Color.Red,
                 ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
                 ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
             };
 
             queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
 
             queueEmbed.Footer = new EmbedFooterBuilder
             {
@@ -313,13 +325,17 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             var queueEmbed = new EmbedBuilder
             {
-                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
                 Color = Color.Red,
                 ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
                 ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
             };
 
             queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
 
             queueEmbed.Footer = new EmbedFooterBuilder
             {
@@ -399,13 +415,17 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             var queueEmbed = new EmbedBuilder
             {
-                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
                 Color = Color.Red,
                 ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
                 ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
             };
 
             queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
 
             queueEmbed.Footer = new EmbedFooterBuilder
             {
@@ -462,13 +482,17 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             var queueEmbed = new EmbedBuilder
             {
-                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
                 Color = Color.Red,
                 ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
                 ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
             };
 
             queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
 
             queueEmbed.Footer = new EmbedFooterBuilder
             {
@@ -546,13 +570,17 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             var queueEmbed = new EmbedBuilder
             {
-                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
                 Color = Color.Red,
                 ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
                 ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
             };
 
             queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
 
             queueEmbed.Footer = new EmbedFooterBuilder
             {
@@ -722,18 +750,23 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             var queueEmbed = new EmbedBuilder
             {
-                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
                 Color = Color.Red,
                 ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
                 ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
             };
 
-            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif")
-                 .WithFooter(footer =>
-                 {
-                     footer.Text = $"{Context.User.Username} • {formattedTime}";
-                     footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
-                 });
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
 
             await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
             return;
@@ -899,18 +932,23 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             var queueEmbed = new EmbedBuilder
             {
-                Description = $"<a:no:1206485104424128593> {Context.User.Mention}, ya tienes una operación existente en la cola. Espere hasta que se procese.",
                 Color = Color.Red,
                 ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
                 ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
             };
 
-            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif")
-                 .WithFooter(footer =>
-                 {
-                     footer.Text = $"{Context.User.Username} • {formattedTime}";
-                     footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
-                 });
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
 
             await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
             return;
@@ -1144,9 +1182,39 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("specialrequestpokemon")]
     [Alias("srp")]
     [Summary("Downloads wondercard event attachments from the specified generation and adds to trade queue.")]
-    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
     public async Task SpecialEventRequestAsync(string generationOrGame, int index)
     {
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
+
+            var queueEmbed = new EmbedBuilder
+            {
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
         try
         {
             MysteryGift[] eventData;
@@ -1344,6 +1412,36 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
     public async Task EventRequestAsync(int index)
     {
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
+
+            var queueEmbed = new EmbedBuilder
+            {
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
         try
         {
             var eventsFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.EventsFolder;
@@ -1496,6 +1594,36 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
     public async Task BattleReadyRequestAsync(int index)
     {
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
+
+            var queueEmbed = new EmbedBuilder
+            {
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
         try
         {
             var battleReadyFolderPath = SysCord<T>.Runner.Config.Trade.RequestFolderSettings.BattleReadyPKMFolder;
