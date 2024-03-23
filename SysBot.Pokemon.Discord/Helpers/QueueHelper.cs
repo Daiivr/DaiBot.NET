@@ -18,6 +18,7 @@ using PKHeX.Core.AutoMod;
 using PKHeX.Drawing.PokeSprite;
 using System.Text.RegularExpressions;
 using static System.Net.Mime.MediaTypeNames;
+using static TeraTypeDictionaries;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -112,11 +113,7 @@ public static class QueueHelper<T> where T : PKM, new()
             etaMessage = $"Estimado: {adjustedEta:F1} minuto(s) para el tradeo {batchTradeNumber}/{totalBatchTrades}.";
         }
 
-        Dictionary<string, string> scaleEmojis = new Dictionary<string, string>
-                {
-                    { "XXXS", "<:minimark:1158632782013136946>" }, // Emoji for XXXS
-                    { "XXXL", "<:jumbomark:1158632783380492318>" }  // Emoji for XXXL
-                };
+        var scaleEmojis = ScaleEmojisDictionary.ScaleEmojis;
         string scale = "";
 
         if (pk is PA8 fin8a)
@@ -214,7 +211,7 @@ public static class QueueHelper<T> where T : PKM, new()
             {
                 formattedMove = $"{moveEmoji} {formattedMove}";
             }
-            moveNames.Add($"- {formattedMove}"); // Adding a zero-width space for formatting purposes if needed
+            moveNames.Add($"{formattedMove}"); // Adding a zero-width space for formatting purposes if needed
         }
 
 
@@ -230,8 +227,12 @@ public static class QueueHelper<T> where T : PKM, new()
         {
             teraTypeString = ""; // or another default value as needed
         }
+
+        var traduccionesNaturalezas = NatureTranslations.TraduccionesNaturalezas;
+
         int level = pk.CurrentLevel;
         string speciesName = GameInfo.GetStrings(1).Species[pk.Species];
+        string traduccionNature = traduccionesNaturalezas.ContainsKey(natureName) ? traduccionesNaturalezas[natureName] : natureName;
         string alphaMarkSymbol = string.Empty;
         string mightyMarkSymbol = string.Empty;
         if (pk is IRibbonSetMark9 ribbonSetMark)
@@ -369,54 +370,29 @@ public static class QueueHelper<T> where T : PKM, new()
         if (!isMysteryEgg && !isCloneRequest && !isDumpRequest && !FixOT && !isSpecialRequest)
         {
             // Prepare the left side content
-            string leftSideContent = $"{speciesAndForm}\n" +
-                                     $"**Entrenador**: {user.Mention}\n" +
+            string leftSideContent = $"**Entrenador**: {user.Mention}\n" +
                                      $"**Nivel**: {level}\n";
 
             // Add Tera Type information if the Pokémon is PK9 and the game version supports it
             if (pk is PK9 pk9Instance && (pk.Version == GameVersion.SL || pk.Version == GameVersion.VL))
             {
                 var tera = pk9Instance.TeraType.ToString();
-                Dictionary<string, string> teraEmojis = new Dictionary<string, string>
-    {
-        { "Normal", "<:Normal:1134575677648162886>" },
-        { "Fire", "<:Fire:1134576993799766197>" },
-        { "Water", "<:Water:1134575004038742156>" },
-        { "Grass", "<:Grass:1134574800057139331>" },
-        { "Flying", "<:Flying:1134573296734711918>" },
-        { "Poison", "<:Poison:1134575188403564624>" },
-        { "Electric", "<:Electric:1134576561991995442>" },
-        { "Ground", "<:Ground:1134573701766058095>" },
-        { "Psychic", "<:Psychic:1134576746298089575>" },
-        { "Fighting", "<:Fighting:1134573062881300551>" },
-        { "Rock", "<:Rock:1134574024542912572>" },
-        { "Ice", "<:Ice:1134576183787409531>" },
-        { "Bug", "<:Bug:1134574602908073984>" },
-        { "Dragon", "<:Dragon:1134576015973294221>" },
-        { "Ghost", "<:Ghost:1134574276628975626>" },
-        { "Dark", "<:Dark:1134575488598294578>" },
-        { "Steel", "<:Steel:1134576384191254599>" },
-        { "Fairy", "<:Fairy:1134575841523814470>" },
-        { "Stellar", "<:Stellar:1186199337177468929>" },
-    };
+                var teraEmojis = TeraTypeDictionaries.TeraEmojis;
+                var teraTranslations = TeraTypeDictionaries.TeraTranslations;
 
-                if (tera == "99") // Special case for Stellar
+                // Check if the Tera Type has a corresponding emoji and translation
+                if (teraEmojis.TryGetValue(tera, out string emojiID) && teraTranslations.TryGetValue(tera, out string teraEsp))
                 {
-                    leftSideContent += $"**Tera Tipo**: <:Stellar:1186199337177468929> Stellar\n";
+                    leftSideContent += $"**Tera Tipo**: {emojiID} {teraEsp}\n";
+                }
+                else if (tera == "99") // Special case for Stellar
+                {
+                    leftSideContent += $"**Tera Tipo**: <:Stellar:1186199337177468929> Estelar\n";
                 }
                 else
                 {
-                    // Check if the Tera Type has a corresponding emoji
-                    if (teraEmojis.TryGetValue(tera, out string? emojiID))
-                    {
-                        var emoji = new Emoji(emojiID); // Get emoji from the server using the ID
-                        leftSideContent += $"**Tera Tipo**: {emoji} {tera}\n"; // Add emoji to the message
-                    }
-                    else
-                    {
-                        // If no corresponding emoji found, just display the Tera Type
-                        leftSideContent += $"**Tera Tipo**: {tera}\n";
-                    }
+                    // If no corresponding emoji or translation found, just display the Tera Type in English
+                    leftSideContent += $"**Tera Tipo**: {tera}\n";
                 }
             }
             leftSideContent += $"**Habilidad**: {abilityName}\n";
@@ -424,7 +400,7 @@ public static class QueueHelper<T> where T : PKM, new()
             {
                 leftSideContent += $"{scale}\n";
             };
-            leftSideContent += $"**Naturaleza**: {natureName}\n" +
+            leftSideContent += $"**Naturaleza**: {traduccionNature}\n" +
                                $"**IVs**: {ivsDisplay}\n";
             var evs = new List<string>();
 
@@ -453,11 +429,11 @@ public static class QueueHelper<T> where T : PKM, new()
                 leftSideContent += "**EVs**: " + string.Join(" / ", evs) + "\n";
             }
             // Add the field to the embed
-            embedBuilder.AddField($"__**Información**__", leftSideContent, inline: true);
+            embedBuilder.AddField($"{speciesAndForm}", leftSideContent, inline: true);
             // Add a blank field to align with the 'Trainer' field on the left
             embedBuilder.AddField("\u200B", "\u200B", inline: true); // First empty field for spacing
             // 'Moves' as another inline field, ensuring it's aligned with the content on the left
-            embedBuilder.AddField("**__Movimientos__**", movesDisplay, inline: true);
+            embedBuilder.AddField("Movimientos", movesDisplay, inline: true);
         }
         else
         {
