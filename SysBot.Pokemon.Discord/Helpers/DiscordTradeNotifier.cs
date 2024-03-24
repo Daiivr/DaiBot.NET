@@ -41,19 +41,30 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
 
     public void TradeInitialize(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
     {
-        if (Data is not PB7)
+        if (Data is PK9)
         {
             var batchInfo = TotalBatchTrades > 1 ? $" (Trade {BatchTradeNumber} de {TotalBatchTrades})" : "";
             var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
             var message = $"Inicializando el comercio**{receive}{batchInfo}**. Por favor prepárate. Tu código es: **{Code:0000 0000}**.";
             Trader.SendMessageAsync(message).ConfigureAwait(false);
+
+            if (TotalBatchTrades > 1 && BatchTradeNumber == 1)
+            {
+                message += "\n**Permanezca en el intercambio hasta que se completen todos los intercambios por lotes.**";
+            }
         }
-        else
+        else if (Data is PB7)
         {
             var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
             var (thefile, lgcodeembed) = CreateLGLinkCodeSpriteEmbed(LGCode);
-
             Trader.SendFileAsync(thefile, $"Inicializando el comercio**{receive}**. Por favor prepárate. Tu código es:", embed: lgcodeembed).ConfigureAwait(false);
+        }
+        else
+        {
+            var batchInfo = TotalBatchTrades > 1 ? $" (Trade {BatchTradeNumber} of {TotalBatchTrades})" : "";
+            var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
+            var message = $"Inicializando el comercio**{receive}{batchInfo}**. Por favor prepárate. Tu código es: **{Code:0000 0000}**.";
+            Trader.SendMessageAsync(message).ConfigureAwait(false);
         }
     }
 
@@ -63,13 +74,22 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
         var name = Info.TrainerName;
         var trainer = string.IsNullOrEmpty(name) ? string.Empty : $" {name}";
         string message;
-        if (Data is PB7 && LGCode != null && LGCode.Any())
+
+        if (Data is PB7 && LGCode != null && LGCode.Count != 0)
         {
             message = $"Estoy esperando por ti,**{trainer}{batchInfo}**! __Tienes **40 segundos**__. Mi IGN es **{routine.InGameName}**.";
         }
         else
         {
-            message = $"Estoy esperando por ti,**{trainer}{batchInfo}**! __Tienes **40 segundos**__. Tu codigo es: **{Code:0000 0000}**. Mi IGN es **{routine.InGameName}**.";
+            if (TotalBatchTrades > 1 && BatchTradeNumber > 1)
+            {
+                var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
+                message = $"Ahora intercambiando{receive} (Intercambio {BatchTradeNumber} de {TotalBatchTrades}). **Selecciona el Pokémon que deseas intercambiar!**";
+            }
+            else
+            {
+                message = $"Estoy esperando por ti,**{trainer}{batchInfo}**! __Tienes **40 segundos**__. Tu codigo es: **{Code:0000 0000}**. Mi IGN es **{routine.InGameName}**.";
+            }
         }
 
         Trader.SendMessageAsync(message).ConfigureAwait(false);

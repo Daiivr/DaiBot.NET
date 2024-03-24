@@ -101,19 +101,8 @@ public static class QueueHelper<T> where T : PKM, new()
 
         var position = Info.CheckPosition(userID, uniqueTradeID, type);
         var botct = Info.Hub.Bots.Count;
-        var etaMessage = "";
-        if (position.Position > botct)
-        {
-            var baseEta = Info.Hub.Config.Queues.EstimateDelay(position.Position, botct);
-            // Increment ETA by 1 minute for each batch trade
-            var adjustedEta = baseEta + (batchTradeNumber - 1);
-            etaMessage = $"Estimado: {adjustedEta:F1} min(s) para el tradeo {batchTradeNumber}/{totalBatchTrades}.";
-        }
-        else
-        {
-            var adjustedEta = (batchTradeNumber - 1); // Add 1 minute for each subsequent batch trade
-            etaMessage = $"Estimado: {adjustedEta:F1} minuto(s) para el tradeo {batchTradeNumber}/{totalBatchTrades}.";
-        }
+        var baseEta = position.Position > botct ? Info.Hub.Config.Queues.EstimateDelay(position.Position, botct) : 0;
+        var etaMessage = $"Estimado: {baseEta:F1} minuto(s) para el tradeo {batchTradeNumber}/{totalBatchTrades}.";
 
         var scaleEmojis = ScaleEmojisDictionary.ScaleEmojis;
         string scale = "";
@@ -196,7 +185,9 @@ public static class QueueHelper<T> where T : PKM, new()
 
         // Format IVs for display
         int[] ivs = pk.IVs;
-        string ivsDisplay = $"{ivs[0]}/{ivs[1]}/{ivs[2]}/{ivs[3]}/{ivs[4]}/{ivs[5]}";
+        // Comprobar si todos los IVs son 31
+        bool todosMaximos = ivs.All(iv => iv == 31);
+        string ivsDisplay = todosMaximos ? "Máximos" : $"{ivs[0]}/{ivs[1]}/{ivs[2]}/{ivs[3]}/{ivs[4]}/{ivs[5]}";
 
         ushort[] moves = new ushort[4];
         pk.GetMoves(moves.AsSpan());
@@ -340,8 +331,8 @@ public static class QueueHelper<T> where T : PKM, new()
         }
         // Check if the image URL is a local file path
         bool isLocalFile = File.Exists(embedImageUrl);
-        string userName = user.Username;
-        string isPkmShiny = pk.IsShiny ? "✨" : "";
+        string userName = string.IsNullOrEmpty(user.GlobalName) ? user.Username : user.GlobalName;
+        string isPkmShiny = pk.IsShiny ? " Shiny" : "";
         // Build the embed with the author title image
         string authorName;
 
@@ -352,7 +343,7 @@ public static class QueueHelper<T> where T : PKM, new()
         }
         else // Normal trade
         {
-            authorName = $"{isPkmShiny} {pokemonDisplayName} de {userName} ";
+            authorName = $"Pokémon{isPkmShiny} solicitado por {userName} ";
         }
         var embedBuilder = new EmbedBuilder()
             .WithColor(embedColor)
