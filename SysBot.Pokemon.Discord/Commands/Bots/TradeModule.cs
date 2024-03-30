@@ -46,7 +46,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var embedBuilder = new EmbedBuilder()
             .WithTitle($"Lista de Servidores - Pagina {page}/{totalPages}")
             .WithDescription("📝 Aquí están los servidores en los que estoy actualmente:")
-            .WithColor(Color.Blue); 
+            .WithColor(Color.Blue);
 
         foreach (var guild in guilds)
         {
@@ -59,7 +59,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         if (Context.Message is IUserMessage userMessage)
         {
-            await Task.Delay(2000); 
+            await Task.Delay(2000);
             await userMessage.DeleteAsync().ConfigureAwait(false);
         }
     }
@@ -351,7 +351,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
         var pkm = sav.GetLegal(template, out var result);
         pkm = EntityConverter.ConvertToType(pkm, typeof(T), out _) ?? pkm;
-        if (pkm.HeldItem == 0 )
+        if (pkm.HeldItem == 0)
         {
             await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, el item que has solicitado no ha sido reconocido.").ConfigureAwait(false);
             return;
@@ -467,9 +467,18 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("mysteryegg")]
     [Alias("me")]
+    [Summary("Trades an egg generated from the provided Pokémon name.")]
+    public async Task TradeMysteryEggAsync()
+    {
+        var code = Info.GetRandomTradeCode();
+        await TradeMysteryEggAsync(code).ConfigureAwait(false);
+    }
+
+    [Command("mysteryegg")]
+    [Alias("me")]
     [Summary("Trades a random mystery egg with perfect stats and shiny appearance.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-    public async Task TradeMysteryEggAsync()
+    public async Task TradeMysteryEggAsync([Summary("Trade Code")] int code)
     {
         // Check if the user is already in the queue
         var userID = Context.User.Id;
@@ -520,7 +529,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             AbstractTrade<T>.EggTrade(pkT, null);
 
-            var code = Info.GetRandomTradeCode();
             var sig = Context.User.GetFavor();
             await AddTradeToQueueAsync(code, Context.User.Username, pkT, sig, Context.User, isMysteryEgg: true).ConfigureAwait(false);
         }
@@ -689,10 +697,10 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         catch (Exception ex)
         {
             LogUtil.LogSafe(ex, nameof(TradeModule<T>));
-            var msg = $"<a:warning:1206483664939126795> ¡Oops! Ocurrió un problema inesperado con este conjunto de enfrentamiento:\n```{string.Join("\n", set.GetSetLines())}```";
+            var msg = $"<a:warning:1206483664939126795> ¡Oops! Ocurrió un problema inesperado con este conjunto de showdown:\n```{string.Join("\n", set.GetSetLines())}```";
 
             await Task.Delay(2000);
-            await Context.Message.DeleteAsync(); 
+            await Context.Message.DeleteAsync();
         }
         _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
     }
@@ -780,8 +788,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention} Sólo puedes procesar hasta **{maxTradesAllowed}** trades a la vez. Por favor, reduzca el número de operaciones en su lote").ConfigureAwait(false);
 
-            await Task.Delay(5000); 
-            await Context.Message.DeleteAsync(); 
+            await Task.Delay(5000);
+            await Context.Message.DeleteAsync();
             return;
         }
         // Check if the number of trades exceeds the limit
@@ -789,8 +797,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             await ReplyAsync($"<a:warning:1206483664939126795> Sólo puede procesar hasta {maxTradesAllowed} trades a la vez. Por favor, reduzca el número de operaciones en su lote.").ConfigureAwait(false);
 
-            await Task.Delay(2000); 
-            await Context.Message.DeleteAsync(); 
+            await Task.Delay(2000);
+            await Context.Message.DeleteAsync();
             return;
         }
 
@@ -809,7 +817,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     {
         var delimiters = new[] { "---", "—-" }; // Includes both three hyphens and an em dash followed by a hyphen
         var trades = content.Split(delimiters, StringSplitOptions.RemoveEmptyEntries)
-                            .Select(trade => trade.Trim()) 
+                            .Select(trade => trade.Trim())
                             .ToList();
         return trades;
     }
@@ -1628,7 +1636,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 return;
             }
 
-            var selectedFile = battleReadyFiles[index - 1]; 
+            var selectedFile = battleReadyFiles[index - 1];
             var fileData = await File.ReadAllBytesAsync(Path.Combine(battleReadyFolderPath, selectedFile));
 
             var download = new Download<PKM>

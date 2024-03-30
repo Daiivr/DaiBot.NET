@@ -388,7 +388,7 @@ public static class QueueHelper<T> where T : PKM, new()
         }
 
         // Adding thumbnails for clone and special requests, or held items
-        if (isCloneRequest || isSpecialRequest)
+        if (isCloneRequest || isSpecialRequest || isDumpRequest || FixOT)
         {
             embedBuilder.WithThumbnailUrl("https://raw.githubusercontent.com/bdawg1989/sprites/main/profoak.png");
         }
