@@ -55,7 +55,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var dmChannel = await Context.User.CreateDMChannelAsync();
         await dmChannel.SendMessageAsync(embed: embedBuilder.Build());
 
-        await ReplyAsync($"{Context.User.Mention}, Te envié un DM con la lista de gremios. (Page {page}).");
+        await ReplyAsync($"{Context.User.Mention}, Te envié un DM con la lista de servidores. (Pagina {page}).");
 
         if (Context.Message is IUserMessage userMessage)
         {
@@ -85,7 +85,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             return;
         }
 
-        var newServerAccess = new RemoteControlAccess { ID = serverId, Name = server.Name, Comment = "Blacklisted server" };
+        var newServerAccess = new RemoteControlAccess { ID = serverId, Name = server.Name, Comment = "Servidor en lista negra" };
 
         settings.ServerBlacklist.AddIfNew([newServerAccess]);
 
@@ -161,11 +161,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var lgcode = Info.GetRandomLGTradeCode();
         var sig = Context.User.GetFavor();
         await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, new T(), PokeRoutineType.FixOT, PokeTradeType.FixOT, Context.User, false, 1, 1, false, lgcode).ConfigureAwait(false);
-        if (Context.Message is IUserMessage userMessage)
-        {
-            await Task.Delay(2000); 
-            await userMessage.DeleteAsync().ConfigureAwait(false);
-        }
     }
 
     [Command("fixOT")]
@@ -207,7 +202,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         var trainerName = Context.User.Username;
         var sig = Context.User.GetFavor();
-        var lgcode = Info.GetRandomLGTradeCode(); 
+        var lgcode = Info.GetRandomLGTradeCode();
 
         await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, new T(), PokeRoutineType.FixOT, PokeTradeType.FixOT, Context.User, false, 1, 1, false, lgcode).ConfigureAwait(false);
     }
@@ -236,18 +231,12 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     {
         var code = Info.GetRandomTradeCode();
         await DittoTrade(code, keyword, language, nature).ConfigureAwait(false);
-
-        if (Context.Message is IUserMessage userMessage)
-        {
-            await Task.Delay(2000); 
-            await userMessage.DeleteAsync().ConfigureAwait(false);
-        }
     }
 
     [Command("dittoTrade")]
     [Alias("dt", "ditto")]
     [Summary("Makes the bot trade you a Ditto with a requested stat spread and language.")]
-    public async Task DittoTrade([Summary("Trade Code")] int code, [Summary("A combination of \"ATK/SPA/SPE\" or \"6IV\"")] string keyword, [Summary("Language")] string language, [Summary("Nature")] string nature)
+    public async Task DittoTrade([Summary("Trade Code")] int code, [Summary("Una combinación de \"ATK/SPA/SPE\" or \"6IV\"")] string keyword, [Summary("Language")] string language, [Summary("Nature")] string nature)
     {
         // Check if the user is already in the queue
         var userID = Context.User.Id;
@@ -472,7 +461,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         catch (Exception ex)
         {
             LogUtil.LogSafe(ex, nameof(TradeModule<T>));
-            await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, Se produjo un error al procesar la solicitud..").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, Se produjo un error al procesar la solicitud.").ConfigureAwait(false);
         }
     }
 
@@ -516,9 +505,9 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
             var speciesList = BreedableSpeciesGenerator.GetBreedableSpeciesForSV();
-            var randomIndex = new Random().Next(speciesList.Count); 
+            var randomIndex = new Random().Next(speciesList.Count);
             ushort speciesId = speciesList[randomIndex];
-            var context = new EntityContext(); 
+            var context = new EntityContext();
             var IsEgg = new EncounterEgg(speciesId, 0, 1, 9, GameVersion.SV, context);
             var pk = IsEgg.ConvertToPKM(sav);
             TradeModule<T>.SetPerfectIVsAndShiny(pk);
@@ -702,7 +691,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             LogUtil.LogSafe(ex, nameof(TradeModule<T>));
             var msg = $"<a:warning:1206483664939126795> ¡Oops! Ocurrió un problema inesperado con este conjunto de enfrentamiento:\n```{string.Join("\n", set.GetSetLines())}```";
 
-            await Task.Delay(2000); 
+            await Task.Delay(2000);
             await Context.Message.DeleteAsync(); 
         }
         _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
@@ -743,8 +732,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("batchTrade")]
     [Alias("bt")]
     [Summary("Makes the bot trade multiple Pokémon from the provided list, up to a maximum of 3 trades.")]
-    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-    public async Task BatchTradeAsync([Summary("List of Showdown Sets separated by '---'")][Remainder] string content)
+    [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
+    public async Task BatchTradeAsync([Summary("Lista de conjuntos de showdowns separados por '---'")][Remainder] string content)
     {
         // First, check if batch trades are allowed
         if (!SysCord<T>.Runner.Config.Trade.TradeConfiguration.AllowBatchTrades)
@@ -828,7 +817,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("batchtradezip")]
     [Alias("btz")]
     [Summary("Makes the bot trade multiple Pokémon from the provided .zip file, up to a maximum of 6 trades.")]
-    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
     public async Task BatchTradeZipAsync()
     {
         // First, check if batch trades are allowed
@@ -1157,12 +1146,12 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 }
                 catch (HttpException ex) when (ex.HttpCode == HttpStatusCode.Forbidden)
                 {
-                    replyMessage = await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention}, Te envié un DM con la lista de eventos.");
+                    replyMessage = await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, No puedo enviarte un DM. Por favor verifique su **Configuración de privacidad del servidor**.");
                 }
             }
             else
             {
-                replyMessage = await ReplyAsync("<a:yes:1206485105674166292> {Context.User.Mention}, Te envié un DM con la lista de eventos.");
+                replyMessage = await ReplyAsync("<a:warning:1206483664939126795> **Error**: No se puede enviar un DM. Por favor verifique su **Configuración de Privacidad del Servidor**.");
             }
         }
 
@@ -1177,7 +1166,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("specialrequestpokemon")]
     [Alias("srp")]
     [Summary("Downloads wondercard event attachments from the specified generation and adds to trade queue.")]
-    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
     public async Task SpecialEventRequestAsync(string generationOrGame, int index)
     {
         // Check if the user is already in the queue
@@ -1315,7 +1304,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         // Check if the events folder path is not set or empty
         if (string.IsNullOrEmpty(eventsFolderPath))
         {
-            await ReplyAsync($"a:no:1206485104424128593> Lo siento {Context.User.Mention}, Este bot no tiene esta función configurada.");
+            await ReplyAsync($"<a:no:1206485104424128593> Lo siento {Context.User.Mention}, Este bot no tiene esta función configurada.");
             return;
         }
 
@@ -1403,7 +1392,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("eventrequest")]
     [Alias("er")]
     [Summary("Downloads event attachments from the specified EventsFolder and adds to trade queue.")]
-    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
     public async Task EventRequestAsync(int index)
     {
         // Check if the user is already in the queue
@@ -1585,7 +1574,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("battlereadyrequest")]
     [Alias("brr", "br")]
     [Summary("Downloads battle-ready attachments from the specified folder and adds to trade queue.")]
-    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
     public async Task BattleReadyRequestAsync(int index)
     {
         // Check if the user is already in the queue
