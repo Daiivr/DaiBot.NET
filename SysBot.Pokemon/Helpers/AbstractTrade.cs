@@ -23,9 +23,9 @@ namespace SysBot.Pokemon.Helpers
         public abstract IPokeTradeNotifier<T> GetPokeTradeNotifier(T pkm, int code);//完善此方法以实现消息通知功能
         protected PokeTradeTrainerInfo userInfo = default!;
         private TradeQueueInfo<T> queueInfo = default!;
-        private List<Pictocodes> lgcode;
-        public static readonly ushort[] ShinyLock = {  (ushort)Species.Victini, (ushort)Species.Keldeo, (ushort)Species.Volcanion, (ushort)Species.Cosmog, (ushort)Species.Cosmoem, (ushort)Species.Magearna, (ushort)Species.Marshadow, (ushort)Species.Eternatus,
-                                                    (ushort)Species.Kubfu, (ushort)Species.Urshifu, (ushort)Species.Zarude, (ushort)Species.Glastrier, (ushort)Species.Spectrier, (ushort)Species.Calyrex };
+        private readonly List<Pictocodes>? lgcode;
+        public static readonly ushort[] ShinyLock = [  (ushort)Species.Victini, (ushort)Species.Keldeo, (ushort)Species.Volcanion, (ushort)Species.Cosmog, (ushort)Species.Cosmoem, (ushort)Species.Magearna, (ushort)Species.Marshadow, (ushort)Species.Eternatus,
+                                                    (ushort)Species.Kubfu, (ushort)Species.Urshifu, (ushort)Species.Zarude, (ushort)Species.Glastrier, (ushort)Species.Spectrier, (ushort)Species.Calyrex ];
 
         public void SetPokeTradeTrainerInfo(PokeTradeTrainerInfo pokeTradeTrainerInfo)
         {
@@ -102,8 +102,9 @@ namespace SysBot.Pokemon.Helpers
                     pkm.Form = 0;
                 }
                 else
+                {
                     pkm.Form = 1;
-
+                }
                 string s = pkm.IsShiny ? "r" : "n";
                 string g = md && pkm.Gender is not 1 ? "md" : "fd";
                 return $"https://raw.githubusercontent.com/bdawg1989/HomeImages/master/128x128/poke_capture_0" + $"{pkm.Species}" + "_00" + $"{pkm.Form}" + "_" + $"{g}" + "_n_00000000_f_" + $"{s}" + ".png";
@@ -113,7 +114,7 @@ namespace SysBot.Pokemon.Helpers
             baseLink[3] = pkm.Form < 10 ? $"00{form}" : $"0{form}";
             baseLink[4] = pkm.PersonalInfo.OnlyFemale ? "fo" : pkm.PersonalInfo.OnlyMale ? "mo" : pkm.PersonalInfo.Genderless ? "uk" : fd ? "fd" : md ? "md" : "mf";
             baseLink[5] = canGmax ? "g" : "n";
-            baseLink[6] = "0000000" + (pkm.Species == (int)Species.Alcremie && !canGmax ? pkm.Data[0xE4] : 0);
+            baseLink[6] = "0000000" + ((pkm.Species == (int)Species.Alcremie && !canGmax) ? ((IFormArgument)pkm).FormArgument.ToString() : "0");
             baseLink[8] = pkm.IsShiny ? "r.png" : "n.png";
             return string.Join("_", baseLink);
         }
@@ -132,93 +133,131 @@ namespace SysBot.Pokemon.Helpers
             return formString[form].Contains('-') ? formString[form] : formString[form] == "" ? "" : $"-{formString[form]}";
         }
 
-        public static bool HasMark(IRibbonIndex pk, out RibbonIndex result)
+        public static bool HasMark(IRibbonIndex pk, out RibbonIndex result, out string markTitle)
         {
             result = default;
+            markTitle = string.Empty;
+
+            if (pk is IRibbonSetMark9 ribbonSetMark)
+            {
+                if (ribbonSetMark.RibbonMarkMightiest)
+                {
+                    result = RibbonIndex.MarkMightiest;
+                    markTitle = " el Imbatible";
+                    return true;
+                }
+                else if (ribbonSetMark.RibbonMarkAlpha)
+                {
+                    result = RibbonIndex.MarkAlpha;
+                    markTitle = " el Antiguo Alfa";
+                    return true;
+                }
+                else if (ribbonSetMark.RibbonMarkTitan)
+                {
+                    result = RibbonIndex.MarkTitan;
+                    markTitle = " el Antiguo Dominante";
+                    return true;
+                }
+                else if (ribbonSetMark.RibbonMarkJumbo)
+                {
+                    result = RibbonIndex.MarkJumbo;
+                    markTitle = " el Gigante";
+                    return true;
+                }
+                else if (ribbonSetMark.RibbonMarkMini)
+                {
+                    result = RibbonIndex.MarkMini;
+                    markTitle = " el Diminuto";
+                    return true;
+                }
+            }
+
             for (var mark = RibbonIndex.MarkLunchtime; mark <= RibbonIndex.MarkSlump; mark++)
             {
                 if (pk.GetRibbon((int)mark))
                 {
                     result = mark;
+                    markTitle = MarkTitle[(int)mark - (int)RibbonIndex.MarkLunchtime];
                     return true;
                 }
             }
+
             return false;
         }
 
         public static readonly string[] MarkTitle =
         [
-            " the Peckish",
-            " the Sleepy",
-            " the Dozy",
-            " the Early Riser",
-            " the Cloud Watcher",
-            " the Sodden",
-            " the Thunderstruck",
-            " the Snow Frolicker",
-            " the Shivering",
-            " the Parched",
-            " the Sandswept",
-            " the Mist Drifter",
-            " the Chosen One",
-            " the Catch of the Day",
-            " the Curry Connoisseur",
-            " the Sociable",
-            " the Recluse",
-            " the Rowdy",
-            " the Spacey",
-            " the Anxious",
-            " the Giddy",
-            " the Radiant",
-            " the Serene",
-            " the Feisty",
-            " the Daydreamer",
-            " the Joyful",
-            " the Furious",
-            " the Beaming",
-            " the Teary-Eyed",
-            " the Chipper",
-            " the Grumpy",
-            " the Scholar",
-            " the Rampaging",
-            " the Opportunist",
-            " the Stern",
-            " the Kindhearted",
-            " the Easily Flustered",
-            " the Driven",
-            " the Apathetic",
-            " the Arrogant",
-            " the Reluctant",
-            " the Humble",
-            " the Pompous",
-            " the Lively",
-            " the Worn-Out",
-            " of the Distant Past",
-            " the Twinkling Star",
-            " the Paldea Champion",
-            " the Great",
-            " the Teeny",
-            " the Treasure Hunter",
-            " the Reliable Partner",
-            " the Gourmet",
-            " the One-in-a-Million",
-            " the Former Alpha",
-            " the Unrivaled",
-            " the Former Titan",
+            " el Hambriento",
+            " el Somnoliento",
+            " el Adormilado",
+            " el Madrugador",
+            " el Obnubilado",
+            " el Empapado",
+            " el Atronador",
+            " el Níveo",
+            " el Aterido",
+            " el Sediento",
+            " el Arenoso",
+            " el Errante de la Niebla",
+            " el Predestinado",
+            " el Recién Pescado",
+            " el Entusiasta del Curri",
+            " el Sociable",
+            " el Ermitaño",
+            " el Travieso",
+            " el Despreocupado",
+            " el Nervioso",
+            " el Ilusionado",
+            " el Carismático",
+            " el Sereno",
+            " el Apasionado",
+            " el Distraído",
+            " el Feliz",
+            " el Colérico",
+            " el Sonriente",
+            " el Llorón",
+            " el Bienhumorado",
+            " el Malhumorado",
+            " el Intelectual",
+            " el Impulsivo",
+            " el Astuto",
+            " el Amenazante",
+            " el Amable",
+            " el Aturullado",
+            " el Motivado",
+            " el Desidioso",
+            " el Confiado",
+            " el Inseguro",
+            " el Humilde",
+            " el Pretencioso",
+            " el Vigoroso",
+            " el Extenuado",
+            " el Viajero del Pasado",
+            " el Rutilante",
+            " el Campeón de Paldea",
+            " el Gigante",
+            " el Diminuto",
+            " el Recolector",
+            " el Compañero Leal",
+            " el Sibarita",
+            " el Excepcional",
+            " el Antiguo Alfa",
+            " el Imbatible",
+            " el Antiguo Dominante",
         ];
 
         public static PKM TrashBytes(PKM pkm, LegalityAnalysis? la = null)
         {
             var pkMet = (T)pkm.Clone();
             if (pkMet.Version is not GameVersion.GO)
-                pkMet.MetDate = DateOnly.Parse("2020/10/20");
+                pkMet.MetDate = DateOnly.FromDateTime(DateTime.Now);
 
             var analysis = new LegalityAnalysis(pkMet);
             var pkTrash = (T)pkMet.Clone();
             if (analysis.Valid)
             {
                 pkTrash.IsNicknamed = true;
-                pkTrash.Nickname = "KOIKOIKOIKOI";
+                pkTrash.Nickname = "UwU";
                 pkTrash.SetDefaultNickname(la ?? new LegalityAnalysis(pkTrash));
             }
 
@@ -254,7 +293,10 @@ namespace SysBot.Pokemon.Helpers
                     mgPkm.HeldItem = mgPkm.Form + 903;
                 else mgPkm.HeldItem = 0;
             }
-            else return new();
+            else
+            {
+                return new();
+            }
 
             mgPkm = TrashBytes((T)mgPkm);
             var la = new LegalityAnalysis(mgPkm);
@@ -268,7 +310,10 @@ namespace SysBot.Pokemon.Helpers
                 pk.SetAllTrainerData(info);
                 return (T)pk;
             }
-            else return (T)mgPkm;
+            else
+            {
+                return (T)mgPkm;
+            }
         }
 
         public void StartTradePs(string ps)
@@ -334,8 +379,8 @@ namespace SysBot.Pokemon.Helpers
         {
             if (!JudgeMultiNum(rawPkms.Count)) return;
 
-            List<T> pkms = new();
-            List<bool> skipAutoOTList = new();
+            List<T> pkms = [];
+            List<bool> skipAutoOTList = [];
             int invalidCount = 0;
             for (var i = 0; i < rawPkms.Count; i++)
             {
@@ -370,8 +415,8 @@ namespace SysBot.Pokemon.Helpers
         /// <returns></returns>
         private List<T> GetPKMsFromPsList(List<string> psList, bool isChinesePS, out int invalidCount, out List<bool> skipAutoOTList)
         {
-            List<T> pkms = new();
-            skipAutoOTList = new List<bool>();
+            List<T> pkms = [];
+            skipAutoOTList = [];
             invalidCount = 0;
             for (var i = 0; i < psList.Count; i++)
             {
@@ -541,7 +586,7 @@ namespace SysBot.Pokemon.Helpers
         private bool AddToTradeQueue(T pk, int code, bool skipAutoOT,
             PokeRoutineType type, out string msg)
         {
-            return AddToTradeQueue(new List<T> { pk }, code, new List<bool> { skipAutoOT }, type, out msg);
+            return AddToTradeQueue([pk], code, [skipAutoOT], type, out msg);
         }
 
         private bool AddToTradeQueue(List<T> pks, int code, List<bool> skipAutoOTList,
@@ -626,7 +671,7 @@ namespace SysBot.Pokemon.Helpers
             }
 
             pkm.Ball = 21;
-            pkm.IVs = new int[] { 31, nickname.Contains(dittoStats[0]) ? 0 : 31, 31, nickname.Contains(dittoStats[1]) ? 0 : 31, nickname.Contains(dittoStats[2]) ? 0 : 31, 31 };
+            pkm.IVs = [31, nickname.Contains(dittoStats[0]) ? 0 : 31, 31, nickname.Contains(dittoStats[1]) ? 0 : 31, nickname.Contains(dittoStats[2]) ? 0 : 31, 31];
             pkm.ClearHyperTraining();
             TrashBytes(pkm, new LegalityAnalysis(pkm));
         }

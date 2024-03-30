@@ -155,7 +155,7 @@ public abstract class PokeRoutineExecutor<T>(IConsoleBotManaged<IConsoleConnecti
                 msg += $"\nUser was banned for: {entry.Comment}";
             if (!string.IsNullOrWhiteSpace(AbuseSettings.BannedIDMatchEchoMention))
                 msg = $"{AbuseSettings.BannedIDMatchEchoMention} {msg}";
-            EchoUtil.Echo(msg);
+            Log(msg);
             return PokeTradeResult.SuspiciousActivity;
         }
 
@@ -171,13 +171,12 @@ public abstract class PokeRoutineExecutor<T>(IConsoleBotManaged<IConsoleConnecti
             if (cd != 0 && TimeSpan.FromMinutes(cd) > delta)
             {
                 var wait = TimeSpan.FromMinutes(cd) - delta;
-                poke.Notifier.SendNotification(bot, poke, $"<a:no:1206485104424128593> Sigues en tiempo de reutilización y no puedes intercambiar por otros **{wait.TotalMinutes:F1}** minuto(s).");
                 var msg = $"<a:warning:1206483664939126795> Encontre a **{user.TrainerName}{useridmsg}** ignorando el enfriamiento de tradeo de **{cd}** minutos. Encontrado por última vez hace **{delta.TotalMinutes:F1}** minutos.";
                 if (AbuseSettings.EchoNintendoOnlineIDCooldown)
                     msg += $"\nID: {TrainerNID}";
                 if (!string.IsNullOrWhiteSpace(AbuseSettings.CooldownAbuseEchoMention))
                     msg = $"{AbuseSettings.CooldownAbuseEchoMention} {msg}";
-                EchoUtil.Echo(msg);
+                Log(msg);
                 return PokeTradeResult.SuspiciousActivity;
             }
 
@@ -192,7 +191,7 @@ public abstract class PokeRoutineExecutor<T>(IConsoleBotManaged<IConsoleConnecti
                         await BlockUser(token).ConfigureAwait(false);
                         if (AbuseSettings.BanIDWhenBlockingUser || bot is not PokeRoutineExecutor8SWSH) // Only ban ID if blocking in SWSH, always in other games.
                         {
-                            AbuseSettings.BannedIDs.AddIfNew(new[] { GetReference(TrainerName, TrainerNID, "🚫 Bloqueo en el juego por el uso de varias cuentas") });
+                            AbuseSettings.BannedIDs.AddIfNew([GetReference(TrainerName, TrainerNID, "🚫 Bloqueo en el juego por el uso de varias cuentas")]);
                             Log($"Added {TrainerNID} to the BannedIDs list.");
                         }
                     }
@@ -204,7 +203,7 @@ public abstract class PokeRoutineExecutor<T>(IConsoleBotManaged<IConsoleConnecti
                     msg += $"\nID: {TrainerNID}";
                 if (!string.IsNullOrWhiteSpace(AbuseSettings.MultiAbuseEchoMention))
                     msg = $"{AbuseSettings.MultiAbuseEchoMention} {msg}";
-                EchoUtil.Echo(msg);
+                Log(msg);
             }
         }
 
@@ -222,7 +221,7 @@ public abstract class PokeRoutineExecutor<T>(IConsoleBotManaged<IConsoleConnecti
                         await BlockUser(token).ConfigureAwait(false);
                         if (AbuseSettings.BanIDWhenBlockingUser || bot is not PokeRoutineExecutor8SWSH) // Only ban ID if blocking in SWSH, always in other games.
                         {
-                            AbuseSettings.BannedIDs.AddIfNew(new[] { GetReference(TrainerName, TrainerNID, "🚫 Bloqueado en el juego por enviar a varios jugadores dentro de el juego") });
+                            AbuseSettings.BannedIDs.AddIfNew([GetReference(TrainerName, TrainerNID, "🚫 Bloqueado en el juego por enviar a varios jugadores dentro de el juego")]);
                             Log($"Added {TrainerNID} to the BannedIDs list.");
                         }
                     }
@@ -234,7 +233,7 @@ public abstract class PokeRoutineExecutor<T>(IConsoleBotManaged<IConsoleConnecti
                     msg += $"\nID: {TrainerNID}";
                 if (!string.IsNullOrWhiteSpace(AbuseSettings.MultiRecipientEchoMention))
                     msg = $"{AbuseSettings.MultiRecipientEchoMention} {msg}";
-                EchoUtil.Echo(msg);
+                Log(msg);
             }
         }
 

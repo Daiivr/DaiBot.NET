@@ -188,6 +188,24 @@ public class TradeSettings : IBotStateSettings, ICountSettings
 
         [Category(EmbedSettings), Description("The emoji information for displaying the alpha emoji in Legends: Arceus.")]
         public EmojiInfo AlphaPLAEmoji { get; set; } = new EmojiInfo();
+
+        [Category(EmbedSettings), Description("Will show Scale in trade embed (SV & Discord only). Requires user to upload the emojis to their server.")]
+        public bool ShowScale { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Tera Type in trade embed (SV & Discord only).")]
+        public bool ShowTeraType { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Level in trade embed (Discord only).")]
+        public bool ShowLevel { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Ability in trade embed (Discord only).")]
+        public bool ShowAbility { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show Nature in trade embed (Discord only).")]
+        public bool ShowNature { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Will show IVs in trade embed (Discord only).")]
+        public bool ShowIVs { get; set; } = true;
     }
 
     [Category(VGCPastesConfig), TypeConverter(typeof(CategoryConverter<VGCPastesCategory>))]

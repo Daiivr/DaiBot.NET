@@ -16,11 +16,9 @@ using System.IO;
 using SysBot.Pokemon.Helpers;
 using PKHeX.Core.AutoMod;
 using PKHeX.Drawing.PokeSprite;
-using System.Text.RegularExpressions;
-using static System.Net.Mime.MediaTypeNames;
-using static TeraTypeDictionaries;
 using static MovesTranslationDictionary;
 using static AbilityTranslationDictionary;
+using static NatureTranslations;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -29,10 +27,10 @@ public static class QueueHelper<T> where T : PKM, new()
     private const uint MaxTradeCode = 9999_9999;
 
     // A dictionary to hold batch trade file paths and their deletion status
-    private static Dictionary<int, List<string>> batchTradeFiles = [];
-    private static Dictionary<ulong, int> userBatchTradeMaxDetailId = [];
+    private static readonly Dictionary<int, List<string>> batchTradeFiles = [];
+    private static readonly Dictionary<ulong, int> userBatchTradeMaxDetailId = [];
 
-    public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, int formArgument = 0, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
+    public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
     {
         if ((uint)code > MaxTradeCode)
         {
@@ -53,14 +51,13 @@ public static class QueueHelper<T> where T : PKM, new()
                 }
                 else
                 {
-                    await trader.SendMessageAsync($"Tu código de tradeo sera: **{code:0000 0000}**").ConfigureAwait(false);
+                    await trader.SendMessageAsync($"Tu código de tradeo sera: **{code:0000 0000}**.\nTe enviaré un mensaje cuando tu operación esté a punto de comenzar.").ConfigureAwait(false);
                 }
             }
 
-            // Add to trade queue and get the result
-            var result = await AddToTradeQueue(context, trade, code, trainer, sig, routine, type, trader, isBatchTrade, batchTradeNumber, totalBatchTrades, formArgument, isMysteryEgg, lgcode).ConfigureAwait(false);
+            var result = await AddToTradeQueue(context, trade, code, trainer, sig, routine, isBatchTrade ? PokeTradeType.Batch : type, trader, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode).ConfigureAwait(false);
             // Delete the user's join message for privacy
-            if(!isBatchTrade && !context.IsPrivate)
+            if (!isBatchTrade && !context.IsPrivate)
                 await context.Message.DeleteAsync(RequestOptions.Default).ConfigureAwait(false);
         }
         catch (HttpException ex)
@@ -74,7 +71,7 @@ public static class QueueHelper<T> where T : PKM, new()
         return AddToQueueAsync(context, code, trainer, sig, trade, routine, type, context.User);
     }
 
-    private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, int formArgument = 0, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
+    private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, bool isMysteryEgg = false, List<Pictocodes> lgcode = null)
     {
         var user = trader;
         var userID = user.Id;
@@ -84,7 +81,7 @@ public static class QueueHelper<T> where T : PKM, new()
         var notifier = new DiscordTradeNotifier<T>(pk, trainer, code, trader, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode);
         var uniqueTradeID = GenerateUniqueTradeID();
         var detail = new PokeTradeDetail<T>(pk, trainer, notifier, t, code, sig == RequestSignificance.Favored, lgcode, batchTradeNumber, totalBatchTrades, isMysteryEgg, uniqueTradeID);
-        var trade = new TradeEntry<T>(detail, userID, type, name, uniqueTradeID);
+        var trade = new TradeEntry<T>(detail, userID, PokeRoutineType.LinkTrade, name, uniqueTradeID);
         var strings = GameInfo.GetStrings(1);
         var hub = SysCord<T>.Runner.Hub;
         var Info = hub.Queues.Info;
@@ -93,24 +90,176 @@ public static class QueueHelper<T> where T : PKM, new()
         bool useTypeEmojis = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MoveTypeEmojis;
         string maleEmojiString = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MaleEmoji.EmojiString;
         string femaleEmojiString = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.FemaleEmoji.EmojiString;
-
+        bool showScale = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowScale;
+        bool showTeraType = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowTeraType;
+        bool showLevel = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowLevel;
+        bool showAbility = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowAbility;
+        bool showNature = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowNature;
+        bool showIVs = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowIVs;
         if (added == QueueResultAdd.AlreadyInQueue)
         {
             return new TradeQueueResult(false);
         }
+        var typeEmojis = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.CustomTypeEmojis
+                             .Where(e => !string.IsNullOrEmpty(e.EmojiName) && !string.IsNullOrEmpty(e.ID))
+                             .ToDictionary(
+                                 e => e.MoveType,
+                                 e => $"<:{e.EmojiName}:{e.ID}>"
+                             );
 
+        // Basic Pokémon details
+        int[] ivs = pk.IVs;
+        ushort[] moves = new ushort[4];
+        pk.GetMoves(moves.AsSpan());
+        List<int> movePPs = [pk.Move1_PP, pk.Move2_PP, pk.Move3_PP, pk.Move4_PP];
+        List<string> moveNames = [];
+        for (int i = 0; i < moves.Length; i++)
+        {
+            if (moves[i] == 0) continue;
+            string moveName = GameInfo.MoveDataSource.FirstOrDefault(m => m.Value == moves[i])?.Text ?? "";
+            string translatedMoveName = MovesTranslation.ContainsKey(moveName) ? MovesTranslation[moveName] : moveName;
+            byte moveTypeId = MoveInfo.GetType(moves[i], default);
+            MoveType moveType = (MoveType)moveTypeId;
+            string formattedMove = $"{translatedMoveName}";
+            if (useTypeEmojis && typeEmojis.TryGetValue(moveType, out var moveEmoji))
+            {
+                formattedMove = $"{moveEmoji} {formattedMove}";
+            }
+            moveNames.Add($"\u200B{formattedMove}"); // Adding a zero-width space for formatting purposes if needed
+        }
+        int level = pk.CurrentLevel;
+
+        // Pokémon appearance and type details
+        string teraTypeString = "", scaleText = "", abilityName, natureName, speciesName, formName, speciesAndForm, heldItemName, ballName, formDecoration = "";
+        byte scaleNumber = 0;
+        if (pk is PK9 pk9)
+        {
+            teraTypeString = GetTeraTypeString(pk9);
+            scaleText = $"{PokeSizeDetailedUtil.GetSizeRating(pk9.Scale)}";
+            scaleNumber = pk9.Scale;
+        }
+
+        // Pokémon identity and special attributes
+        abilityName = GameInfo.AbilityDataSource.FirstOrDefault(a => a.Value == pk.Ability)?.Text ?? "";
+        natureName = GameInfo.NatureDataSource.FirstOrDefault(n => n.Value == (int)pk.Nature)?.Text ?? "";
+        speciesName = GameInfo.GetStrings(1).Species[pk.Species];
+        string translatedAbility = AbilityTranslation.ContainsKey(abilityName) ? AbilityTranslation[abilityName] : abilityName;
+        string traduccionNature = TraduccionesNaturalezas.ContainsKey(natureName) ? TraduccionesNaturalezas[natureName] : natureName;
+        string alphaMarkSymbol = string.Empty;
+        string mightyMarkSymbol = string.Empty;
+        string markTitle = string.Empty;
+        if (pk is IRibbonSetMark9 ribbonSetMark)
+        {
+            alphaMarkSymbol = ribbonSetMark.RibbonMarkAlpha ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.AlphaMarkEmoji.EmojiString : string.Empty;
+            mightyMarkSymbol = ribbonSetMark.RibbonMarkMightiest ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MightiestMarkEmoji.EmojiString : string.Empty;
+        }
+        if (pk is IRibbonIndex ribbonIndex)
+        {
+            AbstractTrade<T>.HasMark(ribbonIndex, out RibbonIndex result, out markTitle);
+        }
+        string alphaSymbol = (pk is IAlpha alpha && alpha.IsAlpha) ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.AlphaPLAEmoji.EmojiString : string.Empty;
+        string shinySymbol = pk.ShinyXor == 0 ? "<:square:1134580807529398392> " : pk.IsShiny ? "<:shiny:1134580552926777385> " : string.Empty;
+        string genderSymbol = GameInfo.GenderSymbolASCII[pk.Gender];
+        string displayGender = genderSymbol switch
+        {
+            "M" => !string.IsNullOrEmpty(maleEmojiString) ? maleEmojiString : "(M) ",
+            "F" => !string.IsNullOrEmpty(femaleEmojiString) ? femaleEmojiString : "(F) ",
+            _ => ""
+        };
+        string mysteryGiftEmoji = pk.FatefulEncounter ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MysteryGiftEmoji.EmojiString : "";
+        displayGender += alphaSymbol + mightyMarkSymbol + alphaMarkSymbol + mysteryGiftEmoji;
+        formName = ShowdownParsing.GetStringFromForm(pk.Form, strings, pk.Species, pk.Context);
+        string toppingName = "";
+        if (pk.Species == (int)Species.Alcremie && pk is IFormArgument formArgument)
+        {
+            AlcremieDecoration topping = (AlcremieDecoration)formArgument.FormArgument;
+            toppingName = $"-{topping}";
+            formName += toppingName;
+        }
+        speciesAndForm = $"**{shinySymbol}{speciesName}{(string.IsNullOrEmpty(formName) ? "" : $"-{formName}")}{(!string.IsNullOrEmpty(markTitle) ? markTitle : "")} {displayGender}**";
+        heldItemName = strings.itemlist[pk.HeldItem];
+        ballName = strings.balllist[pk.Ball];
+
+        // Request type flags
+        bool isCloneRequest = type == PokeRoutineType.Clone;
+        bool isDumpRequest = type == PokeRoutineType.Dump;
+        bool FixOT = type == PokeRoutineType.FixOT;
+        bool isSpecialRequest = type == PokeRoutineType.SeedCheck;
+
+        // Display elements
+        // Comprobar si todos los IVs son 31
+        bool todosMaximos = ivs.All(iv => iv == 31);
+        string ivsDisplay = todosMaximos ? "Máximos" : $"{ivs[0]}/{ivs[1]}/{ivs[2]}/{ivs[3]}/{ivs[4]}/{ivs[5]}";
+        string movesDisplay = string.Join("\n", moveNames);
+        string shinyEmoji = pk.IsShiny ? "✨ " : "";
+        string pokemonDisplayName = pk.IsNicknamed ? pk.Nickname : GameInfo.GetStrings(1).Species[pk.Species];
+
+        // Queue position and ETA calculation
         var position = Info.CheckPosition(userID, uniqueTradeID, type);
         var botct = Info.Hub.Bots.Count;
         var baseEta = position.Position > botct ? Info.Hub.Config.Queues.EstimateDelay(position.Position, botct) : 0;
-        var etaMessage = $"Estimado: {baseEta:F1} minuto(s) para el tradeo {batchTradeNumber}/{totalBatchTrades}.";
+        var etaMessage = $"Estimated: {baseEta:F1} min(s) for trade {batchTradeNumber}/{totalBatchTrades}.";
+
+        // Determining trade title based on trade type
+        string tradeTitle;
+        tradeTitle = isMysteryEgg ? "✨ Huevo Misterioso Shiny ✨ de" :
+                     isBatchTrade ? $"Comercio por lotes #{batchTradeNumber} - {shinyEmoji}{pokemonDisplayName} de" :
+                     FixOT ? "Solicitud de FixOT de" :
+                     isSpecialRequest ? "Solicitud Especial de" :
+                     isCloneRequest ? "Capsula de Clonación activada para" :
+                     isDumpRequest ? "Solicitud de Dump de" :
+                     "";
+
+        // Prepare embed details for Discord message
+        (string embedImageUrl, DiscordColor embedColor) = await PrepareEmbedDetails(pk);
+
+        // Adjust image URL based on request type
+        embedImageUrl = isMysteryEgg ? "https://raw.githubusercontent.com/bdawg1989/sprites/main/mysteryegg2.png" :
+                        isDumpRequest ? "https://i.imgur.com/9wfEHwZ.png" :
+                        isCloneRequest ? "https://i.imgur.com/aSTCjUn.png" :
+                        isSpecialRequest ? "https://i.imgur.com/EI1BHr5.png" :
+                        FixOT ? "https://i.imgur.com/gRZGFIi.png" :
+                        embedImageUrl; // Keep original if none of the above
+
+        // Prepare held item image URL if available
+        string heldItemUrl = string.Empty;
+        if (!string.IsNullOrWhiteSpace(heldItemName))
+        {
+            heldItemName = heldItemName.ToLower().Replace(" ", "");
+            heldItemUrl = $"https://serebii.net/itemdex/sprites/{heldItemName}.png";
+        }
+
+        // Checking if the image URL points to a local file
+        bool isLocalFile = File.Exists(embedImageUrl);
+        string userName = string.IsNullOrEmpty(user.GlobalName) ? user.Username : user.GlobalName;
+        string isPkmShiny = pk.IsShiny ? " Shiny" : "";
+
+        // Building the embed author name based on the type of trade
+        string authorName = isMysteryEgg || FixOT || isCloneRequest || isDumpRequest || isSpecialRequest || isBatchTrade ?
+                            $"{tradeTitle} {userName}" :
+                            $"Pokémon{isPkmShiny} solicitado por {userName} ";
+
+        // Initializing the embed builder with general settings
+        var embedBuilder = new EmbedBuilder()
+            .WithColor(embedColor)
+            .WithImageUrl(isLocalFile ? $"attachment://{Path.GetFileName(embedImageUrl)}" : embedImageUrl)
+            .WithFooter($"Posición actual: {position.Position}\n{etaMessage}")
+            .WithAuthor(new EmbedAuthorBuilder()
+                .WithName(authorName)
+                .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()));
+
+        // Adding additional text to the embed, if any
+        string additionalText = string.Join("\n", SysCordSettings.Settings.AdditionalEmbedText);
+        if (!string.IsNullOrEmpty(additionalText))
+        {
+            embedBuilder.AddField("\u200B", additionalText, inline: false);
+        }
 
         var scaleEmojis = ScaleEmojisDictionary.ScaleEmojis;
         string scale = "";
-
         if (pk is PA8 fin8a)
         {
             string scaleRating = PokeSizeDetailedUtil.GetSizeRating(fin8a.Scale).ToString();
-
             // Check if the scale value has a corresponding emoji
             if (scaleEmojis.TryGetValue(scaleRating, out string? emojiCode))
             {
@@ -130,7 +279,6 @@ public static class QueueHelper<T> where T : PKM, new()
         if (pk is PB8 fin8b)
         {
             string scaleRating = PokeSizeDetailedUtil.GetSizeRating(fin8b.HeightScalar).ToString();
-
             // Check if the scale value has a corresponding emoji
             if (scaleEmojis.TryGetValue(scaleRating, out string? emojiCode))
             {
@@ -146,7 +294,6 @@ public static class QueueHelper<T> where T : PKM, new()
         if (pk is PK8 fin8)
         {
             string scaleRating = PokeSizeDetailedUtil.GetSizeRating(fin8.HeightScalar).ToString();
-
             // Check if the scale value has a corresponding emoji
             if (scaleEmojis.TryGetValue(scaleRating, out string? emojiCode))
             {
@@ -162,7 +309,6 @@ public static class QueueHelper<T> where T : PKM, new()
         if (pk is PK9 fin9)
         {
             string scaleRating = PokeSizeDetailedUtil.GetSizeRating(fin9.Scale).ToString();
-
             // Check if the scale value has a corresponding emoji
             if (scaleEmojis.TryGetValue(scaleRating, out string? emojiCode))
             {
@@ -176,204 +322,17 @@ public static class QueueHelper<T> where T : PKM, new()
             }
         }
 
-        var typeEmojis = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.CustomTypeEmojis
-                             .Where(e => !string.IsNullOrEmpty(e.EmojiName) && !string.IsNullOrEmpty(e.ID))
-                             .ToDictionary(
-                                 e => e.MoveType,
-                                 e => $"<:{e.EmojiName}:{e.ID}>"
-                             );
-
-        // Format IVs for display
-        int[] ivs = pk.IVs;
-        // Comprobar si todos los IVs son 31
-        bool todosMaximos = ivs.All(iv => iv == 31);
-        string ivsDisplay = todosMaximos ? "Máximos" : $"{ivs[0]}/{ivs[1]}/{ivs[2]}/{ivs[3]}/{ivs[4]}/{ivs[5]}";
-
-        ushort[] moves = new ushort[4];
-        pk.GetMoves(moves.AsSpan());
-        List<int> movePPs = [pk.Move1_PP, pk.Move2_PP, pk.Move3_PP, pk.Move4_PP];
-        List<string> moveNames = [];
-        for (int i = 0; i < moves.Length; i++)
-        {
-            if (moves[i] == 0) continue;
-            string moveName = GameInfo.MoveDataSource.FirstOrDefault(m => m.Value == moves[i])?.Text ?? "";
-            string translatedMoveName = MovesTranslation.ContainsKey(moveName) ? MovesTranslation[moveName] : moveName;
-            byte moveTypeId = MoveInfo.GetType(moves[i], default);
-            MoveType moveType = (MoveType)moveTypeId;
-            string formattedMove = $"{translatedMoveName} ({movePPs[i]}pp)";
-            if (useTypeEmojis && typeEmojis.TryGetValue(moveType, out var moveEmoji))
-            {
-                formattedMove = $"{moveEmoji} {formattedMove}";
-            }
-            moveNames.Add($"{formattedMove}"); // Adding a zero-width space for formatting purposes if needed
-        }
-
-        string movesDisplay = string.Join("\n", moveNames);
-        string abilityName = GameInfo.AbilityDataSource.FirstOrDefault(a => a.Value == pk.Ability)?.Text ?? "";
-        string translatedAbility = AbilityTranslation.ContainsKey(abilityName) ? AbilityTranslation[abilityName] : abilityName;
-        string natureName = GameInfo.NatureDataSource.FirstOrDefault(n => n.Value == (int)pk.Nature)?.Text ?? "";
-        string teraTypeString;
-        if (pk is PK9 pk9)
-        {
-            teraTypeString = pk9.TeraTypeOverride == (MoveType)99 ? "Stellar" : pk9.TeraType.ToString();
-        }
-        else
-        {
-            teraTypeString = ""; // or another default value as needed
-        }
-
-        var traduccionesNaturalezas = NatureTranslations.TraduccionesNaturalezas;
-
-        int level = pk.CurrentLevel;
-        string speciesName = GameInfo.GetStrings(1).Species[pk.Species];
-        string traduccionNature = traduccionesNaturalezas.ContainsKey(natureName) ? traduccionesNaturalezas[natureName] : natureName;
-        string alphaMarkSymbol = string.Empty;
-        string mightyMarkSymbol = string.Empty;
-        if (pk is IRibbonSetMark9 ribbonSetMark)
-        {
-            alphaMarkSymbol = ribbonSetMark.RibbonMarkAlpha ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.AlphaMarkEmoji.EmojiString : string.Empty;
-            mightyMarkSymbol = ribbonSetMark.RibbonMarkMightiest ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MightiestMarkEmoji.EmojiString : string.Empty;
-        }
-        string alphaSymbol = (pk is IAlpha alpha && alpha.IsAlpha) ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.AlphaPLAEmoji.EmojiString : string.Empty;
-        string shinySymbol = pk.ShinyXor == 0 ? "<:square:1134580807529398392> " : pk.IsShiny ? "<:shiny:1134580552926777385> " : string.Empty;
-        string genderSymbol = GameInfo.GenderSymbolASCII[pk.Gender];
-        string displayGender = genderSymbol switch
-        {
-            "M" => !string.IsNullOrEmpty(maleEmojiString) ? maleEmojiString : "(M) ",
-            "F" => !string.IsNullOrEmpty(femaleEmojiString) ? femaleEmojiString : "(F) ",
-            _ => ""
-        };
-        string mysteryGiftEmoji = pk.FatefulEncounter ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MysteryGiftEmoji.EmojiString : "";
-        displayGender += alphaSymbol + mightyMarkSymbol + alphaMarkSymbol + mysteryGiftEmoji;
-        string formName = ShowdownParsing.GetStringFromForm(pk.Form, strings, pk.Species, pk.Context);
-        string speciesAndForm = $"**{shinySymbol}{speciesName}{(string.IsNullOrEmpty(formName) ? "" : $"-{formName}")} {displayGender}**";
-        string heldItemName = strings.itemlist[pk.HeldItem];
-        string ballName = strings.balllist[pk.Ball];
-
-
-        string formDecoration = "";
-        if (pk.Species == (int)Species.Alcremie && formArgument != 0)
-        {
-            formDecoration = $"{(AlcremieDecoration)formArgument}";
-        }
-
-        // Determine if this is a clone or dump request
-        bool isCloneRequest = type == PokeRoutineType.Clone;
-        bool isDumpRequest = type == PokeRoutineType.Dump;
-        bool FixOT = type == PokeRoutineType.FixOT;
-        bool isSpecialRequest = type == PokeRoutineType.SeedCheck;
-
-        // Check if the Pokémon is shiny and prepend the shiny emoji
-        string shinyEmoji = pk.IsShiny ? "✨ " : "";
-        string pokemonDisplayName = pk.IsNicknamed ? pk.Nickname : GameInfo.GetStrings(1).Species[pk.Species];
-        string tradeTitle;
-
-        if (isMysteryEgg)
-        {
-            tradeTitle = "✨ Huevo Misterioso Shiny ✨ de";
-        }
-        else if (isBatchTrade)
-        {
-            tradeTitle = $"Comercio por lotes #{batchTradeNumber} - {shinyEmoji}{pokemonDisplayName} de";
-        }
-        else if (FixOT)
-        {
-            tradeTitle = $"Solicitud de FixOT de ";
-        }
-        else if (isSpecialRequest)
-        {
-            tradeTitle = $"Solicitud Especial de";
-        }
-        else if (isCloneRequest)
-        {
-            tradeTitle = "Capsula de Clonación activada para";
-        }
-        else if (isDumpRequest)
-        {
-            tradeTitle = "Solicitud de Dump de";
-        }
-        else
-        {
-            tradeTitle = $"";
-        }
-
-        // Get the Pokémon's image URL and dominant color
-        (string embedImageUrl, DiscordColor embedColor) = await PrepareEmbedDetails(context, pk, isCloneRequest || isDumpRequest, formName, formArgument);
-
-        // Adjust the image URL for dump request
-        if (isMysteryEgg)
-        {
-            embedImageUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/mysteryegg2.png"; // URL for mystery egg
-        }
-        else if (isDumpRequest)
-        {
-            embedImageUrl = "https://i.imgur.com/9wfEHwZ.png"; // URL for dump request
-        }
-        else if (isCloneRequest)
-        {
-            embedImageUrl = "https://i.imgur.com/aSTCjUn.png"; // URL for clone request
-        }
-        else if (isSpecialRequest)
-        {
-            embedImageUrl = "https://i.imgur.com/EI1BHr5.png"; // URL for clone request
-        }
-        else if (FixOT)
-        {
-            embedImageUrl = "https://i.imgur.com/gRZGFIi.png"; // URL for fixot request
-        }
-        string heldItemUrl = string.Empty;
-
-        if (!string.IsNullOrWhiteSpace(heldItemName))
-        {
-            // Convert to lowercase and remove spaces
-            heldItemName = heldItemName.ToLower().Replace(" ", "");
-            heldItemUrl = $"https://serebii.net/itemdex/sprites/{heldItemName}.png";
-        }
-        // Check if the image URL is a local file path
-        bool isLocalFile = File.Exists(embedImageUrl);
-        string userName = string.IsNullOrEmpty(user.GlobalName) ? user.Username : user.GlobalName;
-        string isPkmShiny = pk.IsShiny ? " Shiny" : "";
-        // Build the embed with the author title image
-        string authorName;
-
-        // Determine the author's name based on trade type
-        if (isMysteryEgg || FixOT || isCloneRequest || isDumpRequest || isSpecialRequest || isBatchTrade)
-        {
-            authorName = $"{tradeTitle} {userName}";
-        }
-        else // Normal trade
-        {
-            authorName = $"Pokémon{isPkmShiny} solicitado por {userName} ";
-        }
-        var embedBuilder = new EmbedBuilder()
-            .WithColor(embedColor)
-            .WithImageUrl(embedImageUrl)
-            .WithFooter($"Posición actual: {position.Position}\n{etaMessage}")
-            .WithAuthor(new EmbedAuthorBuilder()
-                .WithName(authorName)
-                .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()));
-
-        // Add the additional text at the top as its own field
-        string additionalText = string.Join("\n", SysCordSettings.Settings.AdditionalEmbedText);
-        if (!string.IsNullOrEmpty(additionalText))
-        {
-            embedBuilder.AddField("\u200B", additionalText, inline: false); // '\u200B' is a zero-width space to create an empty title
-        }
-
-        // Conditionally add the 'Trainer' and 'Moves' fields based on trade type
+        // Constructing the content of the embed based on the trade type
         if (!isMysteryEgg && !isCloneRequest && !isDumpRequest && !FixOT && !isSpecialRequest)
         {
-            // Prepare the left side content
-            string leftSideContent = $"**Entrenador**: {user.Mention}\n" +
-                                     $"**Nivel**: {level}\n";
-
+            // Preparing content for normal trades
+            string leftSideContent = (showLevel ? $"**Nivel:** {level}\n" : "");
             // Add Tera Type information if the Pokémon is PK9 and the game version supports it
             if (pk is PK9 pk9Instance && (pk.Version == GameVersion.SL || pk.Version == GameVersion.VL))
             {
                 var tera = pk9Instance.TeraType.ToString();
                 var teraEmojis = TeraTypeDictionaries.TeraEmojis;
                 var teraTranslations = TeraTypeDictionaries.TeraTranslations;
-
                 // Check if the Tera Type has a corresponding emoji and translation
                 if (teraEmojis.TryGetValue(tera, out string emojiID) && teraTranslations.TryGetValue(tera, out string teraEsp))
                 {
@@ -389,56 +348,47 @@ public static class QueueHelper<T> where T : PKM, new()
                     leftSideContent += $"**Tera Tipo**: {tera}\n";
                 }
             }
-            leftSideContent += $"**Habilidad**: {translatedAbility}\n";
-            if (!(pk is PB7)) // Exclude scale for PB7 type
-            {
-                leftSideContent += $"{scale}\n";
-            };
-            leftSideContent += $"**Naturaleza**: {traduccionNature}\n" +
-                               $"**IVs**: {ivsDisplay}\n";
+            leftSideContent +=
+                (showAbility ? $"**Habilidad:** {translatedAbility}\n" : "") +
+                ($"{scale}\n") +
+                (showNature ? $"**Naturaleza**: {traduccionNature}\n" : "") +
+                (showIVs ? $"**IVs**: {ivsDisplay}\n" : "");
             var evs = new List<string>();
-
             // Agregar los EVs no nulos al listado
             if (pk.EV_HP != 0)
                 evs.Add($"{pk.EV_HP} HP");
-
             if (pk.EV_ATK != 0)
                 evs.Add($"{pk.EV_ATK} Atk");
-
             if (pk.EV_DEF != 0)
                 evs.Add($"{pk.EV_DEF} Def");
-
             if (pk.EV_SPA != 0)
                 evs.Add($"{pk.EV_SPA} SpA");
-
             if (pk.EV_SPD != 0)
                 evs.Add($"{pk.EV_SPD} SpD");
-
             if (pk.EV_SPE != 0)
                 evs.Add($"{pk.EV_SPE} Spe");
-
             // Comprobar si hay EVs para agregarlos al mensaje
             if (evs.Any())
             {
                 leftSideContent += "**EVs**: " + string.Join(" / ", evs) + "\n";
             }
-            // Add the field to the embed
+            leftSideContent += $"\n{user.Mention}\nAgregado a la cola de tradeo.";
+
+            leftSideContent = leftSideContent.TrimEnd('\n');
             embedBuilder.AddField($"{speciesAndForm}", leftSideContent, inline: true);
-            // Add a blank field to align with the 'Trainer' field on the left
-            embedBuilder.AddField("\u200B", "\u200B", inline: true); // First empty field for spacing
-            // 'Moves' as another inline field, ensuring it's aligned with the content on the left
-            embedBuilder.AddField("Movimientos", movesDisplay, inline: true);
+            embedBuilder.AddField("\u200B", "\u200B", inline: true); // Spacer
+            embedBuilder.AddField("**Movimientos:**", movesDisplay, inline: true);
         }
         else
         {
-            // For special cases, add only the special description
-            string specialDescription = $"**Entrenador**: {user.Mention}\n" +
+            // Preparing content for special types of trades
+            string specialDescription = $"**Entrenador:** {user.Mention}\n" +
                                         (isMysteryEgg ? "Huevo Misterioso" : isSpecialRequest ? "Solicitud Especial" : isCloneRequest ? "Solicitud de clonación" : FixOT ? "Solicitud de FixOT" : "Solicitud de Dump");
             embedBuilder.AddField("\u200B", specialDescription, inline: false);
         }
 
-        // Set thumbnail images
-        if (isCloneRequest || isSpecialRequest || isDumpRequest || FixOT)
+        // Adding thumbnails for clone and special requests, or held items
+        if (isCloneRequest || isSpecialRequest)
         {
             embedBuilder.WithThumbnailUrl("https://raw.githubusercontent.com/bdawg1989/sprites/main/profoak.png");
         }
@@ -447,37 +397,23 @@ public static class QueueHelper<T> where T : PKM, new()
             embedBuilder.WithThumbnailUrl(heldItemUrl);
         }
 
-        // If the image is a local file, set the image URL to the attachment reference
-        if (isLocalFile)
-        {
-            embedBuilder.WithImageUrl($"attachment://{Path.GetFileName(embedImageUrl)}");
-        }
-
+        // Building and sending the embed message
         var embed = embedBuilder.Build();
         if (embed == null)
         {
             Console.WriteLine("Error: Embed is null.");
-            await context.Channel.SendMessageAsync("Se produjo un error al preparar los detalles del trade.");
+            await context.Channel.SendMessageAsync("<a:warning:1206483664939126795> Se produjo un error al preparar los detalles del trade.");
             return new TradeQueueResult(false);
         }
 
+        // Handling file operations for batch trades and sending messages
         if (isLocalFile)
         {
-            // Send the message with the file and embed, referencing the file in the embed
             await context.Channel.SendFileAsync(embedImageUrl, embed: embed);
-
             if (isBatchTrade)
             {
-                // Update the highest detail.ID for this user's batch trades
-                if (!userBatchTradeMaxDetailId.ContainsKey(userID) || userBatchTradeMaxDetailId[userID] < detail.ID)
-                {
-                    userBatchTradeMaxDetailId[userID] = detail.ID;
-                }
-
-                // Schedule file deletion for batch trade
+                userBatchTradeMaxDetailId[userID] = Math.Max(userBatchTradeMaxDetailId.GetValueOrDefault(userID), detail.ID);
                 await ScheduleFileDeletion(embedImageUrl, 0, detail.ID);
-
-                // Check if this is the last trade in the batch for the user
                 if (detail.ID == userBatchTradeMaxDetailId[userID] && batchTradeNumber == totalBatchTrades)
                 {
                     DeleteBatchTradeFiles(detail.ID);
@@ -485,7 +421,6 @@ public static class QueueHelper<T> where T : PKM, new()
             }
             else
             {
-                // For non-batch trades, just schedule file deletion normally
                 await ScheduleFileDeletion(embedImageUrl, 0);
             }
         }
@@ -503,6 +438,23 @@ public static class QueueHelper<T> where T : PKM, new()
         int randomValue = new Random().Next(1000);
         int uniqueTradeID = (int)(timestamp % int.MaxValue) * 1000 + randomValue;
         return uniqueTradeID;
+    }
+
+    private static string GetTeraTypeString(PK9 pk9)
+    {
+        if (pk9.TeraTypeOverride == (MoveType)TeraTypeUtil.Stellar)
+        {
+            return "Stellar";
+        }
+        else if ((int)pk9.TeraType == 99) // Terapagos
+        {
+            return "Stellar";
+        }
+        // Fallback to default TeraType string representation if not Stellar
+        else
+        {
+            return pk9.TeraType.ToString();
+        }
     }
 
     private static string GetImageFolderPath()
@@ -536,7 +488,7 @@ public static class QueueHelper<T> where T : PKM, new()
         return filePath;
     }
 
-    private static async Task<(string, DiscordColor)> PrepareEmbedDetails(SocketCommandContext context, T pk, bool isCloneRequest, string formName, int formArgument = 0)
+    private static async Task<(string, DiscordColor)> PrepareEmbedDetails(T pk)
     {
         string embedImageUrl;
         string speciesImageUrl;
@@ -597,7 +549,7 @@ public static class QueueHelper<T> where T : PKM, new()
 
             if (!ballImageLoaded)
             {
-                Console.WriteLine($"Ball image could not be loaded: {ballImgUrl}");
+                Console.WriteLine($"No se pudo cargar la imagen de la pelota: {ballImgUrl}");
                // await context.Channel.SendMessageAsync($"Ball image could not be loaded: {ballImgUrl}");
             }
         }
@@ -612,14 +564,14 @@ public static class QueueHelper<T> where T : PKM, new()
         {
             if (speciesImage == null)
             {
-                Console.WriteLine("Species image could not be loaded.");
+                Console.WriteLine("No se pudo cargar la imagen de la especie.");
                 return (null, false);
             }
 
             var ballImage = await LoadImageFromUrl(ballImageUrl);
             if (ballImage == null)
             {
-                Console.WriteLine($"Ball image could not be loaded: {ballImageUrl}");
+                Console.WriteLine($"No se pudo cargar la imagen de la pelota: {ballImageUrl}");
                 return ((System.Drawing.Image)speciesImage.Clone(), false); // Return false indicating failure
             }
 
@@ -942,4 +894,5 @@ public static class QueueHelper<T> where T : PKM, new()
         Embed returnembed = new EmbedBuilder().WithTitle($"{lgcode[0]}, {lgcode[1]}, {lgcode[2]}").WithImageUrl($"attachment://{filename}").Build();
         return (filename, returnembed);
     }
+
 }

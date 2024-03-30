@@ -225,6 +225,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             PokeTradeType.Clone => PokeRoutineType.Clone,
             PokeTradeType.Dump => PokeRoutineType.Dump,
             PokeTradeType.FixOT => PokeRoutineType.FixOT,
+            PokeTradeType.Batch => PokeRoutineType.Batch,
             _ => PokeRoutineType.LinkTrade,
         };
     }
@@ -295,8 +296,11 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             if (toSend.Species != 0)
                 await SetBoxPokemonAbsolute(BoxStartOffset, toSend, token, sav).ConfigureAwait(false);
 
-            // Trigger the StartTrade process for each trade in the batch
-            Hub.Queues.StartTrade(this, poke);
+            // Trigger the StartTrade process only after the first trade in the batch
+            if (completedTrades > 0)
+            {
+                Hub.Queues.StartTrade(this, poke);
+            }
 
             // Search for a trade partner for a Link Trade.
             await Click(A, 0_500, token).ConfigureAwait(false);
@@ -326,8 +330,6 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
                 if (poke.TotalBatchTrades > 1)
                 {
                     // If it's part of a batch trade, remove the current trade from the queue
-                    var routineType = GetRoutineType(poke.Type);
-                    Hub.Queues.Info.Remove(new TradeEntry<PK9>(poke, poke.Trainer.ID, routineType, poke.Trainer.TrainerName, poke.UniqueTradeID));
                     Log($"No trainer found for trade {completedTrades + 1} of {poke.TotalBatchTrades}. Removing from the queue.");
                 }
 
@@ -483,9 +485,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
 
                 completedTrades++;
 
-                // Remove the current trade from the queue
                 var routineType = GetRoutineType(poke.Type);
-                Hub.Queues.Info.Remove(new TradeEntry<PK9>(poke, poke.Trainer.ID, routineType, poke.Trainer.TrainerName, poke.UniqueTradeID));
 
                 if (completedTrades < poke.TotalBatchTrades)
                 {
