@@ -14,13 +14,7 @@ Este bot recibirá todas las actualizaciones que MergeBot reciba.
 
 3- Para el **Simbolo de Warning** en Visual Studio presioná `crtl+shift+f` para buscar, pegas `<a:warning:1206483664939126795>` y lo cambias por tu emoji a preferencia.
 
-4- Para los **Movimientos** en Visual Studio presioná `crtl+shift+f` para buscar, pegas `// Add emojis for specific moves` y los cambias por tus emojis.
-
-5- Para el **Genero** en Visual Studio presioná `crtl+shift+f` para buscar, pegas `var gender = pk.Gender` y los cambias por tus emojis.
-
-6- Para el **Tera Tipo** en Visual Studio presioná `crtl+shift+f` para buscar, pegas `// Add Tera Type information if the Pokémon is PK9 and the game version supports it` y los cambias por tus emojis.
-
-7- Para el **Tamaño** en Visual Studio presioná `crtl+shift+f` para buscar, pegas `// Emoji for XXXS` y los cambias por tus emojis.
+4- Para el **Tera Tipo** y **Tamaño** buscar el archivo `Diccionarios.c` localizado en `DaiBot.NET\SysBot.Pokemon\Helpers` y los cambias por tus emojis.
 
 - __PD: Si sientes que es mucho trabajo, puedes agregarme a [discord](https://discordid.netlify.app/?id=271701484922601472) y agregaré tus bots a mi servidor donde están los emojis__.
 
@@ -29,12 +23,12 @@ Este bot recibirá todas las actualizaciones que MergeBot reciba.
 
 - __Hermosos Embeds__
 - 
-![image](https://i.imgur.com/F1NdO3l.png)
+![image](https://i.imgur.com/GziHZJ7.png)
 
 - __Textos adicionales para el Embed__
 Puedes añadir el texto que quieras para tus incrustaciones, que se mostrará encima de la información del pokémon.
 
-![image](https://i.imgur.com/ulgsxeq.png)
+![image](https://i.imgur.com/z2suYVK.png)
 
 - __Batch Trading__
 Esta función permite a tus usuarios intercambiar pokémon por lotes.  Puedes establecer cuántos quieres permitir en la configuración, o desactivarla por completo.
@@ -61,7 +55,7 @@ Ejemplo:
 Shiny: Yes
 ```
 
-![image](https://i.imgur.com/u9YFVfU.png)
+![image](https://i.imgur.com/Xr4zwWI.png)
 
 - __Gestión y listas negras de servidores__
 ¿Compartes tu bot en varios servidores?  ¿Es tu bot un bot público en el que permites que cualquiera añada tu bot?
