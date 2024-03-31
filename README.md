@@ -21,16 +21,14 @@ Este bot recibirá todas las actualizaciones que MergeBot reciba.
 # Este sysBot ofrece todas las características que puedas desear <3
 ### Soporta Los Siguientes Juegos:  SV/BDSP/PLA/SWSH/LGPE
 
-- __Hermosos Embeds__
-- 
+## Hermosos Embeds                                       
 ![image](https://i.imgur.com/GziHZJ7.png)
 
-- __Textos adicionales para el Embed__
-Puedes añadir el texto que quieras para tus incrustaciones, que se mostrará encima de la información del pokémon.
-
+## Textos adicionales para el Embed
+Puedes añadir el texto que quieras para tus incrustaciones, que se mostrará encima de la información del pokémon.                                                                                                                                                            
 ![image](https://i.imgur.com/z2suYVK.png)
 
-- __Batch Trading__
+## Batch Trading
 Esta función permite a tus usuarios intercambiar pokémon por lotes.  Puedes establecer cuántos quieres permitir en la configuración, o desactivarla por completo.
 ```
 .bt
@@ -41,14 +39,14 @@ Esta función permite a tus usuarios intercambiar pokémon por lotes.  Puedes es
 [Showdown Template]
 ```
 
-- __Huevos Misteriosos__
+## Huevos Misteriosos
 ¿A quién no le gusta un buen misterio?
 Todos los Huevos Misteriosos son siempre Shinies, IV Perfectos y tienen Habilidad Oculta.  ¿Qué Huevo incubarás?
 Manda: `me` o `mysteryegg`.
 
-- __Tradeos de Huevos__
+## Tradeos de Huevos
 Gracias a Koi, también se ha implementado el comercio de huevos.
-Para solicitar un huevo, escribirás `egg <especie>` en lugar de `trade`.
+Para solicitar un huevo, escribirás `egg <especie>` en lugar de `trade`.                                                                                                          
 Ejemplo:  
 ```
 .Egg Charmander
@@ -57,16 +55,16 @@ Shiny: Yes
 
 ![image](https://i.imgur.com/Xr4zwWI.png)
 
-- __Gestión y listas negras de servidores__
+## Gestión y listas negras de servidores
 ¿Compartes tu bot en varios servidores?  ¿Es tu bot un bot público en el que permites que cualquiera añada tu bot?
 Las funciones avanzadas de gestión de servidores te permiten poner fácilmente en la lista negra cualquier servidor.
 Usa `bls <serverid>` para agreagarlos a la lista negra y `ubls <serverid>` para quitarlos de la lista negra.
 Cuando pongas un servidor en tu lista negra, este bot lo abandonará automáticamente.  ¡Adios!
 
-- __Items por defecto__
+## Items por defecto
 Elige un objeto popular por defecto si el usuario no lo proporciona.  Elige entre objetos populares como Parche de habilidad, Caramelos raros, Mochi fresco y mucho más.
 
-- __Eventos y carpeta BattleReady__
+## Eventos y carpeta BattleReady
 Si quieres proporcionar a tus increíbles miembros Legendarios,  Pokemon de Evento y Pokemons ya entrenados con rastrador home, sólo tienes que añadir los archivos a una carpeta de tu máquina local y proporcionar la ruta en la configuración en **Trade > EventsFolder/BattleReadyPKMFolder**.
 Puedes descargar de la página web los Pokémon Home Tracked y Pokemons Entrenados listos para usar.  (todos los archivos .pk9) También, ¡Gracias a todos los usuarios de discord que contribuyeron a estos!  (Maddison, Marnie, Fly, Reedy, Newfie, Joseph11024)
 
