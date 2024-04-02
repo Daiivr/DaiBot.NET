@@ -467,7 +467,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("mysteryegg")]
     [Alias("me")]
-    [Summary("Trades an egg generated from the provided Pokémon name.")]
+    [Summary("Trades a random mystery egg with perfect stats and shiny appearance.")]
     public async Task TradeMysteryEggAsync()
     {
         var code = Info.GetRandomTradeCode();
@@ -558,7 +558,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var sig = Context.User.GetFavor();
         return TradeAsyncAttach(code, sig, Context.User);
     }
-
 
     [Command("trade")]
     [Alias("t")]
@@ -828,6 +827,16 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
     public async Task BatchTradeZipAsync()
     {
+        var batchTradeCode = Info.GetRandomTradeCode();
+        await BatchTradeZipAsync(batchTradeCode).ConfigureAwait(false);
+    }
+
+    [Command("batchtradezip")]
+    [Alias("btz")]
+    [Summary("Makes the bot trade multiple Pokémon from the provided .zip file, up to a maximum of 6 trades.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
+    public async Task BatchTradeZipAsync([Summary("Trade Code")] int code)
+    {
         // First, check if batch trades are allowed
         if (!SysCord<T>.Runner.Config.Trade.TradeConfiguration.AllowBatchTrades)
         {
@@ -896,7 +905,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             return;
         }
 
-        var batchTradeCode = Info.GetRandomTradeCode();
         int batchTradeNumber = 1;
         _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
 
@@ -908,7 +916,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             if (pk is T)
             {
-                await ProcessSingleTradeAsync((T)pk, batchTradeCode, true, batchTradeNumber, entries.Count);
+                await ProcessSingleTradeAsync((T)pk, code, true, batchTradeNumber, entries.Count);
                 batchTradeNumber++;
             }
         }
