@@ -1182,7 +1182,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("specialrequestpokemon")]
     [Alias("srp")]
     [Summary("Downloads wondercard event attachments from the specified generation and adds to trade queue.")]
-    [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task SpecialEventRequestAsync(string generationOrGame, int index)
     {
         // Check if the user is already in the queue
