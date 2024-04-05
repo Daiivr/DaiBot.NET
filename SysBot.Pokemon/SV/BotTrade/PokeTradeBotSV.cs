@@ -386,7 +386,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             await ExitTradeToPortal(false, token).ConfigureAwait(false);
             return result;
         }
-        if (Hub.Config.Legality.UseTradePartnerInfo)
+        if (Hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT)
         {
             await SetBoxPkmWithSwappedIDDetailsSV(toSend, tradePartnerFullInfo, sav, token);
         }
@@ -568,7 +568,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
 
             poke.SendNotification(this, $"Entrenador encontrado: **{tradePartner.TrainerName}**.\n\n▼\n Aqui esta tu Informacion\n **TID**: __{tradePartner.TID7}__\n **SID**: __{tradePartner.SID7}__\n▲\n\n Esperando por un __Pokémon__...");
 
-            if (Hub.Config.Legality.UseTradePartnerInfo)
+            if (Hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT)
             {
                 await SetBoxPkmWithSwappedIDDetailsSV(toSend, tradePartnerFullInfo, sav, token);
             }

@@ -323,7 +323,7 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
             return update;
         }
 
-        if (Hub.Config.Legality.UseTradePartnerInfo)
+        if (Hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT)
         {
             await SetBoxPkmWithSwappedIDDetailsPLA(toSend, tradePartner, sav, token);
         }

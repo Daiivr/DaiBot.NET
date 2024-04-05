@@ -156,7 +156,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             return;
         }
 
-        var code = Info.GetRandomTradeCode();
+        var code = Info.GetRandomTradeCode(userID);
         var trainerName = Context.User.Username;
         var lgcode = Info.GetRandomLGTradeCode();
         var sig = Context.User.GetFavor();
@@ -229,7 +229,37 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Summary("Makes the bot trade you a Ditto with a requested stat spread and language.")]
     public async Task DittoTrade([Summary("Una combinación de \"ATK/SPA/SPE\" o \"6IV\"")] string keyword, [Summary("Language")] string language, [Summary("Nature")] string nature)
     {
-        var code = Info.GetRandomTradeCode();
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
+
+            var queueEmbed = new EmbedBuilder
+            {
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
+        var code = Info.GetRandomTradeCode(userID);
         await DittoTrade(code, keyword, language, nature).ConfigureAwait(false);
     }
 
@@ -271,7 +301,9 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         keyword = keyword.ToLower().Trim();
         if (Enum.TryParse(language, true, out LanguageID lang))
+        {
             language = lang.ToString();
+        }
         else
         {
             await Context.Message.ReplyAsync($"<a:warning:1206483664939126795> No pude reconocer el idioma solicitado: {language}.").ConfigureAwait(false);
@@ -305,7 +337,37 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Summary("Makes the bot trade you a Pokémon holding the requested item, or Ditto if stat spread keyword is provided.")]
     public async Task ItemTrade([Remainder] string item)
     {
-        var code = Info.GetRandomTradeCode();
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
+
+            var queueEmbed = new EmbedBuilder
+            {
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
+        var code = Info.GetRandomTradeCode(userID);
         await ItemTrade(code, item).ConfigureAwait(false);
     }
 
@@ -394,7 +456,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Summary("Trades an egg generated from the provided Pokémon name.")]
     public async Task TradeEgg([Remainder] string egg)
     {
-        var code = Info.GetRandomTradeCode();
+        var userID = Context.User.Id;
+        var code = Info.GetRandomTradeCode(userID);
         await TradeEggAsync(code, egg).ConfigureAwait(false);
     }
 
@@ -470,7 +533,37 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Summary("Trades a random mystery egg with perfect stats and shiny appearance.")]
     public async Task TradeMysteryEggAsync()
     {
-        var code = Info.GetRandomTradeCode();
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
+
+            var queueEmbed = new EmbedBuilder
+            {
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
+        var code = Info.GetRandomTradeCode(userID);
         await TradeMysteryEggAsync(code).ConfigureAwait(false);
     }
 
@@ -598,6 +691,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
 
         content = ReusableActions.StripCodeBlock(content);
+        var ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
         var set = new ShowdownSet(content);
         var template = AutoLegalityWrapper.GetTemplate(set);
         int formArgument = ExtractFormArgument(content);
@@ -629,24 +723,40 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
             var pkm = sav.GetLegal(template, out var result);
+
             if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
             {
-                if (pkm is ITechRecord tr)
+                if (pkm is PK9 pk9)
                 {
-                    tr.SetRecordFlagsAll();
+                    pk9.SetRecordFlagsAll();
+                }
+                else if (pkm is PK8 pk8)
+                {
+                    pk8.SetRecordFlagsAll();
+                }
+                else if (pkm is PB8 pb8)
+                {
+                    pb8.SetRecordFlagsAll();
+                }
+                else if (pkm is PB7 pb7)
+                {
+                    // not applicable for PB7 (LGPE)
+                }
+                else if (pkm is PA8 pa8)
+                {
+                    // not applicable for PA8 (Legends: Arceus)
                 }
             }
-            // Check if the Pokémon is from "Legends: Arceus"
-            bool isLegendsArceus = pkm.Version == GameVersion.PLA;
 
-            if (!isLegendsArceus && pkm.HeldItem == 0 && !pkm.IsEgg)
-            {
-                pkm.HeldItem = (int)SysCord<T>.Runner.Config.Trade.TradeConfiguration.DefaultHeldItem;
-            }
-            else if (isLegendsArceus)
+            if (pkm is PA8)
             {
                 pkm.HeldItem = (int)HeldItem.None; // Set to None for "Legends: Arceus" Pokémon
             }
+            else if (pkm.HeldItem == 0 && !pkm.IsEgg)
+            {
+                pkm.HeldItem = (int)SysCord<T>.Runner.Config.Trade.TradeConfiguration.DefaultHeldItem;
+            }
+
             if (pkm is PB7)
             {
                 if (pkm.Species == (int)Species.Mew)
@@ -691,7 +801,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             pk.ResetPartyStats();
 
             var sig = Context.User.GetFavor();
-            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isBatchTrade: false, batchTradeNumber: 1, totalBatchTrades: 1, lgcode: lgcode).ConfigureAwait(false);
+            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isBatchTrade: false, batchTradeNumber: 1, totalBatchTrades: 1, lgcode: lgcode, ignoreAutoOT: ignoreAutoOT).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -710,7 +820,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public Task TradeAsync([Summary("Showdown Set")][Remainder] string content)
     {
-        var code = Info.GetRandomTradeCode();
+        var userID = Context.User.Id;
+        var code = Info.GetRandomTradeCode(userID);
         return TradeAsync(code, content);
     }
 
@@ -720,7 +831,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task TradeAsyncAttach()
     {
-        var code = Info.GetRandomTradeCode();
+        var userID = Context.User.Id;
+        var code = Info.GetRandomTradeCode(userID);
         var sig = Context.User.GetFavor();
 
         await TradeAsyncAttach(code, sig, Context.User);
@@ -801,7 +913,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             return;
         }
 
-        var batchTradeCode = Info.GetRandomTradeCode();
+        var batchTradeCode = Info.GetRandomTradeCode(userID);
         int batchTradeNumber = 1;
         _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
 
@@ -827,7 +939,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
     public async Task BatchTradeZipAsync()
     {
-        var batchTradeCode = Info.GetRandomTradeCode();
+        var userID = Context.User.Id;
+        var batchTradeCode = Info.GetRandomTradeCode(userID);
         await BatchTradeZipAsync(batchTradeCode).ConfigureAwait(false);
     }
 
@@ -944,7 +1057,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             pk.ResetPartyStats();
 
-            var code = Info.GetRandomTradeCode();
+            var userID = Context.User.Id;
+            var code = Info.GetRandomTradeCode(userID);
             var lgcode = Info.GetRandomLGTradeCode();
 
             // Add the trade to the queue
@@ -1024,7 +1138,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             pk.ResetPartyStats();
 
             // Use a predefined or random trade code
-            var code = Info.GetRandomTradeCode();
+            var userID = Context.User.Id;
+            var code = Info.GetRandomTradeCode(userID);
             var lgcode = Info.GetRandomLGTradeCode();
 
             // Add the trade to the queue
@@ -1182,7 +1297,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("specialrequestpokemon")]
     [Alias("srp")]
     [Summary("Downloads wondercard event attachments from the specified generation and adds to trade queue.")]
-    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
     public async Task SpecialEventRequestAsync(string generationOrGame, int index)
     {
         // Check if the user is already in the queue
@@ -1296,7 +1411,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 return;
             }
 
-            var code = Info.GetRandomTradeCode();
+            var code = Info.GetRandomTradeCode(userID);
             var lgcode = Info.GetRandomLGTradeCode();
             var sig = Context.User.GetFavor();
             await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention} Solicitud de evento especial agregada a la cola.");
@@ -1408,7 +1523,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("eventrequest")]
     [Alias("er")]
     [Summary("Downloads event attachments from the specified EventsFolder and adds to trade queue.")]
-    [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task EventRequestAsync(int index)
     {
         // Check if the user is already in the queue
@@ -1478,7 +1593,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 return;
             }
 
-            var code = Info.GetRandomTradeCode();
+            var code = Info.GetRandomTradeCode(userID);
             var lgcode = Info.GetRandomLGTradeCode();
             var sig = Context.User.GetFavor();
             await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention} Evento solicitado, agregado a la cola.").ConfigureAwait(false);
@@ -1660,7 +1775,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 return;
             }
 
-            var code = Info.GetRandomTradeCode();
+            var code = Info.GetRandomTradeCode(userID);
             var lgcode = Info.GetRandomLGTradeCode();
             var sig = Context.User.GetFavor();
             await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention}, solicitud de Pokemon listo para batalla agregada a la cola.").ConfigureAwait(false);
@@ -1701,7 +1816,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [RequireSudo]
     public Task TradeAsyncAttachUser([Remainder] string _)
     {
-        var code = Info.GetRandomTradeCode();
+        var userID = Context.User.Id;
+        var code = Info.GetRandomTradeCode(userID);
         return TradeAsyncAttachUser(code, _);
     }
 
@@ -1737,7 +1853,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         };
     }
 
-    private async Task AddTradeToQueueAsync(int code, string trainerName, T pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific)
+    private async Task AddTradeToQueueAsync(int code, string trainerName, T pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false)
     {
         lgcode ??= TradeModule<T>.GenerateRandomPictocodes(3);
         if (!pk.CanBeTraded())
@@ -1864,7 +1980,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             if (la.Valid) pk = clone;
         }
 
-        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode).ConfigureAwait(false);
+        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode, ignoreAutoOT).ConfigureAwait(false);
     }
 
     private static List<Pictocodes> GenerateRandomPictocodes(int count)

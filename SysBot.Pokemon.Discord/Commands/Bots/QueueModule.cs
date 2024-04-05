@@ -1,5 +1,6 @@
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using PKHeX.Core;
 using System.Threading.Tasks;
 
@@ -153,6 +154,93 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await ReplyAsync("La lista de espera está vacía.").ConfigureAwait(false);
         else
             await Context.User.SendMessageAsync(msg).ConfigureAwait(false);
+    }
+
+    [Command("addTradeCode")]
+    [Alias("atc")]
+    [Summary("Stores a trade code for the user.")]
+    public async Task AddTradeCodeAsync([Summary("The trade code to store.")] int tradeCode)
+    {
+        var user = Context.User; // Obtiene el objeto IUser que representa al usuario.
+        var userID = user.Id;
+        string msg = QueueModule<T>.AddTradeCode(userID, tradeCode, user.Mention);
+
+        // Envía el mensaje al MD del usuario.
+        await user.SendMessageAsync(msg).ConfigureAwait(false);
+
+        // Intenta eliminar el mensaje del comando si es posible.
+        if (Context.Message is IUserMessage userMessage)
+        {
+            await userMessage.DeleteAsync().ConfigureAwait(false);
+        }
+    }
+
+    private static string AddTradeCode(ulong userID, int tradeCode, string userMention)
+    {
+        var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
+        var tradeCodeStorage = new TradeCodeStorage();
+        bool success = tradeCodeStorage.SetTradeCode(userID, tradeCode);
+
+        if (success)
+            return $"<a:yes:1206485105674166292> {userMention}, tu código de comercio **{tradeCode}** ha sido almacenado correctamente.";
+        else
+        {
+            // Obtén el código de comercio existente.
+            int existingTradeCode = tradeCodeStorage.GetTradeCode(userID);
+            return $"<a:warning:1206483664939126795> {userMention}, ya tienes un codigo de tradeo establecido y es **{existingTradeCode}**,\nSi deseas cambiarlo usa `{botPrefix}utc` seguido del nuevo código.";
+        }
+    }
+
+    [Command("updateTradeCode")]
+    [Alias("utc")]
+    [Summary("Updates the stored trade code for the user.")]
+    public async Task UpdateTradeCodeAsync([Summary("The new trade code to update.")] int newTradeCode)
+    {
+        var user = Context.User; // Obtiene el objeto IUser que representa al usuario.
+        var userID = user.Id;
+        string msg = QueueModule<T>.UpdateTradeCode(userID, newTradeCode, user.Mention);
+
+        // Envía el mensaje al MD del usuario.
+        await user.SendMessageAsync(msg).ConfigureAwait(false);
+
+        // Intenta eliminar el mensaje del comando si es posible.
+        if (Context.Message is IUserMessage userMessage)
+        {
+            await userMessage.DeleteAsync().ConfigureAwait(false);
+        }
+    }
+
+    private static string UpdateTradeCode(ulong userID, int newTradeCode, string userMention)
+    {
+        var tradeCodeStorage = new TradeCodeStorage();
+        bool success = tradeCodeStorage.UpdateTradeCode(userID, newTradeCode);
+
+        if (success)
+            return $"<a:yes:1206485105674166292> {userMention}, tu código de tradeo se ha actualizado correctamente a **{newTradeCode}**.";
+        else
+            return $"<a:warning:1206483664939126795> {userMention}, hubo un problema al actualizar tu código de comercio. Por favor, intenta de nuevo.";
+    }
+
+    [Command("deleteTradeCode")]
+    [Alias("dtc")]
+    [Summary("Deletes the stored trade code for the user.")]
+    public async Task DeleteTradeCodeAsync()
+    {
+        var usermention = Context.User.Mention;
+        var userID = Context.User.Id;
+        string msg = QueueModule<T>.DeleteTradeCode(userID, usermention);
+        await ReplyAsync(msg).ConfigureAwait(false);
+    }
+
+    private static string DeleteTradeCode(ulong userID, string userMention)
+    {
+        var tradeCodeStorage = new TradeCodeStorage();
+        bool success = tradeCodeStorage.DeleteTradeCode(userID);
+
+        if (success)
+            return $"<a:yes:1206485105674166292> {userMention}, Su código de tradeo se ha eliminado correctamente.";
+        else
+            return $"<a:warning:1206483664939126795> {userMention} No se encontró ningún código de tradeo para su ID de usuario.";
     }
 
     private string ClearTrade()

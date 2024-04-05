@@ -81,7 +81,7 @@ namespace SysBot.Pokemon.Discord
                                              result == "Failed" ? $"<a:warning:1206483664939126795> No he podido crear un {GameInfo.Strings.Species[template.Species]} a partir de ese conjunto." :
                                              "<a:warning:1206483664939126795> Un error desconocido ocurrió.";
 
-                                await ReplyAsync($"Failed to create {GameInfo.Strings.Species[template.Species]}: {reason}");
+                                await ReplyAsync($"Fallo al crear {GameInfo.Strings.Species[template.Species]}: {reason}");
                                 continue;
                             }
 
