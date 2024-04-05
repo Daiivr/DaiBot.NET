@@ -163,12 +163,21 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     {
         var user = Context.User; // Obtiene el objeto IUser que representa al usuario.
         var userID = user.Id;
-        string msg = QueueModule<T>.AddTradeCode(userID, tradeCode, user.Mention);
 
-        // Envía el mensaje al MD del usuario.
-        await user.SendMessageAsync(msg).ConfigureAwait(false);
+        // Validate the trade code range before adding
+        if (tradeCode < 0 || tradeCode > 99999999)
+        {
+            await ReplyAsync($"<a:warning:1206483664939126795> {user.Mention}, lo siento, el código de comercio debe estar entre **00000000** y **99999999**.").ConfigureAwait(false);
+        }
+        else
+        {
+            string msg = QueueModule<T>.AddTradeCode(userID, tradeCode, user.Mention);
 
-        // Intenta eliminar el mensaje del comando si es posible.
+            // Sends the message to the user's DM.
+            await user.SendMessageAsync(msg).ConfigureAwait(false);
+        }
+
+        // Attempt to delete the command message if possible.
         if (Context.Message is IUserMessage userMessage)
         {
             await userMessage.DeleteAsync().ConfigureAwait(false);
@@ -198,12 +207,20 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     {
         var user = Context.User; // Obtiene el objeto IUser que representa al usuario.
         var userID = user.Id;
-        string msg = QueueModule<T>.UpdateTradeCode(userID, newTradeCode, user.Mention);
+        // Validate the trade code range before updating
+        if (newTradeCode < 0 || newTradeCode > 99999999)
+        {
+            await ReplyAsync($"<a:warning:1206483664939126795> {user.Mention}, lo siento, el código de comercio debe estar entre **00000000** y **99999999**.").ConfigureAwait(false);
+        }
+        else
+        {
+            string msg = QueueModule<T>.UpdateTradeCode(userID, newTradeCode, user.Mention);
 
-        // Envía el mensaje al MD del usuario.
-        await user.SendMessageAsync(msg).ConfigureAwait(false);
+            // Sends the message to the user's DM.
+            await user.SendMessageAsync(msg).ConfigureAwait(false);
+        }
 
-        // Intenta eliminar el mensaje del comando si es posible.
+        // Attempt to delete the command message if possible.
         if (Context.Message is IUserMessage userMessage)
         {
             await userMessage.DeleteAsync().ConfigureAwait(false);
