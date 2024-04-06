@@ -150,7 +150,6 @@ public sealed class SysCord<T> where T : PKM, new()
                     continue;
                 }
             }
-
             try
             {
                 // Check if there's a previous announcement message in this channel

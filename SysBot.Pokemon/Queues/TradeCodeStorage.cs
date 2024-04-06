@@ -14,6 +14,20 @@ public class TradeCodeStorage
         _tradeCodes = LoadFromFile();
     }
 
+    public int GetTradeCode(ulong trainerID)
+    {
+        // Load the trade codes from the JSON file
+        _tradeCodes = LoadFromFile();
+
+        if (_tradeCodes.TryGetValue(trainerID, out int code))
+            return code;
+
+        code = GenerateRandomTradeCode();
+        _tradeCodes[trainerID] = code;
+        SaveToFile();
+        return code;
+    }
+
     public bool SetTradeCode(ulong trainerID, int tradeCode)
     {
         // Verifica si el usuario ya tiene un código almacenado y, en caso afirmativo, no actualiza el código.
@@ -26,20 +40,6 @@ public class TradeCodeStorage
         _tradeCodes[trainerID] = tradeCode;
         SaveToFile(); // Guarda los cambios en el archivo.
         return true; // Retorna verdadero para indicar que el código se actualizó correctamente.
-    }
-
-    public int GetTradeCode(ulong trainerID)
-    {
-        // Recarga los códigos de comercio desde el archivo cada vez que se accede.
-        _tradeCodes = LoadFromFile();
-
-        if (_tradeCodes.TryGetValue(trainerID, out int code))
-            return code;
-
-        code = GenerateRandomTradeCode();
-        _tradeCodes[trainerID] = code;
-        SaveToFile();
-        return code;
     }
 
     public bool UpdateTradeCode(ulong trainerID, int newTradeCode)
@@ -73,6 +73,9 @@ public class TradeCodeStorage
 
     public bool DeleteTradeCode(ulong trainerID)
     {
+        // Load the trade codes from the JSON file
+        _tradeCodes = LoadFromFile();
+
         if (_tradeCodes.Remove(trainerID))
         {
             SaveToFile();

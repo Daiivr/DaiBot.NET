@@ -268,6 +268,10 @@ public sealed partial class Main : Form
                 cmd = BotControlCommand.Resume;
             }
         }
+		else
+        {
+            env.StopAll();
+        }
         SendAll(cmd);
     }
 
