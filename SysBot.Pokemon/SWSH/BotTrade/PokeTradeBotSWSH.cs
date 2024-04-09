@@ -315,6 +315,17 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         RecordUtil<PokeTradeBotSWSH>.Record($"Initiating\t{trainerNID:X16}\t{trainerName}\t{poke.Trainer.TrainerName}\t{poke.Trainer.ID}\t{poke.ID}\t{toSend.EncryptionConstant:X8}");
         Log($"Found Link Trade partner: {trainerName}-{trainerTID} (ID: {trainerNID})");
 
+        var tradeCodeStorage = new TradeCodeStorage();
+        var existingTradeDetails = tradeCodeStorage.GetTradeDetails(poke.Trainer.ID);
+
+        bool shouldUpdateOT = existingTradeDetails?.OT != trainerName;
+        bool shouldUpdateTID = existingTradeDetails?.TID != int.Parse(trainerTID);
+
+        if (shouldUpdateOT || shouldUpdateTID)
+        {
+            tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, shouldUpdateOT ? trainerName : existingTradeDetails.OT, shouldUpdateTID ? int.Parse(trainerTID) : existingTradeDetails.TID);
+        }
+
         var partnerCheck = await CheckPartnerReputation(this, poke, trainerNID, trainerName, AbuseSettings, token);
         if (partnerCheck != PokeTradeResult.Success)
         {

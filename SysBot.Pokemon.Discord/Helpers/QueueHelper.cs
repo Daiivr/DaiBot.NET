@@ -96,6 +96,11 @@ public static class QueueHelper<T> where T : PKM, new()
         bool showAbility = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowAbility;
         bool showNature = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowNature;
         bool showIVs = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowIVs;
+        var tradeCodeStorage = new TradeCodeStorage();
+        int totalTradeCount = tradeCodeStorage.GetTradeCount(trader.Id);
+        var tradeDetails = tradeCodeStorage.GetTradeDetails(trader.Id);
+        string otText = tradeDetails?.OT != null ? $"OT: {tradeDetails.OT}" : "";
+        string tidText = tradeDetails?.TID != 0 ? $"TID: {tradeDetails.TID}" : "";
         if (added == QueueResultAdd.AlreadyInQueue)
         {
             return new TradeQueueResult(false);
@@ -239,11 +244,27 @@ public static class QueueHelper<T> where T : PKM, new()
                             $"{tradeTitle} {userName}" :
                             $"Pokémon{isPkmShiny} solicitado por {userName} ";
 
+        // Build footer
+        string footerText = $"Posición actual: {position.Position}";
+
+        TradeCodeStorage.TradeCodeDetails userDetails = tradeCodeStorage.GetTradeDetails(trader.Id);
+        string userDetailsText = $"Trades: {totalTradeCount}";
+        if (!string.IsNullOrEmpty(tradeDetails?.OT))
+        {
+            userDetailsText += $" | OT: {tradeDetails.OT}";
+        }
+        if (userDetails?.TID != 0)
+        {
+            userDetailsText += $" | TID: {userDetails.TID:D6}";
+        }
+
+        footerText += $"\n{userDetailsText}\n{etaMessage}";
+
         // Initializing the embed builder with general settings
         var embedBuilder = new EmbedBuilder()
             .WithColor(embedColor)
             .WithImageUrl(isLocalFile ? $"attachment://{Path.GetFileName(embedImageUrl)}" : embedImageUrl)
-            .WithFooter($"Posición actual: {position.Position}\n{etaMessage}")
+            .WithFooter(footerText)
             .WithAuthor(new EmbedAuthorBuilder()
                 .WithName(authorName)
                 .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()));
