@@ -71,7 +71,18 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         UpdateBarrier(false);
         return CleanExit(CancellationToken.None);
     }
+    public override async Task RebootAndStop(CancellationToken t)
+    {
+        await ReOpenGame(new PokeTradeHubConfig(), t).ConfigureAwait(false);
+        await HardStop().ConfigureAwait(false);
 
+        await Task.Delay(2_000, t).ConfigureAwait(false);
+        if (!t.IsCancellationRequested)
+        {
+            Log("Restarting the main loop.");
+            await MainLoop(t).ConfigureAwait(false);
+        }
+    }
     private async Task InnerLoop(SAV8SWSH sav, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
@@ -146,7 +157,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         {
             // Updates the assets.
             hub.Config.Stream.IdleAssets(this);
-            Log("Nothing to check, waiting for new users...");
+            Log("Nada que comprobar, esperando nuevos usuarios...");
         }
 
         const int interval = 10;

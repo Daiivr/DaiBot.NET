@@ -157,23 +157,24 @@ public partial class BotController : UserControl
                 Runner.InitializeStart();
                 bot.Start(); break;
             case BotControlCommand.Stop: bot.Stop(); break;
+            case BotControlCommand.RebootAndStop: bot.RebootAndStop(); break;
             case BotControlCommand.Resume: bot.Resume(); break;
             case BotControlCommand.Restart:
-            {
-                var prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, "Are you sure you want to restart the connection?");
-                if (prompt != DialogResult.Yes)
-                    return;
+                {
+                    var prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, "¿Estás seguro de que deseas reiniciar la conexión?");
+                    if (prompt != DialogResult.Yes)
+                        return;
 
-                Runner.InitializeStart();
-                bot.Restart();
-                break;
-            }
+                    Runner.InitializeStart();
+                    bot.Restart();
+                    break;
+                }
             default:
-                WinFormsUtil.Alert($"{cmd} is not a command that can be sent to the Bot.");
+                WinFormsUtil.Alert($"{cmd} no es un comando que pueda enviarse al Bot.");
                 return;
         }
         if (echo)
-            EchoUtil.Echo($"{bot.Bot.Connection.Name} ({bot.Bot.Config.InitialRoutine}) has been issued a command to {cmd}.");
+            EchoUtil.Echo($"{bot.Bot.Connection.Name} ({bot.Bot.Config.InitialRoutine}) se le ha dado una orden para {cmd}.");
     }
 
     private BotSource<PokeBotState> GetBot()
@@ -203,6 +204,11 @@ public partial class BotController : UserControl
             ReloadStatus(bot);
         }
     }
+
+    private void L_Description_Click(object sender, EventArgs e)
+    {
+
+    }
 }
 
 public enum BotControlCommand
@@ -213,6 +219,7 @@ public enum BotControlCommand
     Idle,
     Resume,
     Restart,
+    RebootAndStop,
 }
 
 public static class BotControlCommandExtensions

@@ -18,7 +18,7 @@ namespace SysBot.Base
             Connection = cfg.CreateAsynchronous();
         }
 
-        public string LastLogged { get; private set; } = "Not Started";
+        public string LastLogged { get; private set; } = "No empezado";
         public DateTime LastTime { get; private set; } = DateTime.Now;
 
         public void ReportStatus() => LastTime = DateTime.Now;
@@ -46,11 +46,20 @@ namespace SysBot.Base
             Connection.Disconnect();
         }
 
+        public async Task RebootAndStopAsync(CancellationToken token)
+        {
+            Connection.Connect();
+            await InitialStartup(token).ConfigureAwait(false);
+            await RebootAndStop(token).ConfigureAwait(false);
+            Connection.Disconnect();
+        }
+
         public abstract Task MainLoop(CancellationToken token);
         public abstract Task InitialStartup(CancellationToken token);
         public abstract void SoftStop();
         public abstract Task HardStop();
         public abstract Task SetController(ControllerType Controller, CancellationToken token);
+        public abstract Task RebootAndStop(CancellationToken token);
 
     }
 }

@@ -1,4 +1,4 @@
-﻿using PKHeX.Core;
+using PKHeX.Core;
 using System.Threading;
 using System.Threading.Tasks;
 using static SysBot.Base.SwitchButton;
@@ -54,6 +54,7 @@ public class EncounterBotFossilSWSH : EncounterBotSWSH
                 }
             }
 
+
             await ReviveFossil(counts, token).ConfigureAwait(false);
             Log("Fossil revived. Checking details...");
 
@@ -70,6 +71,11 @@ public class EncounterBotFossilSWSH : EncounterBotSWSH
             Log("Clearing destination slot.");
             await SetBoxPokemon(Blank, 0, 0, token).ConfigureAwait(false);
         }
+    }
+    public override async Task RebootAndStop(CancellationToken t)
+    {
+        await ReOpenGame(new PokeTradeHubConfig(), t).ConfigureAwait(false);
+        await HardStop().ConfigureAwait(false);
     }
 
     private async Task ReviveFossil(FossilCount count, CancellationToken token)

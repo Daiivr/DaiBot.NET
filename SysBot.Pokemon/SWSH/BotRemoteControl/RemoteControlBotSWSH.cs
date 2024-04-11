@@ -1,4 +1,4 @@
-﻿using SysBot.Base;
+using SysBot.Base;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,5 +35,17 @@ public class RemoteControlBotSWSH(PokeBotState Config) : PokeRoutineExecutor8SWS
     {
         await SetStick(SwitchStick.LEFT, 0, 0, 0_500, CancellationToken.None).ConfigureAwait(false); // reset
         await CleanExit(CancellationToken.None).ConfigureAwait(false);
+    }
+    public override async Task RebootAndStop(CancellationToken t)
+    {
+        await ReOpenGame(new PokeTradeHubConfig(), t).ConfigureAwait(false);
+        await HardStop().ConfigureAwait(false);
+
+        await Task.Delay(2_000, t).ConfigureAwait(false);
+        if (!t.IsCancellationRequested)
+        {
+            Log("Restarting the main loop.");
+            await MainLoop(t).ConfigureAwait(false);
+        }
     }
 }

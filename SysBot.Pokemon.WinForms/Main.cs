@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using SysBot.Pokemon.Helpers;
 using System.Drawing;
+using SysBot.Pokemon.WinForms.Properties;
 
 namespace SysBot.Pokemon.WinForms;
 
@@ -27,8 +28,8 @@ public sealed partial class Main : Form
     public Main()
     {
         InitializeComponent();
-        comboBox1.SelectedIndexChanged += new EventHandler(comboBox1_SelectedIndexChanged);
-        this.Load += async (sender, e) => await InitializeAsync();
+        comboBox1.SelectedIndexChanged += new EventHandler(ComboBox1_SelectedIndexChanged);
+        Load += async (sender, e) => await InitializeAsync();
 
     }
 
@@ -37,6 +38,7 @@ public sealed partial class Main : Form
         if (IsUpdating)
             return;
         PokeTradeBotSWSH.SeedChecker = new Z3SeedSearchHandler<PK8>();
+
         if (File.Exists(Program.ConfigPath))
         {
             var lines = File.ReadAllText(Program.ConfigPath);
@@ -60,10 +62,11 @@ public sealed partial class Main : Form
 
         RTB_Logs.MaxLength = 32_767; // character length
         LoadControls();
-        Text = $"{(string.IsNullOrEmpty(Config.Hub.BotName) ? "DaiBot.NET" : Config.Hub.BotName)} {TradeBot.Version} ({Config.Mode})";
+        Text = $"{(string.IsNullOrEmpty(Config.Hub.BotName) ? "NotPaldea.net" : Config.Hub.BotName)} {TradeBot.Version} ({Config.Mode})";
         Task.Run(BotMonitor);
         InitUtil.InitializeStubs(Config.Mode);
         _isFormLoading = false;
+        UpdateBackgroundImage(Config.Mode);
     }
 
     private static IPokeBotRunner GetRunner(ProgramConfig cfg) => cfg.Mode switch
@@ -208,21 +211,28 @@ public sealed partial class Main : Form
     [JsonSerializable(typeof(ProgramConfig))]
     [JsonSourceGenerationOptions(WriteIndented = true, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
     public sealed partial class ProgramConfigContext : JsonSerializerContext;
-    private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+    private void ComboBox1_SelectedIndexChanged(object sender, EventArgs e)
     {
-        if (_isFormLoading) return;
+        if (_isFormLoading) return; // Check to avoid processing during form loading
+
         if (comboBox1.SelectedValue is int selectedValue)
         {
-            Config.Mode = (ProgramMode)selectedValue;
+            ProgramMode newMode = (ProgramMode)selectedValue;
+            Config.Mode = newMode;
+
             SaveCurrentConfig();
             UpdateRunnerAndUI();
+
+            UpdateBackgroundImage(newMode);
         }
     }
+
     private void UpdateRunnerAndUI()
     {
         RunningEnvironment = GetRunner(Config);
-        Text = $"{(string.IsNullOrEmpty(Config.Hub.BotName) ? "DaiBot.NET" : Config.Hub.BotName)} {TradeBot.Version} ({Config.Mode})";
+        Text = $"{(string.IsNullOrEmpty(Config.Hub.BotName) ? "NotPaldea.net" : Config.Hub.BotName)} {TradeBot.Version} ({Config.Mode})";
     }
+
     private void B_Start_Click(object sender, EventArgs e)
     {
         SaveCurrentConfig();
@@ -233,7 +243,51 @@ public sealed partial class Main : Form
         Tab_Logs.Select();
 
         if (Bots.Count == 0)
-            WinFormsUtil.Alert("No hay bots configurados, pero se han iniciado todos los servicios de apoyo.");
+            WinFormsUtil.Alert("No bots configured, but all supporting services have been started.");
+    }
+
+    private void B_RebootStop_Click(object sender, EventArgs e)
+    {
+        B_Stop_Click(sender, e);
+        Task.Run(async () =>
+        {
+            await Task.Delay(3_500).ConfigureAwait(false);
+            SaveCurrentConfig();
+            LogUtil.LogInfo("Restarting all the consoles...", "Form");
+            RunningEnvironment.InitializeStart();
+            SendAll(BotControlCommand.RebootAndStop);
+            await Task.Delay(5_000).ConfigureAwait(false); // Add a delay before restarting the bot
+            SendAll(BotControlCommand.Start); // Start the bot after the delay
+            Tab_Logs.Select();
+            if (Bots.Count == 0)
+                WinFormsUtil.Alert("No bots configured, but all supporting services have been issued the reboot command.");
+        });
+    }
+
+    private void UpdateBackgroundImage(ProgramMode mode)
+    {
+        switch (mode)
+        {
+            case ProgramMode.SV:
+                FLP_Bots.BackgroundImage = Resources.sv_mode_image;
+                break;
+            case ProgramMode.SWSH:
+                FLP_Bots.BackgroundImage = Resources.swsh_mode_image;
+                break;
+            case ProgramMode.BDSP:
+                FLP_Bots.BackgroundImage = Resources.bdsp_mode_image;
+                break;
+            case ProgramMode.LA:
+                FLP_Bots.BackgroundImage = Resources.pla_mode_image;
+                break;
+            case ProgramMode.LGPE:
+                FLP_Bots.BackgroundImage = Resources.lgpe_mode_image;
+                break;
+            default:
+                FLP_Bots.BackgroundImage = null;
+                break;
+        }
+        FLP_Bots.BackgroundImageLayout = ImageLayout.Center;
     }
 
     private void SendAll(BotControlCommand cmd)
@@ -241,7 +295,7 @@ public sealed partial class Main : Form
         foreach (var c in FLP_Bots.Controls.OfType<BotController>())
             c.SendCommand(cmd, false);
 
-        EchoUtil.Echo($"Todos los bots han recibido la orden de {cmd}.");
+        EchoUtil.Echo($"A todos los robots se les ha emitido un comando para {cmd}.");
     }
 
     private void B_Stop_Click(object sender, EventArgs e)
@@ -249,7 +303,7 @@ public sealed partial class Main : Form
         var env = RunningEnvironment;
         if (!env.IsRunning && (ModifierKeys & Keys.Alt) == 0)
         {
-            WinFormsUtil.Alert("Actualmente no hay nada en marcha.");
+            WinFormsUtil.Alert("Actualmente no hay nada en ejecución.");
             return;
         }
 
@@ -259,16 +313,16 @@ public sealed partial class Main : Form
         {
             if (env.IsRunning)
             {
-                WinFormsUtil.Alert("Ordenando a todos los robots que se pongan en reposo", "Pulsa Stop (sin una tecla modificadora) para parar y desbloquear el control, o pulsa Stop con la tecla modificadora de nuevo para reanudar.");
+                WinFormsUtil.Alert("Ordenando a todos los bots que permanezcan inactivos.", "Presione Detener (sin una tecla modificadora) para detener completamente y desbloquear el control, o presione Detener con la tecla modificadora nuevamente para reanudar.");
                 cmd = BotControlCommand.Idle;
             }
             else
             {
-                WinFormsUtil.Alert("Ordenando a todos los robots que reanuden su tarea original", "Pulsar Stop (sin una tecla modificadora) para detener y desbloquear el control.");
+                WinFormsUtil.Alert("Ordenando a todos los robots que reanuden su tarea original.", "Presione Detener (sin tecla modificadora) para detener por completo y desbloquear el control.");
                 cmd = BotControlCommand.Resume;
             }
         }
-		else
+        else
         {
             env.StopAll();
         }
@@ -280,7 +334,7 @@ public sealed partial class Main : Form
         var cfg = CreateNewBotConfig();
         if (!AddBot(cfg))
         {
-            WinFormsUtil.Alert("No se puede añadir el bot; asegúrese de que los detalles son válidos y no se duplican con un bot ya existente.");
+            WinFormsUtil.Alert("No se puede agregar el bot; asegúrese de que los detalles sean válidos y no estén duplicados con un bot ya existente.");
             return;
         }
         System.Media.SystemSounds.Asterisk.Play();
@@ -297,7 +351,7 @@ public sealed partial class Main : Form
         PokeRoutineExecutorBase newBot;
         try
         {
-            Console.WriteLine($"El modo actual ({Config.Mode}) no admite este tipo de bot ({cfg.CurrentRoutineType}).");
+            Console.WriteLine($"El modo actual ({Config.Mode}) no soporta este tipo de bot ({cfg.CurrentRoutineType}).");
             newBot = RunningEnvironment.CreateBotFromConfig(cfg);
         }
         catch
@@ -407,12 +461,15 @@ public sealed partial class Main : Form
         Color SkyBlue = Color.FromArgb(135, 206, 250);    // A soft blue color inspired by Sylveon's eyes and ribbons
         Color DeepBlue = Color.FromArgb(70, 130, 180);   // A deeper blue for contrast
         Color ElegantWhite = Color.FromArgb(255, 255, 255);// An elegant white for background and contrast
+        Color StartGreen = Color.FromArgb(10, 74, 27);// Start Button
+        Color StopRed = Color.FromArgb(74, 10, 10);// Stop Button
+        Color RebootBlue = Color.FromArgb(10, 35, 74);// Reboot Button
 
         // Set the background color of the form
-        this.BackColor = ElegantWhite;
+        BackColor = ElegantWhite;
 
         // Set the foreground color of the form (text color)
-        this.ForeColor = DeepBlue;
+        ForeColor = DeepBlue;
 
         // Set the background color of the tab control
         TC_Main.BackColor = SkyBlue;
@@ -458,11 +515,14 @@ public sealed partial class Main : Form
         comboBox1.BackColor = SkyBlue;
         comboBox1.ForeColor = DeepBlue;
 
-        B_Stop.BackColor = DeepPink;
+        B_Stop.BackColor = StopRed;
         B_Stop.ForeColor = ElegantWhite;
 
-        B_Start.BackColor = DeepPink;
+        B_Start.BackColor = StartGreen;
         B_Start.ForeColor = ElegantWhite;
+
+        B_RebootStop.BackColor = RebootBlue;
+        B_RebootStop.ForeColor = ElegantWhite;
     }
 
     private void ApplyGengarTheme()
@@ -473,12 +533,16 @@ public sealed partial class Main : Form
         Color GhostlyGrey = Color.FromArgb(200, 200, 215); // A soft grey for text and borders
         Color HauntingBlue = Color.FromArgb(80, 80, 160);  // A haunting blue for accenting and highlights
         Color MidnightBlack = Color.FromArgb(25, 25, 35);  // A near-black for the darkest areas
+        Color ElegantWhite = Color.FromArgb(255, 255, 255);// An elegant white for background and contrast
+        Color StartGreen = Color.FromArgb(10, 74, 27);// Start Button
+        Color StopRed = Color.FromArgb(74, 10, 10);// Stop Button
+        Color RebootBlue = Color.FromArgb(10, 35, 74);// Reboot Button
 
         // Set the background color of the form
-        this.BackColor = MidnightBlack;
+        BackColor = MidnightBlack;
 
         // Set the foreground color of the form (text color)
-        this.ForeColor = GhostlyGrey;
+        ForeColor = GhostlyGrey;
 
         // Set the background color of the tab control
         TC_Main.BackColor = GengarPurple;
@@ -524,11 +588,14 @@ public sealed partial class Main : Form
         comboBox1.BackColor = GengarPurple;
         comboBox1.ForeColor = GhostlyGrey;
 
-        B_Stop.BackColor = HauntingBlue;
-        B_Stop.ForeColor = GhostlyGrey;
+        B_Stop.BackColor = StopRed;
+        B_Stop.ForeColor = ElegantWhite;
 
-        B_Start.BackColor = HauntingBlue;
-        B_Start.ForeColor = GhostlyGrey;
+        B_Start.BackColor = StartGreen;
+        B_Start.ForeColor = ElegantWhite;
+
+        B_RebootStop.BackColor = RebootBlue;
+        B_RebootStop.ForeColor = ElegantWhite;
     }
 
     private void ApplyLightTheme()
@@ -537,12 +604,16 @@ public sealed partial class Main : Form
         Color SoftBlue = Color.FromArgb(235, 245, 251);
         Color GentleGrey = Color.FromArgb(245, 245, 245);
         Color DarkBlue = Color.FromArgb(26, 13, 171);
+        Color ElegantWhite = Color.FromArgb(255, 255, 255);// An elegant white for background and contrast
+        Color StartGreen = Color.FromArgb(10, 74, 27);// Start Button
+        Color StopRed = Color.FromArgb(74, 10, 10);// Stop Button
+        Color RebootBlue = Color.FromArgb(10, 35, 74);// Reboot Button
 
         // Set the background color of the form
-        this.BackColor = GentleGrey;
+        BackColor = GentleGrey;
 
         // Set the foreground color of the form (text color)
-        this.ForeColor = DarkBlue;
+        ForeColor = DarkBlue;
 
         // Set the background color of the tab control
         TC_Main.BackColor = SoftBlue;
@@ -588,11 +659,14 @@ public sealed partial class Main : Form
         comboBox1.BackColor = Color.White;
         comboBox1.ForeColor = DarkBlue;
 
-        B_Stop.BackColor = SoftBlue;
-        B_Stop.ForeColor = DarkBlue;
+        B_Stop.BackColor = StopRed;
+        B_Stop.ForeColor = ElegantWhite;
 
-        B_Start.BackColor = SoftBlue;
-        B_Start.ForeColor = DarkBlue;
+        B_Start.BackColor = StartGreen;
+        B_Start.ForeColor = ElegantWhite;
+
+        B_RebootStop.BackColor = RebootBlue;
+        B_RebootStop.ForeColor = ElegantWhite;
     }
 
     private void ApplyPokemonTheme()
@@ -603,12 +677,16 @@ public sealed partial class Main : Form
         Color SleekGrey = Color.FromArgb(46, 49, 54);     // A sleek grey for background and contrast
         Color SoftWhite = Color.FromArgb(230, 230, 230);  // A soft white for text and borders
         Color MidnightBlack = Color.FromArgb(18, 19, 20); // A near-black for darker elements and depth
+        Color ElegantWhite = Color.FromArgb(255, 255, 255);// An elegant white for background and contrast
+        Color StartGreen = Color.FromArgb(10, 74, 27);// Start Button
+        Color StopRed = Color.FromArgb(74, 10, 10);// Stop Button
+        Color RebootBlue = Color.FromArgb(10, 35, 74);// Reboot Button
 
         // Set the background color of the form
-        this.BackColor = SleekGrey;
+        BackColor = SleekGrey;
 
         // Set the foreground color of the form (text color)
-        this.ForeColor = SoftWhite;
+        ForeColor = SoftWhite;
 
         // Set the background color of the tab control
         TC_Main.BackColor = DarkPokeRed;
@@ -654,11 +732,14 @@ public sealed partial class Main : Form
         comboBox1.BackColor = DarkPokeRed;
         comboBox1.ForeColor = SoftWhite;
 
-        B_Stop.BackColor = PokeRed;
-        B_Stop.ForeColor = SoftWhite;
+        B_Stop.BackColor = StopRed;
+        B_Stop.ForeColor = ElegantWhite;
 
-        B_Start.BackColor = PokeRed;
-        B_Start.ForeColor = SoftWhite;
+        B_Start.BackColor = StartGreen;
+        B_Start.ForeColor = ElegantWhite;
+
+        B_RebootStop.BackColor = RebootBlue;
+        B_RebootStop.ForeColor = ElegantWhite;
     }
 
     private void ApplyDarkTheme()
@@ -668,12 +749,16 @@ public sealed partial class Main : Form
         Color DarkGrey = Color.FromArgb(30, 30, 30);
         Color LightGrey = Color.FromArgb(60, 60, 60);
         Color SoftWhite = Color.FromArgb(245, 245, 245);
+        Color ElegantWhite = Color.FromArgb(255, 255, 255);// An elegant white for background and contrast
+        Color StartGreen = Color.FromArgb(10, 74, 27);// Start Button
+        Color StopRed = Color.FromArgb(74, 10, 10);// Stop Button
+        Color RebootBlue = Color.FromArgb(10, 35, 74);// Reboot Button
 
         // Set the background color of the form
-        this.BackColor = DarkGrey;
+        BackColor = DarkGrey;
 
         // Set the foreground color of the form (text color)
-        this.ForeColor = SoftWhite;
+        ForeColor = SoftWhite;
 
         // Set the background color of the tab control
         TC_Main.BackColor = LightGrey;
@@ -719,14 +804,17 @@ public sealed partial class Main : Form
         comboBox1.BackColor = LightGrey;
         comboBox1.ForeColor = SoftWhite;
 
-        B_Stop.BackColor = DarkRed;
-        B_Stop.ForeColor = SoftWhite;
+        B_Stop.BackColor = StopRed;
+        B_Stop.ForeColor = ElegantWhite;
 
-        B_Start.BackColor = DarkRed;
-        B_Start.ForeColor = SoftWhite;
+        B_Start.BackColor = StartGreen;
+        B_Start.ForeColor = ElegantWhite;
+
+        B_RebootStop.BackColor = RebootBlue;
+        B_RebootStop.ForeColor = ElegantWhite;
     }
 
-    private void FLP_Bots_Paint(object sender, PaintEventArgs e)
+    private void TB_IP_TextChanged(object sender, EventArgs e)
     {
 
     }

@@ -66,6 +66,24 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
         UpdateBarrier(false);
         await CleanExit(TradeSettings, CancellationToken.None).ConfigureAwait(false);
     }
+    public override async Task RebootAndStop(CancellationToken t)
+    {
+        await ReOpenGame(new PokeTradeHubConfig(), t).ConfigureAwait(false);
+        await HardStop().ConfigureAwait(false);
+
+        await Task.Delay(2_000, t).ConfigureAwait(false);
+        if (!t.IsCancellationRequested)
+        {
+            Log("Restarting the main loop.");
+            await MainLoop(t).ConfigureAwait(false);
+        }
+    }
+    public async Task ReOpenGame(PokeTradeHubConfig config, CancellationToken token)
+    {
+        Log("Error detected, restarting the game!!");
+        await CloseGame(config, token).ConfigureAwait(false);
+        await StartGame(config, token).ConfigureAwait(false);
+    }
     private async Task InnerLoop(SAV7b sav, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
@@ -88,6 +106,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
             }
         }
     }
+
     private async Task DoNothing(CancellationToken token)
     {
         int waitCounter = 0;
@@ -131,7 +150,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
         {
             // Updates the assets.
             Hub.Config.Stream.IdleAssets(this);
-            Log("Nothing to check, waiting for new users...");
+            Log("Nada que comprobar, esperando nuevos usuarios...");
         }
 
         const int interval = 10;
