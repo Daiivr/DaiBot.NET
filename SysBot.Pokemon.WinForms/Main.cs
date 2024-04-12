@@ -62,7 +62,7 @@ public sealed partial class Main : Form
 
         RTB_Logs.MaxLength = 32_767; // character length
         LoadControls();
-        Text = $"{(string.IsNullOrEmpty(Config.Hub.BotName) ? "NotPaldea.net" : Config.Hub.BotName)} {TradeBot.Version} ({Config.Mode})";
+        Text = $"{(string.IsNullOrEmpty(Config.Hub.BotName) ? "DaiBot.NET" : Config.Hub.BotName)} {TradeBot.Version} ({Config.Mode})";
         Task.Run(BotMonitor);
         InitUtil.InitializeStubs(Config.Mode);
         _isFormLoading = false;
@@ -230,7 +230,7 @@ public sealed partial class Main : Form
     private void UpdateRunnerAndUI()
     {
         RunningEnvironment = GetRunner(Config);
-        Text = $"{(string.IsNullOrEmpty(Config.Hub.BotName) ? "NotPaldea.net" : Config.Hub.BotName)} {TradeBot.Version} ({Config.Mode})";
+        Text = $"{(string.IsNullOrEmpty(Config.Hub.BotName) ? "DaiBot.NET" : Config.Hub.BotName)} {TradeBot.Version} ({Config.Mode})";
     }
 
     private void B_Start_Click(object sender, EventArgs e)
@@ -243,7 +243,7 @@ public sealed partial class Main : Form
         Tab_Logs.Select();
 
         if (Bots.Count == 0)
-            WinFormsUtil.Alert("No bots configured, but all supporting services have been started.");
+            WinFormsUtil.Alert("No hay bots configurados, pero se han iniciado todos los servicios de apoyo.");
     }
 
     private void B_RebootStop_Click(object sender, EventArgs e)
@@ -260,7 +260,7 @@ public sealed partial class Main : Form
             SendAll(BotControlCommand.Start); // Start the bot after the delay
             Tab_Logs.Select();
             if (Bots.Count == 0)
-                WinFormsUtil.Alert("No bots configured, but all supporting services have been issued the reboot command.");
+                WinFormsUtil.Alert("No hay bots configurados, pero se han iniciado todos los servicios de apoyo.");
         });
     }
 
