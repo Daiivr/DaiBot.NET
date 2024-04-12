@@ -144,16 +144,15 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     [Alias("peek")]
     [Summary("Take and send a screenshot from the currently configured Switch.")]
     [RequireSudo]
-    public async Task RePeek()
+    public async Task RePeek(string address)
     {
-        string ip = OwnerModule<T>.GetBotIPFromJsonConfig();
         var source = new CancellationTokenSource();
         var token = source.Token;
 
-        var bot = SysCord<T>.Runner.GetBot(ip);
+        var bot = SysCord<T>.Runner.GetBot(address);
         if (bot == null)
         {
-            await ReplyAsync($"<a:warning:1206483664939126795> No se encontró ningún bot con la dirección IP: ({ip}).").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> No se encontró ningún bot con la dirección IP: ({address}).").ConfigureAwait(false);
             return;
         }
 
