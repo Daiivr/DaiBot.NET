@@ -153,7 +153,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
         var bot = SysCord<T>.Runner.GetBot(ip);
         if (bot == null)
         {
-            await ReplyAsync($"No bot found with the specified IP address ({ip}).").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> No se encontró ningún bot con la dirección IP: ({ip}).").ConfigureAwait(false);
             return;
         }
 
@@ -165,20 +165,20 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
         }
         catch (Exception ex)
         {
-            await ReplyAsync($"Error while fetching pixels: {ex.Message}");
+            await ReplyAsync($"<a:Error:1223766391958671454> Error al recuperar píxeles: {ex.Message}");
             return;
         }
 
         if (bytes.Length == 0)
         {
-            await ReplyAsync("No screenshot data received.");
+            await ReplyAsync("<a:warning:1206483664939126795> No se recibieron datos de captura de pantalla.");
             return;
         }
 
         using MemoryStream ms = new(bytes);
         var img = "cap.jpg";
         var embed = new EmbedBuilder { ImageUrl = $"attachment://{img}", Color = Color.Purple }
-            .WithFooter(new EmbedFooterBuilder { Text = $"Here's your screenshot." });
+            .WithFooter(new EmbedFooterBuilder { Text = $"Aquí está tu captura de pantalla." });
 
         await Context.Channel.SendFileAsync(ms, img, embed: embed.Build());
     }
@@ -195,7 +195,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error reading config file: {ex.Message}");
+            Console.WriteLine($"<a:Error:1223766391958671454> Error al leer el archivo de configuración: {ex.Message}");
             return "192.168.1.1";
         }
     }

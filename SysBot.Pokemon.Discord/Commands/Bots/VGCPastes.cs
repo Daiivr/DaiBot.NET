@@ -162,7 +162,7 @@ namespace SysBot.Pokemon.Discord
                             {
                                 var reason = result == "Timeout" ? $"<a:warning:1206483664939126795> Ese conjunto {GameInfo.Strings.Species[template.Species]} tardó demasiado en generarse." :
                                              result == "Failed" ? $"<a:warning:1206483664939126795> No he podido crear un {GameInfo.Strings.Species[template.Species]} a partir de ese conjunto." :
-                                             "Un error desconocido ocurrió.";
+                                             "<a:Error:1223766391958671454> Un error desconocido ocurrió.";
 
                                 await ReplyAsync($"<a:warning:1206483664939126795> Fallo al crear {GameInfo.Strings.Species[template.Species]}: {reason}");
                                 continue;

@@ -1283,7 +1283,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             }
             else
             {
-                replyMessage = await ReplyAsync("<a:warning:1206483664939126795> **Error**: No se puede enviar un DM. Por favor verifique su **Configuración de Privacidad del Servidor**.");
+                replyMessage = await ReplyAsync("<a:Error:1223766391958671454> **Error**: No se puede enviar un DM. Por favor verifique su **Configuración de Privacidad del Servidor**.");
             }
         }
 
@@ -1420,7 +1420,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
         catch (Exception ex)
         {
-            await ReplyAsync($"<a:yes:1206485105674166292> Ocurrió un error: {ex.Message}");
+            await ReplyAsync($"<a:Error:1223766391958671454> Ocurrió un error: {ex.Message}");
         }
     }
 
@@ -1509,7 +1509,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             }
             else
             {
-                replyMessage = await ReplyAsync("<a:warning:1206483664939126795> **Error**: No se puede enviar un DM. Por favor verifique su **Configuración de privacidad del servidor**.");
+                replyMessage = await ReplyAsync("<a:Error:1223766391958671454> **Error**: No se puede enviar un DM. Por favor verifique su **Configuración de privacidad del servidor**.");
             }
         }
 
@@ -1602,7 +1602,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
         catch (Exception ex)
         {
-            await ReplyAsync($"<a:warning:1206483664939126795> Ocurrió un error: {ex.Message}").ConfigureAwait(false);
+            await ReplyAsync($"<a:Error:1223766391958671454> Ocurrió un error: {ex.Message}").ConfigureAwait(false);
         }
     }
 
@@ -1691,7 +1691,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             }
             else
             {
-                replyMessage = await ReplyAsync("<a:warning:1206483664939126795> **Error**: No se puede enviar un MD. Por favor verifique su **Configuración de privacidad del servidor**.");
+                replyMessage = await ReplyAsync("<a:Error:1223766391958671454> **Error**: No se puede enviar un MD. Por favor verifique su **Configuración de privacidad del servidor**.");
             }
         }
 
@@ -1784,7 +1784,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
         catch (Exception ex)
         {
-            await ReplyAsync($"<a:warning:1206483664939126795> Ocurrió un error: {ex.Message}").ConfigureAwait(false);
+            await ReplyAsync($"<a:Error:1223766391958671454> Ocurrió un error: {ex.Message}").ConfigureAwait(false);
         }
     }
 

@@ -79,7 +79,7 @@ namespace SysBot.Pokemon.Discord
                             {
                                 var reason = result == "Timeout" ? $"<a:warning:1206483664939126795> Ese conjunto {GameInfo.Strings.Species[template.Species]} tardó demasiado en generarse." :
                                              result == "Failed" ? $"<a:warning:1206483664939126795> No he podido crear un {GameInfo.Strings.Species[template.Species]} a partir de ese conjunto." :
-                                             "<a:warning:1206483664939126795> Un error desconocido ocurrió.";
+                                             "<a:Error:1223766391958671454> Un error desconocido ocurrió.";
 
                                 await ReplyAsync($"Fallo al crear {GameInfo.Strings.Species[template.Species]}: {reason}");
                                 continue;
@@ -147,7 +147,7 @@ namespace SysBot.Pokemon.Discord
             }
             catch (Exception ex)
             {
-                await ReplyAsync($"<a:warning:1206483664939126795> Error al generar el equipo de Pokepaste: {ex.Message}");
+                await ReplyAsync($"<a:Error:1223766391958671454> Error al generar el equipo de Pokepaste: {ex.Message}");
             }
         }
 
