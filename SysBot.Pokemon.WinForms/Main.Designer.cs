@@ -268,7 +268,7 @@ namespace SysBot.Pokemon.WinForms
             B_RebootStop.Name = "B_RebootStop";
             B_RebootStop.Size = new Size(231, 48);
             B_RebootStop.TabIndex = 2;
-            B_RebootStop.Text = "Reiniciar y Detener";
+            B_RebootStop.Text = "Reiniciar y Empezar";
             B_RebootStop.UseVisualStyleBackColor = false;
             B_RebootStop.Click += B_RebootStop_Click;
             // 
