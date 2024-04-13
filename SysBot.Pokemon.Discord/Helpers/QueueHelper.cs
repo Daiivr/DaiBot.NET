@@ -51,7 +51,7 @@ public static class QueueHelper<T> where T : PKM, new()
                 }
                 else
                 {
-                    await trader.SendMessageAsync($"Tu código de tradeo sera: **{code:0000 0000}**.\nTe enviaré un mensaje cuando tu operación esté a punto de comenzar.").ConfigureAwait(false);
+                    await trader.SendMessageAsync($"Tu código de tradeo sera: **{code:0000 0000}**.").ConfigureAwait(false);
                 }
             }
 
@@ -516,7 +516,7 @@ public static class QueueHelper<T> where T : PKM, new()
 
         if (pk.IsEgg)
         {
-            string eggImageUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/egg.png";
+            string eggImageUrl = "https://i.imgur.com/vXktZIJ.gif";
             speciesImageUrl = AbstractTrade<T>.PokeImg(pk, false, true);
             System.Drawing.Image combinedImage = await OverlaySpeciesOnEgg(eggImageUrl, speciesImageUrl);
             embedImageUrl = SaveImageLocally(combinedImage);
