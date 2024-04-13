@@ -294,8 +294,6 @@ public sealed partial class Main : Form
     {
         foreach (var c in FLP_Bots.Controls.OfType<BotController>())
             c.SendCommand(cmd, false);
-
-        EchoUtil.Echo($"A todos los robots se les ha emitido un comando para {cmd}.");
     }
 
     private void B_Stop_Click(object sender, EventArgs e)
