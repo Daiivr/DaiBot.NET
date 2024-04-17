@@ -304,12 +304,12 @@ public static class QueueHelper<T> where T : PKM, new()
             if (scaleEmojis.TryGetValue(scaleRating, out string? emojiCode))
             {
                 // Use the emoji code in the message
-                scale = $"**Tamaño**: {emojiCode} {scaleRating} ({fin8a.Scale})";
+                scale = $"**Tamaño:** {emojiCode} {scaleRating} ({fin8a.Scale})";
             }
             else
             {
                 // If no emoji is found, just display the scale text
-                scale = $"**Tamaño**: {scaleRating} ({fin8a.Scale})";
+                scale = $"**Tamaño:** {scaleRating} ({fin8a.Scale})";
             }
         }
         else if (pk is PB7 fin7b)
@@ -323,12 +323,12 @@ public static class QueueHelper<T> where T : PKM, new()
             if (scaleEmojis.TryGetValue(scaleRating, out string? emojiCode))
             {
                 // Use the emoji code in the message
-                scale = $"**Tamaño**: {emojiCode} {scaleRating} ({fin8b.HeightScalar})";
+                scale = $"**Tamaño:** {emojiCode} {scaleRating} ({fin8b.HeightScalar})";
             }
             else
             {
                 // If no emoji is found, just display the scale text
-                scale = $"**Tamaño**: {scaleRating} ({fin8b.HeightScalar})";
+                scale = $"**Tamaño:** {scaleRating} ({fin8b.HeightScalar})";
             }
         }
         if (pk is PK8 fin8)
@@ -338,12 +338,12 @@ public static class QueueHelper<T> where T : PKM, new()
             if (scaleEmojis.TryGetValue(scaleRating, out string? emojiCode))
             {
                 // Use the emoji code in the message
-                scale = $"**Tamaño**: {emojiCode} {scaleRating} ({fin8.HeightScalar})";
+                scale = $"**Tamaño:** {emojiCode} {scaleRating} ({fin8.HeightScalar})";
             }
             else
             {
                 // If no emoji is found, just display the scale text
-                scale = $"**Tamaño**: {scaleRating} ({fin8.HeightScalar})";
+                scale = $"**Tamaño:** {scaleRating} ({fin8.HeightScalar})";
             }
         }
         if (pk is PK9 fin9)
@@ -353,12 +353,12 @@ public static class QueueHelper<T> where T : PKM, new()
             if (scaleEmojis.TryGetValue(scaleRating, out string? emojiCode))
             {
                 // Use the emoji code in the message
-                scale = $"**Tamaño**: {emojiCode} {scaleRating} ({fin9.Scale})";
+                scale = $"**Tamaño:** {emojiCode} {scaleRating} ({fin9.Scale})";
             }
             else
             {
                 // If no emoji is found, just display the scale text
-                scale = $"**Tamaño**: {scaleRating} ({fin9.Scale})";
+                scale = $"**Tamaño:** {scaleRating} ({fin9.Scale})";
             }
         }
 
@@ -376,23 +376,23 @@ public static class QueueHelper<T> where T : PKM, new()
                 // Check if the Tera Type has a corresponding emoji and translation
                 if (teraEmojis.TryGetValue(tera, out string emojiID) && teraTranslations.TryGetValue(tera, out string teraEsp))
                 {
-                    leftSideContent += $"**Tera Tipo**: {emojiID} {teraEsp}\n";
+                    leftSideContent += $"**Tera Tipo:** {emojiID} {teraEsp}\n";
                 }
                 else if (tera == "99") // Special case for Stellar
                 {
-                    leftSideContent += $"**Tera Tipo**: <:Stellar:1186199337177468929> Estelar\n";
+                    leftSideContent += $"**Tera Tipo:** <:Stellar:1186199337177468929> Estelar\n";
                 }
                 else
                 {
                     // If no corresponding emoji or translation found, just display the Tera Type in English
-                    leftSideContent += $"**Tera Tipo**: {tera}\n";
+                    leftSideContent += $"**Tera Tipo:** {tera}\n";
                 }
             }
             leftSideContent +=
                 (showAbility ? $"**Habilidad:** {translatedAbility}\n" : "") +
                 ($"{scale}\n") +
-                (showNature ? $"**Naturaleza**: {traduccionNature}\n" : "") +
-                (showIVs ? $"**IVs**: {ivsDisplay}\n" : "");
+                (showNature ? $"**Naturaleza:** {traduccionNature}\n" : "") +
+                (showIVs ? $"**IVs:** {ivsDisplay}\n" : "");
             var evs = new List<string>();
             // Agregar los EVs no nulos al listado
             if (pk.EV_HP != 0)
@@ -410,7 +410,7 @@ public static class QueueHelper<T> where T : PKM, new()
             // Comprobar si hay EVs para agregarlos al mensaje
             if (evs.Any())
             {
-                leftSideContent += "**EVs**: " + string.Join(" / ", evs) + "\n";
+                leftSideContent += "**EVs:** " + string.Join(" / ", evs) + "\n";
             }
             leftSideContent += $"\n{user.Mention}\nAgregado a la cola de tradeo.";
 
