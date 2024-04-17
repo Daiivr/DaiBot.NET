@@ -96,11 +96,17 @@ public static class QueueHelper<T> where T : PKM, new()
         bool showAbility = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowAbility;
         bool showNature = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowNature;
         bool showIVs = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowIVs;
-        var tradeCodeStorage = new TradeCodeStorage();
-        int totalTradeCount = tradeCodeStorage.GetTradeCount(trader.Id);
-        var tradeDetails = tradeCodeStorage.GetTradeDetails(trader.Id);
-        string otText = tradeDetails?.OT != null ? $"OT: {tradeDetails.OT}" : "";
-        string tidText = tradeDetails?.TID != 0 ? $"TID: {tradeDetails.TID}" : "";
+        int totalTradeCount = 0;
+        TradeCodeStorage.TradeCodeDetails tradeDetails = null;
+        TradeCodeStorage tradeCodeStorage = null;
+        if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.StoreTradeCodes)
+        {
+            tradeCodeStorage = new TradeCodeStorage();
+            totalTradeCount = tradeCodeStorage.GetTradeCount(trader.Id);
+            tradeDetails = tradeCodeStorage.GetTradeDetails(trader.Id);
+        }
+        string otText = tradeDetails?.OT != null ? $"OT: {tradeDetails?.OT}" : "";
+        string tidText = tradeDetails?.TID != 0 ? $"TID: {tradeDetails?.TID}" : "";
         if (added == QueueResultAdd.AlreadyInQueue)
         {
             return new TradeQueueResult(false);
@@ -246,19 +252,32 @@ public static class QueueHelper<T> where T : PKM, new()
 
         // Build footer
         string footerText = $"Posición actual: {position.Position}";
+        string userDetailsText = "";
 
-        TradeCodeStorage.TradeCodeDetails userDetails = tradeCodeStorage.GetTradeDetails(trader.Id);
-        string userDetailsText = $"Trades: {totalTradeCount}";
-        if (!string.IsNullOrEmpty(tradeDetails?.OT))
+        if (totalTradeCount > 0)
         {
-            userDetailsText += $" | OT: {tradeDetails.OT}";
-        }
-        if (userDetails?.TID != 0)
-        {
-            userDetailsText += $" | TID: {userDetails.TID:D6}";
+            userDetailsText = $"Trades: {totalTradeCount}";
         }
 
-        footerText += $"\n{userDetailsText}\n{etaMessage}";
+        if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.StoreTradeCodes && tradeCodeStorage != null)
+        {
+            TradeCodeStorage.TradeCodeDetails userDetails = tradeCodeStorage.GetTradeDetails(trader.Id);
+
+            if (!string.IsNullOrEmpty(tradeDetails?.OT))
+            {
+                userDetailsText += $" | OT: {tradeDetails?.OT}";
+            }
+            if (userDetails?.TID != null)
+            {
+                userDetailsText += $" | TID: {userDetails?.TID}";
+            }
+        }
+
+        if (!string.IsNullOrEmpty(userDetailsText))
+        {
+            footerText += $"\n{userDetailsText}";
+        }
+        footerText += $"\n{etaMessage}";
 
         // Initializing the embed builder with general settings
         var embedBuilder = new EmbedBuilder()

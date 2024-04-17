@@ -41,6 +41,9 @@ public class DiscordSettings
     [Category(Startup), Description("Alternar para manejar comandos de forma asincrónica o sincrónica.")]
     public bool AsyncCommands { get; set; }
 
+    [Category(Startup), Description("Estado personalizado del bot.")]
+    public string BotGameStatus { get; set; } = "SysBot.NET: Pokémon";
+
     [Category(Startup), Description("Indica el color del estado de presencia de Discord solo considerando los bots que son de tipo Trade.")]
     public bool BotColorStatusTradeOnly { get; set; } = true;
 
