@@ -2,7 +2,6 @@ using Discord;
 using Discord.Commands;
 using Discord.Net;
 using Discord.WebSocket;
-using Newtonsoft.Json.Linq;
 using PKHeX.Core;
 using SysBot.Base;
 using SysBot.Pokemon.Helpers;
@@ -14,7 +13,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using static SysBot.Pokemon.TradeSettings.TradeSettingsCategory;
 
@@ -643,6 +641,206 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         pk.RefreshAbility(2);
     }
 
+    [Command("hidetrade")]
+    [Alias("ht")]
+    [Summary("Makes the bot trade you the provided Pokémon file without showing the trade embed details.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public Task HideTradeAsyncAttach([Summary("Trade Code")] int code)
+    {
+        var sig = Context.User.GetFavor();
+        return HideTradeAsyncAttach(code, sig, Context.User);
+    }
+
+    [Command("hidetrade")]
+    [Alias("ht")]
+    [Summary("Makes the bot trade you a Pokémon converted from the provided Showdown Set without showing the trade embed details.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public async Task HideTradeAsync([Summary("Trade Code")] int code, [Summary("Showdown Set")][Remainder] string content)
+    {
+        List<Pictocodes>? lgcode = null;
+        // Check if the user is already in the queue
+        var userID = Context.User.Id;
+        if (Info.IsUserInQueue(userID))
+        {
+            var currentTime = DateTime.UtcNow;
+            var formattedTime = currentTime.ToString("hh:mm tt");
+
+            var queueEmbed = new EmbedBuilder
+            {
+                Color = Color.Red,
+                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
+
+            // Añadir un field al Embed para indicar el error
+            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
+            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
+            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
+
+            queueEmbed.Footer = new EmbedFooterBuilder
+            {
+                Text = $"{Context.User.Username} • {formattedTime}",
+                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
+            };
+
+            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
+            return;
+        }
+
+        content = ReusableActions.StripCodeBlock(content);
+        var ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
+        var set = new ShowdownSet(content);
+        var template = AutoLegalityWrapper.GetTemplate(set);
+        int formArgument = ExtractFormArgument(content);
+        if (set.InvalidLines.Count != 0)
+        {
+            var invalidLines = string.Join("\n", set.InvalidLines);
+            var embed = new EmbedBuilder
+            {
+                Description = $"<a:warning:1206483664939126795> No se puede analizar el conjunto showdown:\n{invalidLines}",
+                Color = Color.Red,
+                ImageUrl = "https://i.imgur.com/Y64hLzW.gif",
+                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+            };
+
+            embed.WithAuthor("Error", "https://img.freepik.com/free-icon/warning_318-478601.jpg")
+                 .WithFooter(footer =>
+                 {
+                     footer.Text = $"{Context.User.Username} • {DateTime.UtcNow.ToString("hh:mm tt")}";
+                     footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
+                 });
+
+            await ReplyAsync(embed: embed.Build()).ConfigureAwait(false);
+            await Task.Delay(2000);
+            await Context.Message.DeleteAsync();
+            return;
+        }
+
+        try
+        {
+            var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
+            var pkm = sav.GetLegal(template, out var result);
+
+            if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
+            {
+                if (pkm is PK9 pk9)
+                {
+                    pk9.SetRecordFlagsAll();
+                }
+                else if (pkm is PK8 pk8)
+                {
+                    pk8.SetRecordFlagsAll();
+                }
+                else if (pkm is PB8 pb8)
+                {
+                    pb8.SetRecordFlagsAll();
+                }
+                else if (pkm is PB7 pb7)
+                {
+                    // not applicable for PB7 (LGPE)
+                }
+                else if (pkm is PA8 pa8)
+                {
+                    // not applicable for PA8 (Legends: Arceus)
+                }
+            }
+
+            if (pkm is PA8)
+            {
+                pkm.HeldItem = (int)HeldItem.None; // Set to None for "Legends: Arceus" Pokémon
+            }
+            else if (pkm.HeldItem == 0 && !pkm.IsEgg)
+            {
+                pkm.HeldItem = (int)SysCord<T>.Runner.Config.Trade.TradeConfiguration.DefaultHeldItem;
+            }
+
+            if (pkm is PB7)
+            {
+                if (pkm.Species == (int)Species.Mew)
+                {
+                    if (pkm.IsShiny)
+                    {
+                        await ReplyAsync($"<a:warning:1206483664939126795> Lo siento {Context.User.Mention}, Mew **no** puede ser Shiny en LGPE. PoGo Mew no se transfiere y Pokeball Plus Mew tiene shiny lock.");
+                        return;
+                    }
+                }
+            }
+            var la = new LegalityAnalysis(pkm);
+            var spec = GameInfo.Strings.Species[template.Species];
+            pkm = EntityConverter.ConvertToType(pkm, typeof(T), out _) ?? pkm;
+            if (pkm is not T pk || !la.Valid)
+            {
+                var reason = result == "Timeout" ? $"Este **{spec}** tomó demasiado tiempo en generarse." :
+                             result == "VersionMismatch" ? "Solicitud denegada: Las versiones de **PKHeX** y **Auto-Legality Mod** no coinciden." :
+                             $"{Context.User.Mention} No se puede crear un **{spec}** con los datos proporcionados.";
+                var errorMessage = $"<a:no:1206485104424128593> Oops! {reason}";
+                if (result == "Failed")
+                    errorMessage += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
+
+                var embed = new EmbedBuilder
+                {
+                    Description = errorMessage,
+                    Color = Color.Red,
+                    ImageUrl = "https://i.imgur.com/Y64hLzW.gif",
+                    ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+                };
+
+                embed.WithAuthor("Error en la Legalidad del Conjunto", "https://img.freepik.com/free-icon/warning_318-478601.jpg")
+                     .WithFooter(footer =>
+                     {
+                         footer.Text = $"{Context.User.Username} • {DateTime.UtcNow.ToString("hh:mm tt")}";
+                         footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
+                     });
+
+                await ReplyAsync(embed: embed.Build()).ConfigureAwait(false);
+                await Task.Delay(2000);
+                await Context.Message.DeleteAsync();
+                return;
+            }
+            pk.ResetPartyStats();
+
+            if (pkm is PB7)
+            {
+                lgcode = TradeModule<T>.GenerateRandomPictocodes(3);
+            }
+
+            var sig = Context.User.GetFavor();
+            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isBatchTrade: false, batchTradeNumber: 1, totalBatchTrades: 1, lgcode: lgcode, ignoreAutoOT: ignoreAutoOT, isHiddenTrade: true).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            LogUtil.LogSafe(ex, nameof(TradeModule<T>));
+            var msg = $"<a:warning:1206483664939126795> ¡Oops! Ocurrió un problema inesperado con este conjunto de showdown:\n```{string.Join("\n", set.GetSetLines())}```";
+        }
+        _ = Task.Delay(2000).ContinueWith(async _ => await Context.Message.DeleteAsync());
+    }
+
+    [Command("hidetrade")]
+    [Alias("ht")]
+    [Summary("Makes the bot trade you a Pokémon converted from the provided Showdown Set without showing the trade embed details.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    public Task HideTradeAsync([Summary("Showdown Set")][Remainder] string content)
+    {
+        var userID = Context.User.Id;
+        var code = Info.GetRandomTradeCode(userID);
+        return TradeAsync(code, content);
+    }
+
+    [Command("hidetrade")]
+    [Alias("ht")]
+    [Summary("Makes the bot trade you the attached file without showing the trade embed details.")]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+    private async Task HideTradeAsyncAttach()
+    {
+        var userID = Context.User.Id;
+        var code = Info.GetRandomTradeCode(userID);
+        var sig = Context.User.GetFavor();
+
+        await HideTradeAsyncAttach(code, sig, Context.User).ConfigureAwait(false);
+    }
+
     [Command("trade")]
     [Alias("t")]
     [Summary("Makes the bot trade you the provided Pokémon file.")]
@@ -1158,277 +1356,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
     }
 
-    [Command("specialrequestpokemon")]
-    [Alias("srp")]
-    [Summary("Lists available wondercard events from the specified generation or game and sends the list via DM.")]
-    public async Task ListSpecialEventsAsync(string generationOrGame, [Remainder] string args = "")
-    {
-        const int itemsPerPage = 25; // discord limit
-        var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
-
-        int page = 1;
-        var parts = args.Split(separatorArray0, StringSplitOptions.RemoveEmptyEntries);
-
-        var pagePart = parts.FirstOrDefault(p => p.StartsWith("page", StringComparison.OrdinalIgnoreCase));
-        if (pagePart != null)
-        {
-            if (int.TryParse(pagePart.AsSpan(4), out int pageNumber))
-            {
-                page = pageNumber;
-            }
-        }
-        else if (parts.Length > 0 && int.TryParse(parts.Last(), out int parsedPage))
-        {
-            page = parsedPage;
-        }
-
-        MysteryGift[] eventData;
-
-        switch (generationOrGame.ToLowerInvariant())
-        {
-            case "3":
-            case "gen3":
-                eventData = EncounterEvent.MGDB_G3;
-                break;
-            case "4":
-            case "gen4":
-                eventData = EncounterEvent.MGDB_G4;
-                break;
-            case "5":
-            case "gen5":
-                eventData = EncounterEvent.MGDB_G5;
-                break;
-            case "6":
-            case "gen6":
-                eventData = EncounterEvent.MGDB_G6;
-                break;
-            case "7":
-            case "gen7":
-                eventData = EncounterEvent.MGDB_G7;
-                break;
-            case "gg":
-            case "lgpe":
-                eventData = EncounterEvent.MGDB_G7GG;
-                break;
-            case "swsh":
-                eventData = EncounterEvent.MGDB_G8;
-                break;
-            case "pla":
-            case "la":
-                eventData = EncounterEvent.MGDB_G8A;
-                break;
-            case "bdsp":
-                eventData = EncounterEvent.MGDB_G8B;
-                break;
-            case "9":
-            case "gen9":
-                eventData = EncounterEvent.MGDB_G9;
-                break;
-            default:
-                await ReplyAsync($"<a:warning:1206483664939126795> Generación o juego no válido: {generationOrGame}");
-                return;
-        }
-
-        // get and filter event data
-        var allEvents = eventData
-            .Where(gift => gift.IsEntity && !gift.IsItem)
-            .Select(gift =>
-            {
-                string speciesName = GameInfo.Strings.Species[gift.Species];
-                string levelInfo = $"(Lv. {gift.Level})";
-                string formName = ShowdownParsing.GetStringFromForm(gift.Form, GameInfo.Strings, gift.Species, gift.Context);
-                formName = !string.IsNullOrEmpty(formName) ? $"-{formName}" : formName;
-                return new
-                {
-                    CardNumber = gift.CardID,
-                    EventInfo = $"{gift.CardHeader} - {speciesName}{formName} {levelInfo}"
-                };
-            })
-            .ToList();
-
-        var groupedEvents = allEvents
-            .Select((evt, index) => new { Index = index + 1, evt.CardNumber, evt.EventInfo })
-            .ToList();
-
-        IUserMessage replyMessage;
-
-        if (groupedEvents.Count == 0)
-        {
-            replyMessage = await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention} No se encontraron eventos para: {generationOrGame}.");
-        }
-        else
-        {
-            var pageCount = (int)Math.Ceiling(groupedEvents.Count / (double)itemsPerPage);
-            page = Math.Clamp(page, 1, pageCount); // make sure page number is in range
-
-            var pageItems = groupedEvents.Skip((page - 1) * itemsPerPage).Take(itemsPerPage);
-
-            var embed = new EmbedBuilder()
-                .WithTitle($"📝 Eventos Disponibles - {generationOrGame.ToUpperInvariant()}")
-                .WithDescription($"Pagina {page} de {pageCount}")
-                .WithColor(Color.Blue);
-
-            foreach (var item in pageItems)
-            {
-                embed.AddField($"{item.Index}. {item.EventInfo}", $"Usa `{botPrefix}srp {generationOrGame} {item.Index}` en el canal correspondiente para solicitar este evento.");
-            }
-
-            if (Context.User is IUser user)
-            {
-                try
-                {
-                    var dmChannel = await user.CreateDMChannelAsync();
-                    await dmChannel.SendMessageAsync(embed: embed.Build());
-                    replyMessage = await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention}, Te envié un DM con la lista de eventos.");
-                }
-                catch (HttpException ex) when (ex.HttpCode == HttpStatusCode.Forbidden)
-                {
-                    replyMessage = await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, No puedo enviarte un DM. Por favor verifique su **Configuración de privacidad del servidor**.");
-                }
-            }
-            else
-            {
-                replyMessage = await ReplyAsync("<a:Error:1223766391958671454> **Error**: No se puede enviar un DM. Por favor verifique su **Configuración de Privacidad del Servidor**.");
-            }
-        }
-
-        await Task.Delay(10_000);
-        if (Context.Message is IUserMessage userMessage)
-        {
-            await userMessage.DeleteAsync().ConfigureAwait(false);
-        }
-        await replyMessage.DeleteAsync().ConfigureAwait(false);
-    }
-
-    [Command("specialrequestpokemon")]
-    [Alias("srp")]
-    [Summary("Downloads wondercard event attachments from the specified generation and adds to trade queue.")]
-    [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
-    public async Task SpecialEventRequestAsync(string generationOrGame, int index)
-    {
-        // Check if the user is already in the queue
-        var userID = Context.User.Id;
-        if (Info.IsUserInQueue(userID))
-        {
-            var currentTime = DateTime.UtcNow;
-            var formattedTime = currentTime.ToString("hh:mm tt");
-
-            var queueEmbed = new EmbedBuilder
-            {
-                Color = Color.Red,
-                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
-                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
-            };
-
-            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
-
-            // Añadir un field al Embed para indicar el error
-            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
-            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
-            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
-
-            queueEmbed.Footer = new EmbedFooterBuilder
-            {
-                Text = $"{Context.User.Username} • {formattedTime}",
-                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
-            };
-
-            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
-            return;
-        }
-        try
-        {
-            MysteryGift[] eventData;
-
-            switch (generationOrGame.ToLowerInvariant())
-            {
-                case "3":
-                case "gen3":
-                    eventData = EncounterEvent.MGDB_G3;
-                    break;
-                case "4":
-                case "gen4":
-                    eventData = EncounterEvent.MGDB_G4;
-                    break;
-                case "5":
-                case "gen5":
-                    eventData = EncounterEvent.MGDB_G5;
-                    break;
-                case "6":
-                case "gen6":
-                    eventData = EncounterEvent.MGDB_G6;
-                    break;
-                case "7":
-                case "gen7":
-                    eventData = EncounterEvent.MGDB_G7;
-                    break;
-                case "gg":
-                case "lgpe":
-                    eventData = EncounterEvent.MGDB_G7GG;
-                    break;
-                case "swsh":
-                    eventData = EncounterEvent.MGDB_G8;
-                    break;
-                case "pla":
-                case "la":
-                    eventData = EncounterEvent.MGDB_G8A;
-                    break;
-                case "bdsp":
-                    eventData = EncounterEvent.MGDB_G8B;
-                    break;
-                case "9":
-                case "gen9":
-                    eventData = EncounterEvent.MGDB_G9;
-                    break;
-                default:
-                    await ReplyAsync($"<a:warning:1206483664939126795> Generación o juego no válido: {generationOrGame}");
-                    return;
-            }
-
-            var entityEvents = eventData
-                .Where(gift => gift.IsEntity && !gift.IsItem)
-                .ToArray();
-
-            if (index < 1 || index > entityEvents.Length)
-            {
-                await ReplyAsync($"<a:warning:1206483664939126795> Índice de eventos no válido. Utilice un número de evento válido del comando `{SysCord<T>.Runner.Config.Discord.CommandPrefix}srp {generationOrGame}`");
-                return;
-            }
-
-            var selectedEvent = entityEvents[index - 1];
-
-            var download = new Download<PKM>
-            {
-                Data = selectedEvent.ConvertToPKM(new SimpleTrainerInfo(), EncounterCriteria.Unrestricted),
-                Success = true
-            };
-
-            if (download.Data is null)
-            {
-                await ReplyAsync($"<a:warning:1206483664939126795> No se pudieron convertir los datos de Wondercard al tipo PKM requerido.");
-                return;
-            }
-
-            var pk = GetRequest(download);
-
-            if (pk is null)
-            {
-                await ReplyAsync("<a:warning:1206483664939126795> Los datos de Wondercard proporcionados no son compatibles con este módulo!");
-                return;
-            }
-
-            var code = Info.GetRandomTradeCode(userID);
-            var lgcode = Info.GetRandomLGTradeCode();
-            var sig = Context.User.GetFavor();
-            await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention} Solicitud de evento especial agregada a la cola.");
-            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, lgcode: lgcode);
-        }
-        catch (Exception ex)
-        {
-            await ReplyAsync($"<a:Error:1223766391958671454> Ocurrió un error: {ex.Message}");
-        }
-    }
-
     [Command("listevents")]
     [Alias("le")]
     [Summary("Lists available event files, filtered by a specific letter or substring, and sends the list via DM.")]
@@ -1847,6 +1774,26 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         await AddTradeToQueueAsync(code, usr.Username, pk, sig, usr).ConfigureAwait(false);
     }
 
+    private async Task HideTradeAsyncAttach(int code, RequestSignificance sig, SocketUser usr)
+    {
+        var attachment = Context.Message.Attachments.FirstOrDefault();
+        if (attachment == default)
+        {
+            await ReplyAsync("No attachment provided!").ConfigureAwait(false);
+            return;
+        }
+
+        var att = await NetUtil.DownloadPKMAsync(attachment).ConfigureAwait(false);
+        var pk = GetRequest(att);
+        if (pk == null)
+        {
+            await ReplyAsync("<a:warning:1206483664939126795> ¡El archivo adjunto proporcionado no es compatible con este módulo!").ConfigureAwait(false);
+            return;
+        }
+
+        await AddTradeToQueueAsync(code, usr.Username, pk, sig, usr, isHiddenTrade: true).ConfigureAwait(false);
+    }
+
     private static T? GetRequest(Download<PKM> dl)
     {
         if (!dl.Success)
@@ -1859,7 +1806,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         };
     }
 
-    private async Task AddTradeToQueueAsync(int code, string trainerName, T pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false)
+    private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false, bool isHiddenTrade = false)
     {
         lgcode ??= TradeModule<T>.GenerateRandomPictocodes(3);
         if (!pk.CanBeTraded())
@@ -1986,7 +1933,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             if (la.Valid) pk = clone;
         }
 
-        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode, ignoreAutoOT).ConfigureAwait(false);
+        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode, ignoreAutoOT, isHiddenTrade).ConfigureAwait(false);
     }
 
     private static List<Pictocodes> GenerateRandomPictocodes(int count)

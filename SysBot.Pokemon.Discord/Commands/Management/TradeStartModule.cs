@@ -90,6 +90,22 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
             {
                 speciesName = GameInfo.Strings.Species[detail.TradeData.Species];
             }
+            string ballName = "";
+            if (detail.TradeData != null)
+            {
+                var strings = GameInfo.GetStrings(1);
+                ballName = strings.balllist[detail.TradeData.Ball];
+
+                if (ballName.Contains("(LA)"))
+                {
+                    ballName = "la" + ballName.Replace(" ", "").Replace("(LA)", "").ToLower();
+                }
+                else
+                {
+                    ballName = ballName.Replace(" ", "").ToLower();
+                }
+            }
+            string ballImgUrl = $"https://raw.githubusercontent.com/bdawg1989/sprites/main/AltBallImg/28x28/{ballName}.png";
 
             string tradeTitle, embedImageUrl;
             if (detail.IsMysteryEgg)
@@ -135,11 +151,14 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                 .WithColor(embedColor)
                 .WithThumbnailUrl(embedImageUrl)
                 .WithAuthor(new EmbedAuthorBuilder()
-                    .WithName($"Procesando: {tradeTitle} de {user.Username}")
+                    .WithName($"Siguiente: {user.Username}")
                     .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()))
-                .WithDescription($"# Tradeando ahora: {tradeTitle}")
-                .WithFooter($"Trade #{detail.ID}")
-                .WithCurrentTimestamp();
+                .WithDescription($"**Procesando**: {tradeTitle}\n**Trade ID**: {detail.ID}")
+                .WithFooter(new EmbedFooterBuilder()
+                    .WithText($"Iniciando el comercio ahora. Disfrute de su {speciesName}!\u200B")
+                    .WithIconUrl(ballImgUrl))
+                .WithTimestamp(DateTime.Now);
+
 
             var embed = embedBuilder.Build();
             await c.SendMessageAsync(embed: embed);

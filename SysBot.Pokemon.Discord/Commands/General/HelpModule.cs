@@ -23,10 +23,13 @@ public class HelpModule(CommandService Service) : ModuleBase<SocketCommandContex
         var owner = app.Owner.Id;
         var uid = Context.User.Id;
 
+        int fieldsCount = 0; // Variable para realizar un seguimiento del número de campos agregados
+
         foreach (var module in Service.Modules)
         {
             string? description = null;
-            HashSet<string> mentioned = [];
+            HashSet<string> mentioned = new HashSet<string>(); // Corregir la inicialización de HashSet
+
             foreach (var cmd in module.Commands)
             {
                 var name = cmd.Name;
@@ -54,12 +57,31 @@ public class HelpModule(CommandService Service) : ModuleBase<SocketCommandContex
             {
                 x.Name = moduleName;
                 x.Value = description;
-                x.IsInline = false;
+                x.IsInline = true;
             });
+
+            fieldsCount++; // Incrementar el contador de campos agregados
+
+            // Si el número de campos agregados alcanza 25, enviar el EmbedBuilder actual y crear uno nuevo
+            if (fieldsCount >= 25)
+            {
+                await ReplyAsync(embed: builder.Build()).ConfigureAwait(false);
+                builder = new EmbedBuilder
+                {
+                    Color = new Color(114, 137, 218),
+                    Title = "Continuación de la lista de comandos:", // Agregar título al nuevo EmbedBuilder
+                };
+                fieldsCount = 0; // Restablecer el contador de campos
+            }
         }
 
-        await ReplyAsync("Help has arrived!", false, builder.Build()).ConfigureAwait(false);
+        // Enviar el último EmbedBuilder si hay campos restantes
+        if (fieldsCount > 0)
+        {
+            await ReplyAsync(embed: builder.Build()).ConfigureAwait(false);
+        }
     }
+
 
     [Command("help")]
     [Summary("Lists information about a specific command.")]
