@@ -95,7 +95,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                     break;
                 case "bt":
                     builder.WithAuthor("Intercambio por lotes", icon)
-                           .WithDescription($"Ahora puedes intercambiar por lotes varios Pokémons a la vez.  Para ello, utiliza la siguiente plantilla:\r\n\r\n### Importante:\nEl bot utilizará el mismo código de operación para cada trade por lotes.  El bot cerrará la operación después de cada operación exitosa, y buscará de nuevo usando el mismo código de operación para el siguiente trade.\r\n\r\n```MimikyuPlsbt\r\n[Plantilla Showdown]\r\n---\r\n[Plantilla Showdown]\r\n---\r\n[Plantilla Showdown]```\r\n\r\n### __Asegúrese de separar cada trade con un__: **---**\r\n\r\n### He aquí un ejemplo:\r\n\r\n```{botPrefix}bt\r\nSolgaleo @ Ability Patch\r\nLevel: 100\r\nShiny: Yes\r\nEVs: 252 HP / 252 Atk / 6 Spe\r\nTera Type: Dark\r\n- Calm Mind\r\n- Close Combat\r\n- Cosmic Power\r\n- Heavy Slam\r\n---\r\nSpectrier @ Ability Patch\r\nLevel: 100\r\nEVs: 252 HP / 252 SpA / 6 Spe\r\nTera Type: Dark\r\n- Nasty Plot\r\n- Night Shade\r\n- Phantom Force\r\n- Shadow Ball\r\n---\r\nThundurus-Therian @ Ability Patch\r\nLevel: 100\r\nEVs: 6 Atk / 252 SpA / 252 Spe\r\nTera Type: Dark\r\n- Hammer Arm\r\n- Smart Strike\r\n- Taunt\r\n- Thunder Wave```");
+                           .WithDescription($"Ahora puedes intercambiar por lotes varios Pokémons a la vez.  Para ello, utiliza la siguiente plantilla:\r\n\r\n### Importante:\nEl bot utilizará el mismo código de operación para cada trade por lotes.  El bot cerrará la operación después de cada operación exitosa, y buscará de nuevo usando el mismo código de operación para el siguiente trade.\r\n\r\n```{botPrefix}bt\r\n[Plantilla Showdown]\r\n---\r\n[Plantilla Showdown]\r\n---\r\n[Plantilla Showdown]```\r\n\r\n### __Asegúrese de separar cada trade con un__: **---**\r\n\r\n### He aquí un ejemplo:\r\n\r\n```{botPrefix}bt\r\nSolgaleo @ Ability Patch\r\nLevel: 100\r\nShiny: Yes\r\nEVs: 252 HP / 252 Atk / 6 Spe\r\nTera Type: Dark\r\n- Calm Mind\r\n- Close Combat\r\n- Cosmic Power\r\n- Heavy Slam\r\n---\r\nSpectrier @ Ability Patch\r\nLevel: 100\r\nEVs: 252 HP / 252 SpA / 6 Spe\r\nTera Type: Dark\r\n- Nasty Plot\r\n- Night Shade\r\n- Phantom Force\r\n- Shadow Ball\r\n---\r\nThundurus-Therian @ Ability Patch\r\nLevel: 100\r\nEVs: 6 Atk / 252 SpA / 252 Spe\r\nTera Type: Dark\r\n- Hammer Arm\r\n- Smart Strike\r\n- Taunt\r\n- Thunder Wave```");
                     break;
                 case "me":
                     builder.WithAuthor("Huevo Misterioso", icon)
@@ -103,7 +103,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                     break;
                 case "egg":
                     builder.WithAuthor("Huevos", icon)
-                           .WithDescription("## Como pedir Huevos\r\nUtiliza el comando __`MimikyuPlsEgg`__ seguido de tu set de showdown.\r\n\r\n### Ejemplo: \r\n__**`MimikyuPlsEgg Charmander`**__\r\nShiny: Yes");
+                           .WithDescription($"## Como pedir Huevos\r\nUtiliza el comando __`{botPrefix}Egg`__ seguido de tu set de showdown.\r\n\r\n### Ejemplo: \r\n__**`{botPrefix}Egg Charmander`**__\r\nShiny: Yes");
                     break;
                 // Agrega casos para cada comando
                 default:
