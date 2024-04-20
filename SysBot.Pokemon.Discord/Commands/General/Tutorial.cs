@@ -35,14 +35,16 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                        .AddField($"{botPrefix}ayuda ditto", "Información sobre como pedir **Dittos**")
                        .AddField($"{botPrefix}ayuda me", "Información sobre como pedir **Huevos Misteriosos**")
                        .AddField($"{botPrefix}ayuda egg", "Información sobre como pedir **Huevos de un Pokemons específico**")
+                       .AddField($"{botPrefix}ayuda rt", "Información sobre como generar **Un equipo VGC random**")
+                       .AddField($"{botPrefix}ayuda pp", "Información sobre como generar **Un equipo completo a partir de un link de PokePaste**")
+                       .AddField($"{botPrefix}ayuda srp", "Información sobre como pedir **Regalos Misteriosos)**")
                        // Agrega el resto de los comandos aquí
                        .WithColor(Discord.Color.Blue);
-                await ReplyAsync(embed: builder.Build());
-                await Context.Message.DeleteAsync(); // Opcional: Eliminar el mensaje original
 
                 var message = await ReplyAsync(embed: builder.Build());
-                await Task.Delay(TimeSpan.FromSeconds(10));// Eliminar mensaje después de 10 segundos
-                await message.DeleteAsync();
+                await Context.Message.DeleteAsync(); // Opcional: Eliminar el mensaje original
+                await Task.Delay(TimeSpan.FromSeconds(10)); // Esperar 10 segundos
+                await message.DeleteAsync(); // Eliminar el mensaje embed después de 10 segundos
             }
             else
             {
@@ -61,7 +63,11 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 await Context.Message.DeleteAsync(); // Opcional: Eliminar el mensaje original
 
                 // Notificar en el canal que se ha enviado el mensaje al MD
-                await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention}, la información de ayuda sobre el comando `{command}` ha sido enviada a tu MD. Por favor, revisa tus mensajes directos.");
+                var replyMessage = await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention}, la información de ayuda sobre el comando `{command}` ha sido enviada a tu MD. Por favor, revisa tus mensajes directos.");
+
+                // Esperar 10 segundos antes de eliminar el mensaje de respuesta
+                await Task.Delay(10000); // Delay de 10 segundos
+                await replyMessage.DeleteAsync(); // Elimina el mensaje de notificación
             }
         }
 
@@ -105,13 +111,25 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                     builder.WithAuthor("Huevos", icon)
                            .WithDescription($"## Como pedir Huevos\r\nUtiliza el comando __`{botPrefix}Egg`__ seguido de tu set de showdown.\r\n\r\n### Ejemplo: \r\n__**`{botPrefix}Egg Charmander`**__\r\nShiny: Yes");
                     break;
+                case "rt":
+                    builder.WithAuthor("Equipo Random", icon)
+                           .WithDescription($"# Generar un equipo aleatorio VGC\r\n\r\n## Comandos:\r\n- `{botPrefix}randomteam` o `{botPrefix}rt`\r\n\r\n## Descripción:\r\nGenera un equipo VGC aleatorio a partir de la hoja de cálculo VGCPastes. El bot creará un embed con información detallada sobre el equipo, incluyendo la Descripción del Equipo, Nombre del Entrenador, Fecha Compartida, y una visualización condicional del Código de Alquiler-si está disponible.\r\n\r\n## Características del embed:\r\n- **Descripción del equipo**: Ofrece una visión general del tema o estrategia del equipo.\r\n- **Nombre del formador**: Indica quién creó el equipo.\r\n- **Fecha de compartición**: Muestra la fecha de compartición del equipo.\r\n- **Código de alquiler**: Proporciona un código de acceso directo en el juego, mostrado sólo si está disponible.")
+                           .WithImageUrl("https://i.imgur.com/jUBAz0a.png");
+                    break;
+                case "pp":
+                    builder.WithAuthor("Equipo Completo a partir de PokePaste", icon)
+                           .WithDescription($"# Generar equipos completos a partir de URLs PokePaste\r\n\r\n## Comando:\r\n- `{botPrefix}pp` o `{botPrefix}Pokepaste`\r\n\r\n## Descripción:\r\nPermite a los usuarios generar equipos completos Pokémon VGC directamente desde URLs de PokePaste. Esta función agiliza el proceso de compartir y utilizar equipos.\r\n\r\n## Modo de uso:\r\nEscribe el comando seguido de la URL de PokePaste que contiene el equipo que deseas utilizar. Por ejemplo\r\n```\r\n.pp <URL de PokePaste>\r\n```\r\n\r\nEste comando simplifica el uso compartido de equipos dentro de su comunidad o para la exploración personal de nuevos equipos.\r\n");
+                    break;
+                case "srp":
+                    builder.WithAuthor("Pedir Regalos Misteriosos", icon)
+                           .WithDescription($"# Guía de comandos Pokemon de Petición Especial\r\n\r\n## **🔍 Cómo funciona**\r\n\r\nEl usuario obtendrá una lista de eventos válidos para cada juego escribiendo `{botPrefix}srp <juego> <páginaX>`. Sustituye `<juego>` por el juego del que quieras obtener información. \r\n\r\n- Para Sword/Shield, escribe: `{botPrefix}srp swsh` para obtener una lista de Eventos Misteriosos de SwSh.\r\n- Para Escarlata/Violeta, escribe `{botPrefix}srp gen9` para ver los eventos misteriosos de Scarlet/Violet.\r\n- Para la página 2, escriba `{botPrefix}srp gen9 page2`\r\n\r\n**Juegos disponibles\r\n`{botPrefix}srp gen9` - Escarlata/Violeta\r\n`{botPrefix}srp bdsp` - Diamante brillante/Perla brillante\r\n`{botPrefix}srp swsh` - Espada/Escudo\r\n`{botPrefix}srp pla` - Leyendas: Arceus\r\n`{botPrefix}srp gen7` - Sol y Luna - Ultra Sol y Ultra Luna\r\n`{botPrefix}srp gen6` - Pokémon X e Y\r\n`{botPrefix}srp gen5` - Negro/Blanco - Negro2/Blanco2\r\n`{botPrefix}srp gen4` - Diamante y Perla - Platino\r\n`{botPrefix}srp gen3` - Rubí/Safiro/Esmeralda\r\n\r\nEl bot te enviará una lista de 25 eventos por página para que elijas, y te dará un código para que lo introduzcas en el canal de comercio.\r\n\r\nEl código será el siguiente `srp gen9 10` para el Evento índice 10.\r\n\r\n**Solicitudes entre juegos**\r\n\r\nTambién puedes solicitar eventos de otros juegos, y el bot te lo legalizará para ese juego en concreto.\r\n\r\nPor ejemplo, si quieres un evento de SwSh, pero para Scarlet/Violet, mirarás la lista de eventos para SwSh con `srp swsh` e introducirás el código en un bot de comercio de Scarlet/Violet para que haga ese evento de SwSh para ti.\r\n\r\n**Características principales\r\n\r\n- 📖 Fácil de usar con comandos simples.\r\n- 🌐 Compatibilidad entre juegos\r\n- 📥 Generación de wondercards automática y legal.\r\n- 🤖 No requiere configuración adicional para los propietarios de bots");
+                    break;
                 // Agrega casos para cada comando
                 default:
                     builder.WithAuthor("Comando no encontrado", icon)
-                          .WithDescription($"No se encontró información sobre `{command}`.");
+                          .WithDescription($"No se encontró información sobre el comando: `{command}`.");
                     break;
             }
-            builder.WithColor(Discord.Color.Red);
         }
     }
 }
