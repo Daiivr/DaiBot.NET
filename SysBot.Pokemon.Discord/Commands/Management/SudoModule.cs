@@ -11,7 +11,7 @@ namespace SysBot.Pokemon.Discord;
 public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new()
 {
     [Command("blacklist")]
-    [Summary("Blacklists a mentioned Discord user.")]
+    [Summary("Incluye en la lista negra a un usuario de Discord mencionado.")]
     [RequireSudo]
     // ReSharper disable once UnusedParameter.Global
     public async Task BlackListUsers([Remainder] string _)
@@ -23,7 +23,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
     }
 
     [Command("blacklistComment")]
-    [Summary("Adds a comment for a blacklisted Discord user ID.")]
+    [Summary("Agrega un comentario para una ID de usuario de Discord incluida en la lista negra.")]
     [RequireSudo]
     // ReSharper disable once UnusedParameter.Global
     public async Task BlackListUsers(ulong id, [Remainder] string comment)
@@ -41,7 +41,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
     }
 
     [Command("unblacklist")]
-    [Summary("Removes a mentioned Discord user from the blacklist.")]
+    [Summary("Elimina un usuario de Discord mencionado de la lista negra.")]
     [RequireSudo]
     // ReSharper disable once UnusedParameter.Global
     public async Task UnBlackListUsers([Remainder] string _)
@@ -53,7 +53,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
     }
 
     [Command("blacklistId")]
-    [Summary("Blacklists Discord user IDs. (Useful if user is not in the server).")]
+    [Summary("Incluye en la lista negra los ID de usuario de Discord. (Útil si el usuario no está en el servidor).")]
     [RequireSudo]
     public async Task BlackListIDs([Summary("Comma Separated Discord IDs")][Remainder] string content)
     {
@@ -64,7 +64,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
     }
 
     [Command("unBlacklistId")]
-    [Summary("Removes Discord user IDs from the blacklist. (Useful if user is not in the server).")]
+    [Summary("Elimina las ID de usuario de Discord de la lista negra. (Útil si el usuario no está en el servidor).")]
     [RequireSudo]
     public async Task UnBlackListIDs([Summary("Comma Separated Discord IDs")][Remainder] string content)
     {
@@ -75,7 +75,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
 
     [Command("blacklistSummary")]
     [Alias("printBlacklist", "blacklistPrint")]
-    [Summary("Prints the list of blacklisted Discord users.")]
+    [Summary("Muestra la lista de usuarios de Discord incluidos en la lista negra.")]
     [RequireSudo]
     public async Task PrintBlacklist()
     {
@@ -85,7 +85,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
     }
 
     [Command("banID")]
-    [Summary("Bans online user IDs.")]
+    [Summary("Prohíbe las identificaciones de usuarios en línea.")]
     [RequireSudo]
     public async Task BanOnlineIDs([Summary("Comma Separated Online IDs")][Remainder] string content)
     {
@@ -99,7 +99,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
     }
 
     [Command("bannedIDComment")]
-    [Summary("Adds a comment for a banned online user ID.")]
+    [Summary("Agrega un comentario para una identificación de usuario en línea prohibida.")]
     [RequireSudo]
     public async Task BanOnlineIDs(ulong id, [Remainder] string comment)
     {
@@ -118,7 +118,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
     }
 
     [Command("unbanID")]
-    [Summary("Bans online user IDs.")]
+    [Summary("Desbanea las identificaciones de usuarios en línea.")]
     [RequireSudo]
     public async Task UnBanOnlineIDs([Summary("Comma Separated Online IDs")][Remainder] string content)
     {
@@ -131,7 +131,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
 
     [Command("bannedIDSummary")]
     [Alias("printBannedID", "bannedIDPrint")]
-    [Summary("Prints the list of banned online IDs.")]
+    [Summary("Muestra la lista de identificaciones en línea prohibidas.")]
     [RequireSudo]
     public async Task PrintBannedOnlineIDs()
     {
@@ -144,7 +144,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
 
     [Command("forgetUser")]
     [Alias("forget")]
-    [Summary("Forgets users that were previously encountered.")]
+    [Summary("Perdona a los usuarios que se encontraron anteriormente.")]
     [RequireSudo]
     public async Task ForgetPreviousUser([Summary("Comma Separated Online IDs")][Remainder] string content)
     {
@@ -159,7 +159,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
 
     [Command("previousUserSummary")]
     [Alias("prevUsers")]
-    [Summary("Prints a list of previously encountered users.")]
+    [Summary("Muestra una lista de usuarios encontrados anteriormente.")]
     [RequireSudo]
     public async Task PrintPreviousUsers()
     {

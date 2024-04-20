@@ -18,7 +18,7 @@ using static SysBot.Pokemon.TradeSettings.TradeSettingsCategory;
 
 namespace SysBot.Pokemon.Discord;
 
-[Summary("Queues new Link Code trades")]
+[Summary("Pone en cola nuevos intercambios de códigos de enlace")]
 public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new()
 {
     private static TradeQueueInfo<T> Info => SysCord<T>.Runner.Hub.Queues.Info;
@@ -29,7 +29,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("listguilds")]
     [Alias("lg", "servers", "listservers")]
-    [Summary("Lists all guilds the bot is part of.")]
+    [Summary("Enumera todos los servers de los que forma parte el bot.")]
     [RequireSudo]
     public async Task ListGuilds(int page = 1)
     {
@@ -65,7 +65,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("blacklistserver")]
     [Alias("bls")]
-    [Summary("Adds a server ID to the bot's server blacklist.")]
+    [Summary("Agrega una ID de servidor a la lista negra de servidores del bot.")]
     [RequireOwner]
     public async Task BlacklistServer(ulong serverId)
     {
@@ -94,7 +94,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("unblacklistserver")]
     [Alias("ubls")]
-    [Summary("Removes a server ID from the bot's server blacklist.")]
+    [Summary("Elimina una ID de servidor de la lista negra de servidores del bot.")]
     [RequireOwner]
     public async Task UnblacklistServer(ulong serverId)
     {
@@ -120,7 +120,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("fixOT")]
     [Alias("fix", "f")]
-    [Summary("Fixes OT and Nickname of a Pokémon you show via Link Trade if an advert is detected.")]
+    [Summary("Corrige el OT y el apodo de un Pokémon que muestras a través de Link Trade si se detecta un anuncio.")]
     [RequireQueueRole(nameof(DiscordManager.RolesFixOT))]
     public async Task FixAdOT()
     {
@@ -164,7 +164,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("fixOT")]
     [Alias("fix", "f")]
-    [Summary("Fixes OT and Nickname of a Pokémon you show via Link Trade if an advert is detected.")]
+    [Summary("Corrige el OT y el apodo de un Pokémon que muestras a través de Link Trade si se detecta un anuncio.")]
     [RequireQueueRole(nameof(DiscordManager.RolesFixOT))]
     public async Task FixAdOT([Summary("Trade Code")] int code)
     {
@@ -208,7 +208,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("fixOTList")]
     [Alias("fl", "fq")]
-    [Summary("Prints the users in the FixOT queue.")]
+    [Summary("Muestra los usuarios en la cola Fix OT.")]
     [RequireSudo]
     public async Task GetFixListAsync()
     {
@@ -225,7 +225,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("dittoTrade")]
     [Alias("dt", "ditto")]
-    [Summary("Makes the bot trade you a Ditto with a requested stat spread and language.")]
+    [Summary("Hace que el bot te intercambie un Ditto con un idioma y una extensión de estadísticas solicitados.")]
     public async Task DittoTrade([Summary("Una combinación de \"ATK/SPA/SPE\" o \"6IV\"")] string keyword, [Summary("Language")] string language, [Summary("Nature")] string nature)
     {
         // Check if the user is already in the queue
@@ -264,7 +264,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("dittoTrade")]
     [Alias("dt", "ditto")]
-    [Summary("Makes the bot trade you a Ditto with a requested stat spread and language.")]
+    [Summary("Hace que el bot te intercambie un Ditto con un idioma y una extensión de estadísticas solicitados.")]
     public async Task DittoTrade([Summary("Trade Code")] int code, [Summary("Una combinación de \"ATK/SPA/SPE\" or \"6IV\"")] string keyword, [Summary("Language")] string language, [Summary("Nature")] string nature)
     {
         // Check if the user is already in the queue
@@ -333,7 +333,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("itemTrade")]
     [Alias("it", "item")]
-    [Summary("Makes the bot trade you a Pokémon holding the requested item, or Ditto if stat spread keyword is provided.")]
+    [Summary("Hace que el bot te intercambie un Pokémon que tenga el objeto solicitado, o un ditto si se proporciona la palabra clave de distribución de estadísticas.")]
     public async Task ItemTrade([Remainder] string item)
     {
         // Check if the user is already in the queue
@@ -372,7 +372,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("itemTrade")]
     [Alias("it", "item")]
-    [Summary("Makes the bot trade you a Pokémon holding the requested item.")]
+    [Summary("Hace que el robot te intercambie un Pokémon que tenga el objeto solicitado.")]
     public async Task ItemTrade([Summary("Trade Code")] int code, [Remainder] string item)
     {
         // Check if the user is already in the queue
@@ -435,7 +435,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("tradeList")]
     [Alias("tl")]
-    [Summary("Prints the users in the trade queues.")]
+    [Summary("Muestra los usuarios en las colas comerciales.")]
     [RequireSudo]
     public async Task GetTradeListAsync()
     {
@@ -452,7 +452,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("egg")]
     [Alias("Egg")]
-    [Summary("Trades an egg generated from the provided Pokémon name.")]
+    [Summary("Intercambia un huevo generado a partir del nombre de Pokémon proporcionado.")]
     public async Task TradeEgg([Remainder] string egg)
     {
         var userID = Context.User.Id;
@@ -462,7 +462,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("egg")]
     [Alias("Egg")]
-    [Summary("Trades an egg generated from the provided Pokémon name.")]
+    [Summary("Intercambia un huevo generado a partir del nombre de Pokémon proporcionado.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task TradeEggAsync([Summary("Trade Code")] int code, [Summary("Showdown Set")][Remainder] string content)
     {
@@ -529,7 +529,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("mysteryegg")]
     [Alias("me")]
-    [Summary("Trades a random mystery egg with perfect stats and shiny appearance.")]
+    [Summary("Intercambia un huevo misterioso aleatorio con estadísticas perfectas y apariencia brillante.")]
     public async Task TradeMysteryEggAsync()
     {
         // Check if the user is already in the queue
@@ -568,7 +568,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("mysteryegg")]
     [Alias("me")]
-    [Summary("Trades a random mystery egg with perfect stats and shiny appearance.")]
+    [Summary("Intercambia un huevo misterioso aleatorio con estadísticas perfectas y apariencia brillante.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task TradeMysteryEggAsync([Summary("Trade Code")] int code)
     {
@@ -643,7 +643,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("hidetrade")]
     [Alias("ht")]
-    [Summary("Makes the bot trade you the provided Pokémon file without showing the trade embed details.")]
+    [Summary("Hace que el bot te intercambie el archivo Pokémon proporcionado sin mostrar los detalles del intercambio.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public Task HideTradeAsyncAttach([Summary("Trade Code")] int code)
     {
@@ -653,7 +653,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("hidetrade")]
     [Alias("ht")]
-    [Summary("Makes the bot trade you a Pokémon converted from the provided Showdown Set without showing the trade embed details.")]
+    [Summary("Hace que el bot te intercambie un Pokémon convertido del conjunto de showdown proporcionado sin mostrar los detalles del intercambio.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task HideTradeAsync([Summary("Trade Code")] int code, [Summary("Showdown Set")][Remainder] string content)
     {
@@ -819,7 +819,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("hidetrade")]
     [Alias("ht")]
-    [Summary("Makes the bot trade you a Pokémon converted from the provided Showdown Set without showing the trade embed details.")]
+    [Summary("Hace que el bot te intercambie un Pokémon convertido del conjunto de showdown proporcionado sin mostrar los detalles del intercambio.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public Task HideTradeAsync([Summary("Showdown Set")][Remainder] string content)
     {
@@ -830,7 +830,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("hidetrade")]
     [Alias("ht")]
-    [Summary("Makes the bot trade you the attached file without showing the trade embed details.")]
+    [Summary("Hace que el bot le intercambie el archivo adjunto sin mostrar los detalles de la inserción comercial.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     private async Task HideTradeAsyncAttach()
     {
@@ -843,7 +843,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("trade")]
     [Alias("t")]
-    [Summary("Makes the bot trade you the provided Pokémon file.")]
+    [Summary("Hace que el bot te intercambie el archivo Pokémon proporcionado.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public Task TradeAsyncAttach([Summary("Trade Code")] int code)
     {
@@ -853,7 +853,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("trade")]
     [Alias("t")]
-    [Summary("Makes the bot trade you a Pokémon converted from the provided Showdown Set.")]
+    [Summary("Hace que el robot te intercambie un Pokémon convertido del conjunto de showdown proporcionado.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task TradeAsync([Summary("Trade Code")] int code, [Summary("Showdown Set")][Remainder] string content)
     {
@@ -1020,7 +1020,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("trade")]
     [Alias("t")]
-    [Summary("Makes the bot trade you a Pokémon converted from the provided Showdown Set.")]
+    [Summary("Hace que el robot te intercambie un Pokémon convertido del conjunto de showdown proporcionado.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public Task TradeAsync([Summary("Showdown Set")][Remainder] string content)
     {
@@ -1031,7 +1031,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("trade")]
     [Alias("t")]
-    [Summary("Makes the bot trade you the attached file.")]
+    [Summary("Hace que el bot le intercambie el archivo adjunto.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task TradeAsyncAttach()
     {
@@ -1054,7 +1054,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("batchTrade")]
     [Alias("bt")]
-    [Summary("Makes the bot trade multiple Pokémon from the provided list, up to a maximum of 3 trades.")]
+    [Summary("Hace que el bot intercambie varios Pokémon de la lista proporcionada, hasta un máximo de 3 intercambios.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
     public async Task BatchTradeAsync([Summary("Lista de conjuntos de showdowns separados por '---'")][Remainder] string content)
     {
@@ -1139,7 +1139,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("batchtradezip")]
     [Alias("btz")]
-    [Summary("Makes the bot trade multiple Pokémon from the provided .zip file, up to a maximum of 6 trades.")]
+    [Summary("Hace que el bot intercambie varios Pokémon desde el archivo .zip proporcionado, hasta un máximo de 6 intercambios.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
     public async Task BatchTradeZipAsync()
     {
@@ -1150,7 +1150,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("batchtradezip")]
     [Alias("btz")]
-    [Summary("Makes the bot trade multiple Pokémon from the provided .zip file, up to a maximum of 6 trades.")]
+    [Summary("Hace que el bot intercambie varios Pokémon desde el archivo .zip proporcionado, hasta un máximo de 6 intercambios.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
     public async Task BatchTradeZipAsync([Summary("Trade Code")] int code)
     {
@@ -1358,7 +1358,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("listevents")]
     [Alias("le")]
-    [Summary("Lists available event files, filtered by a specific letter or substring, and sends the list via DM.")]
+    [Summary("Enumera los archivos de eventos disponibles, filtrados por una letra o subcadena específica, y envía la lista a través de DM.")]
     public async Task ListEventsAsync([Remainder] string args = "")
     {
         const int itemsPerPage = 20; // Number of items per page
@@ -1455,7 +1455,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("eventrequest")]
     [Alias("er")]
-    [Summary("Downloads event attachments from the specified EventsFolder and adds to trade queue.")]
+    [Summary("Descarga archivos adjuntos de eventos de la carpeta de eventos especificada y los agrega a la cola de transacciones.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task EventRequestAsync(int index)
     {
@@ -1540,7 +1540,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("battlereadylist")]
     [Alias("brl")]
-    [Summary("Lists available battle-ready files, filtered by a specific letter or substring, and sends the list via DM.")]
+    [Summary("Enumera los archivos disponibles listos para la batalla, filtrados por una letra o subcadena específica, y envía la lista a través de DM.")]
     public async Task BattleReadyListAsync([Remainder] string args = "")
     {
         const int itemsPerPage = 20; // Number of items per page
@@ -1637,7 +1637,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("battlereadyrequest")]
     [Alias("brr", "br")]
-    [Summary("Downloads battle-ready attachments from the specified folder and adds to trade queue.")]
+    [Summary("Descarga archivos adjuntos listos para la batalla desde la carpeta especificada y los agrega a la cola de intercambios.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTradePlus))]
     public async Task BattleReadyRequestAsync(int index)
     {
@@ -1722,7 +1722,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("tradeUser")]
     [Alias("tu", "tradeOther")]
-    [Summary("Makes the bot trade the mentioned user the attached file.")]
+    [Summary("Hace que el bot intercambie al usuario mencionado el archivo adjunto.")]
     [RequireSudo]
     public async Task TradeAsyncAttachUser([Summary("Trade Code")] int code, [Remainder] string _)
     {
@@ -1745,7 +1745,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("tradeUser")]
     [Alias("tu", "tradeOther")]
-    [Summary("Makes the bot trade the mentioned user the attached file.")]
+    [Summary("Hace que el bot intercambie al usuario mencionado el archivo adjunto.")]
     [RequireSudo]
     public Task TradeAsyncAttachUser([Remainder] string _)
     {

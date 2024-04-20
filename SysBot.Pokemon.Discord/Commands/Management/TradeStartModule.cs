@@ -52,7 +52,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
     }
 
     [Command("startHere")]
-    [Summary("Makes the bot log trade starts to the channel.")]
+    [Summary("Hace que el bot registre el comercio en el canal.")]
     [RequireSudo]
     public async Task AddLogAsync()
     {
@@ -191,7 +191,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
     }
 
     [Command("startInfo")]
-    [Summary("Dumps the Start Notification settings.")]
+    [Summary("Dump la configuración de Notificación de inicio.")]
     [RequireSudo]
     public async Task DumpLogInfoAsync()
     {
@@ -200,7 +200,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
     }
 
     [Command("startClear")]
-    [Summary("Clears the Start Notification settings in that specific channel.")]
+    [Summary("Borra la configuración de Notificación de inicio en ese canal específico.")]
     [RequireSudo]
     public async Task ClearLogsAsync()
     {
@@ -212,7 +212,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
     }
 
     [Command("startClearAll")]
-    [Summary("Clears all the Start Notification settings.")]
+    [Summary("Borra todas las configuraciones de Notificación de inicio.")]
     [RequireSudo]
     public async Task ClearLogsAllAsync()
     {

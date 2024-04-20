@@ -8,7 +8,7 @@ namespace SysBot.Pokemon.Discord;
 public class LegalityCheckModule : ModuleBase<SocketCommandContext>
 {
     [Command("lc"), Alias("check", "validate", "verify")]
-    [Summary("Verifies the attachment for legality.")]
+    [Summary("Verifica la legalidad del archivo adjunto.")]
     public async Task LegalityCheck()
     {
         var attachments = Context.Message.Attachments;
@@ -17,7 +17,7 @@ public class LegalityCheckModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("lcv"), Alias("verbose")]
-    [Summary("Verifies the attachment for legality with a verbose output.")]
+    [Summary("Verifica la legalidad del archivo adjunto con una salida detallada.")]
     public async Task LegalityCheckVerbose()
     {
         var attachments = Context.Message.Attachments;

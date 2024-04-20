@@ -1,15 +1,21 @@
 using Discord;
 using Discord.Commands;
+using System;
+using SysBot.Pokemon.Discord;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord.Net;
+using System.Net;
 
 namespace SysBot.Pokemon.Discord;
 
-public class HelpModule(CommandService Service) : ModuleBase<SocketCommandContext>
+public class HelpModule(CommandService commandService) : ModuleBase<SocketCommandContext>
 {
+    private readonly CommandService _commandService = commandService;
+
     [Command("help")]
-    [Summary("Lists available commands.")]
+    [Summary("Muestra los comandos disponibles.")]
     public async Task HelpAsync()
     {
         var builder = new EmbedBuilder
@@ -18,6 +24,7 @@ public class HelpModule(CommandService Service) : ModuleBase<SocketCommandContex
             Description = "📝 Estos son los comandos que puedes usar:",
         };
 
+        var botPrefix = SysCordSettings.HubConfig.Discord.CommandPrefix;
         var mgr = SysCordSettings.Manager;
         var app = await Context.Client.GetApplicationInfoAsync().ConfigureAwait(false);
         var owner = app.Owner.Id;
@@ -25,7 +32,7 @@ public class HelpModule(CommandService Service) : ModuleBase<SocketCommandContex
 
         int fieldsCount = 0; // Variable para realizar un seguimiento del número de campos agregados
 
-        foreach (var module in Service.Modules)
+        foreach (var module in commandService.Modules)
         {
             string? description = null;
             HashSet<string> mentioned = new HashSet<string>(); // Corregir la inicialización de HashSet
@@ -43,7 +50,7 @@ public class HelpModule(CommandService Service) : ModuleBase<SocketCommandContex
                 mentioned.Add(name);
                 var result = await cmd.CheckPreconditionsAsync(Context).ConfigureAwait(false);
                 if (result.IsSuccess)
-                    description += $"{cmd.Aliases[0]}\n";
+                    description += $"- {cmd.Aliases[0]}\n";
             }
             if (string.IsNullOrWhiteSpace(description))
                 continue;
@@ -65,7 +72,7 @@ public class HelpModule(CommandService Service) : ModuleBase<SocketCommandContex
             // Si el número de campos agregados alcanza 25, enviar el EmbedBuilder actual y crear uno nuevo
             if (fieldsCount >= 25)
             {
-                await ReplyAsync(embed: builder.Build()).ConfigureAwait(false);
+                await Context.User.SendMessageAsync(embed: builder.Build()).ConfigureAwait(false);
                 builder = new EmbedBuilder
                 {
                     Color = new Color(114, 137, 218),
@@ -74,65 +81,77 @@ public class HelpModule(CommandService Service) : ModuleBase<SocketCommandContex
                 fieldsCount = 0; // Restablecer el contador de campos
             }
         }
+        // Aquí agregas el footer antes de enviar la respuesta
+        builder.Footer = new EmbedFooterBuilder
+        {
+            Text = $"Si necesitas ayuda sobre un comando especifico utiliza `{botPrefix}help` seguido del comando del que necesitas ayuda.",
+            IconUrl = "https://i.imgur.com/gUstNQ8.gif"
+        };
 
         // Enviar el último EmbedBuilder si hay campos restantes
         if (fieldsCount > 0)
         {
-            await ReplyAsync(embed: builder.Build()).ConfigureAwait(false);
+            await Context.Message.DeleteAsync();
+            await Context.User.SendMessageAsync(embed: builder.Build()).ConfigureAwait(false);
+            var reply = await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention}, la información de ayuda ha sido enviada a tu MD. Por favor, revisa tus mensajes directos.");
+            await Task.Delay(10000); // Delay de 10 segundos
+            await reply.DeleteAsync(); // Elimina el mensaje de respuesta del bot
         }
     }
 
 
     [Command("help")]
-    [Summary("Lists information about a specific command.")]
-    public async Task HelpAsync([Summary("The command you want help for")] string command)
+    [Summary("Muestra información sobre un comando específico.")]
+    public async Task HelpAsync([Summary("The command to get information for.")] string command)
     {
-        var result = Service.Search(Context, command);
-
-        if (!result.IsSuccess)
+        // Verificar si el comando se está ejecutando en un MD
+        if (!(Context.Channel is IDMChannel))
         {
-            await ReplyAsync($"<a:warning:1206483664939126795> Lo siento, no pude encontrar un comando como: **{command}**.").ConfigureAwait(false);
+            var reply = await ReplyAsync($"<a:warning:1206483664939126795> Lo siento {Context.User.Mention}, este comando solo puede ser usado en el MD del bot.");
+
+            // Verificar si el contexto NO es un MD, y luego eliminar el mensaje del usuario
+            if (Context.Channel is IGuildChannel) // Verifica si es un canal dentro de un servidor
+            {
+                await Context.Message.DeleteAsync(); // Elimina el mensaje del usuario
+            }
+
+            // Esperar 10 segundos antes de eliminar el mensaje de respuesta del bot
+            await Task.Delay(10000); // Delay de 10 segundos
+            await reply.DeleteAsync(); // Elimina el mensaje de respuesta del bot
+
             return;
         }
 
-        var builder = new EmbedBuilder
-        {
-            Color = new Color(114, 137, 218),
-            Description = $"He aquí algunos comandos como: **{command}**:",
-        };
+        var searchResult = _commandService.Search(Context, command);
 
-        foreach (var match in result.Commands)
+        if (!searchResult.IsSuccess)
+        {
+            await ReplyAsync($"<a:warning:1206483664939126795> Lo siento, no pude encontrar un comando como **{command}**.");
+            return;
+        }
+
+        var embedBuilder = new EmbedBuilder()
+            .WithTitle($"Ayuda para el comanod: {command}")
+            .WithColor(Color.Blue);
+
+        foreach (var match in searchResult.Commands)
         {
             var cmd = match.Command;
 
-            builder.AddField(x =>
-            {
-                x.Name = string.Join(", ", cmd.Aliases);
-                x.Value = GetCommandSummary(cmd);
-                x.IsInline = false;
-            });
+            var parameters = cmd.Parameters.Select(p => $"`{p.Name}` - {p.Summary}");
+            var parameterSummary = string.Join("\n", parameters);
+
+            embedBuilder.AddField(cmd.Name, $"{cmd.Summary}\n\n**Parámetros:**\n{parameterSummary}", false);
         }
 
-        await ReplyAsync("¡La ayuda ha llegado!", false, builder.Build()).ConfigureAwait(false);
-    }
-
-    private static string GetCommandSummary(CommandInfo cmd)
-    {
-        return $"Summary: {cmd.Summary}\nParameters: {GetParameterSummary(cmd.Parameters)}";
-    }
-
-    private static string GetParameterSummary(IReadOnlyList<ParameterInfo> p)
-    {
-        if (p.Count == 0)
-            return "None";
-        return $"{p.Count}\n- " + string.Join("\n- ", p.Select(GetParameterSummary));
-    }
-
-    private static string GetParameterSummary(ParameterInfo z)
-    {
-        var result = z.Name;
-        if (!string.IsNullOrWhiteSpace(z.Summary))
-            result += $" ({z.Summary})";
-        return result;
+        try
+        {
+            var dmChannel = await Context.User.CreateDMChannelAsync();
+            await dmChannel.SendMessageAsync(embed: embedBuilder.Build());
+        }
+        catch (Exception ex)
+        {
+            await ReplyAsync($"<a:Error:1223766391958671454> Ocurrió un error: {ex.Message}");
+        }
     }
 }

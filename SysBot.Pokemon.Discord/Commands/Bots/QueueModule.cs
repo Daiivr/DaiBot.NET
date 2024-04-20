@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.Discord;
 
-[Summary("Clears and toggles Queue features.")]
+[Summary("Borra y alterna las funciones de la cola.")]
 public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new()
 {
     private static TradeQueueInfo<T> Info => SysCord<T>.Runner.Hub.Queues.Info;
 
     [Command("queueStatus")]
     [Alias("qs", "ts")]
-    [Summary("Checks the user's position in the queue.")]
+    [Summary("Comprueba la posición del usuario en la cola.")]
     public async Task GetTradePositionAsync()
     {
         var userID = Context.User.Id;
@@ -47,7 +47,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("queueClear")]
     [Alias("qc", "tc")]
-    [Summary("Clears the user from the trade queues. Will not remove a user if they are being processed.")]
+    [Summary("Borra al usuario de las colas comerciales. No eliminará a un usuario si está siendo procesado.")]
     public async Task ClearTradeAsync()
     {
         string msg = ClearTrade();
@@ -71,7 +71,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("queueClearUser")]
     [Alias("qcu", "tcu")]
-    [Summary("Clears the user from the trade queues. Will not remove a user if they are being processed.")]
+    [Summary("Borra al usuario de las colas comerciales. No eliminará a un usuario si está siendo procesado.")]
     [RequireSudo]
     public async Task ClearTradeUserAsync([Summary("ID de usuario de discord")] ulong id)
     {
@@ -81,7 +81,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("queueClearUser")]
     [Alias("qcu", "tcu")]
-    [Summary("Clears the user from the trade queues. Will not remove a user if they are being processed.")]
+    [Summary("Borra al usuario de las colas comerciales. No eliminará a un usuario si está siendo procesado.")]
     [RequireSudo]
     public async Task ClearTradeUserAsync([Summary("Nombre de usuario de la persona a borrar")] string _)
     {
@@ -94,7 +94,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("queueClearUser")]
     [Alias("qcu", "tcu")]
-    [Summary("Clears the user from the trade queues. Will not remove a user if they are being processed.")]
+    [Summary("Borra al usuario de las colas comerciales. No eliminará a un usuario si está siendo procesado.")]
     [RequireSudo]
     public async Task ClearTradeUserAsync()
     {
@@ -110,7 +110,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("queueClearAll")]
     [Alias("qca", "tca")]
-    [Summary("Clears all users from the trade queues.")]
+    [Summary("Borra a todos los usuarios de las colas comerciales.")]
     [RequireSudo]
     public async Task ClearAllTradesAsync()
     {
@@ -120,7 +120,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("queueToggle")]
     [Alias("qt", "tt")]
-    [Summary("Toggles on/off the ability to join the trade queue.")]
+    [Summary("Activa/desactiva la posibilidad de unirse a la cola comercial.")]
     [RequireSudo]
     public Task ToggleQueueTradeAsync()
     {
@@ -134,7 +134,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("queueMode")]
     [Alias("qm")]
-    [Summary("Changes how queueing is controlled (manual/threshold/interval).")]
+    [Summary("Cambia la forma en que se controlan las colas (manual/umbral/intervalo).")]
     [RequireSudo]
     public async Task ChangeQueueModeAsync([Summary("Queue mode")] QueueOpening mode)
     {
@@ -144,7 +144,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("queueList")]
     [Alias("ql")]
-    [Summary("Private messages the list of users in the queue.")]
+    [Summary("Envía al MD la lista de usuarios en la cola.")]
     [RequireSudo]
     public async Task ListUserQueue()
     {
@@ -158,7 +158,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("addTradeCode")]
     [Alias("atc")]
-    [Summary("Stores a trade code for the user.")]
+    [Summary("Almacena un código comercial para el usuario.")]
     public async Task AddTradeCodeAsync([Summary("The trade code to store.")] int tradeCode)
     {
         var user = Context.User; // Obtiene el objeto IUser que representa al usuario.
@@ -202,7 +202,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("updateTradeCode")]
     [Alias("utc")]
-    [Summary("Updates the stored trade code for the user.")]
+    [Summary("Actualiza el código comercial almacenado para el usuario.")]
     public async Task UpdateTradeCodeAsync([Summary("The new trade code to update.")] int newTradeCode)
     {
         var user = Context.User; // Obtiene el objeto IUser que representa al usuario.
@@ -240,7 +240,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("deleteTradeCode")]
     [Alias("dtc")]
-    [Summary("Deletes the stored trade code for the user.")]
+    [Summary("Elimina el código comercial almacenado para el usuario.")]
     public async Task DeleteTradeCodeAsync()
     {
         var usermention = Context.User.Mention;
@@ -277,7 +277,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userEntries = Info.GetIsUserQueued(entry => entry.UserID == userID);
 
         if (userEntries.Count == 0)
-            return "Sorry, you are not currently in the queue.";
+            return "<a:warning:1206483664939126795> Lo sentimos, actualmente no estás en la cola..";
 
         bool removedAll = true;
         bool currentlyProcessing = false;

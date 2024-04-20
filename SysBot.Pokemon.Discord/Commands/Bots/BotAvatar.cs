@@ -11,7 +11,7 @@ namespace SysBot.Pokemon.Discord
     {
         [Command("setavatar")]
         [Alias("botavatar", "changeavatar", "sa", "ba")]
-        [Summary("Sets the bot's avatar to a specified GIF.")]
+        [Summary("Establece el avatar del bot a un GIF específico.")]
         [RequireOwner]
         public async Task SetAvatarAsync()
         {

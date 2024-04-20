@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.Discord;
 
-[Summary("Queues new Seed Check trades")]
+[Summary("Pone en cola nuevas operaciones de verificación de semillas")]
 public class SeedCheckModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new()
 {
     private static TradeQueueInfo<T> Info => SysCord<T>.Runner.Hub.Queues.Info;
 
     [Command("seedCheck")]
     [Alias("checkMySeed", "checkSeed", "seed", "s", "sc", "specialrequest", "sr")]
-    [Summary("Checks the seed for a Pokémon.")]
+    [Summary("Comprueba la semilla de un Pokémon.")]
     [RequireQueueRole(nameof(DiscordManager.RolesSeed))]
     public async Task SeedCheckAsync(int code)
     {
@@ -53,7 +53,7 @@ public class SeedCheckModule<T> : ModuleBase<SocketCommandContext> where T : PKM
 
     [Command("seedCheck")]
     [Alias("checkMySeed", "checkSeed", "seed", "s", "sc", "specialrequest", "sr")]
-    [Summary("Checks the seed for a Pokémon.")]
+    [Summary("Comprueba la semilla de un Pokémon.")]
     [RequireQueueRole(nameof(DiscordManager.RolesSeed))]
     public async Task SeedCheckAsync([Summary("Trade Code")][Remainder] string code)
     {
@@ -94,7 +94,7 @@ public class SeedCheckModule<T> : ModuleBase<SocketCommandContext> where T : PKM
 
     [Command("seedCheck")]
     [Alias("checkMySeed", "checkSeed", "seed", "s", "sc", "specialrequest", "sr")]
-    [Summary("Checks the seed for a Pokémon.")]
+    [Summary("Comprueba la semilla de un Pokémon.")]
     [RequireQueueRole(nameof(DiscordManager.RolesSeed))]
     public async Task SeedCheckAsync()
     {
@@ -134,7 +134,7 @@ public class SeedCheckModule<T> : ModuleBase<SocketCommandContext> where T : PKM
 
     [Command("seedList")]
     [Alias("sl", "scq", "seedCheckQueue", "seedQueue", "seedList")]
-    [Summary("Prints the users in the Seed Check queue.")]
+    [Summary("Imprime los usuarios en la cola de Seed Check.")]
     [RequireSudo]
     public async Task GetSeedListAsync()
     {
@@ -151,7 +151,7 @@ public class SeedCheckModule<T> : ModuleBase<SocketCommandContext> where T : PKM
 
     [Command("findFrame")]
     [Alias("ff", "getFrameData")]
-    [Summary("Prints the next shiny frame from the provided seed.")]
+    [Summary("Imprime el siguiente fotograma brillante a partir de la semilla proporcionada.")]
     public async Task FindFrameAsync([Remainder] string seedString)
     {
         var me = SysCord<T>.Runner;

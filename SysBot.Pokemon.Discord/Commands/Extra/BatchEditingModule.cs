@@ -12,7 +12,7 @@ namespace SysBot.Pokemon.Discord;
 public class BatchEditingModule : ModuleBase<SocketCommandContext>
 {
     [Command("batchInfo"), Alias("bei")]
-    [Summary("Tries to get info about the requested property.")]
+    [Summary("Intenta obtener información sobre la propiedad solicitada.")]
     public async Task GetBatchInfo(string propertyName)
     {
         var result = BatchEditing.GetPropertyType(propertyName);
@@ -23,7 +23,7 @@ public class BatchEditingModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("batchValidate"), Alias("bev")]
-    [Summary("Tries to get info about the requested property.")]
+    [Summary("Intenta obtener información sobre la propiedad solicitada.")]
     public async Task ValidateBatchInfo(string instructions)
     {
         bool valid = IsValidInstructionSet(instructions, out var invalid);

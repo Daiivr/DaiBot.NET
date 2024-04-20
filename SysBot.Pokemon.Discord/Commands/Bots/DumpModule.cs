@@ -13,7 +13,7 @@ public class DumpModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
 
     [Command("dump")]
     [Alias("d")]
-    [Summary("Dumps the Pokémon you show via Link Trade.")]
+    [Summary("Dump los Pokémon que muestras a través de Link Trade.")]
     [RequireQueueRole(nameof(DiscordManager.RolesDump))]
     public async Task DumpAsync(int code)
     {
@@ -67,7 +67,7 @@ public class DumpModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
 
     [Command("dump")]
     [Alias("d")]
-    [Summary("Dumps the Pokémon you show via Link Trade.")]
+    [Summary("Dump los Pokémon que muestras a través de Link Trade.")]
     [RequireQueueRole(nameof(DiscordManager.RolesDump))]
     public async Task DumpAsync([Summary("Trade Code")][Remainder] string code)
     {
@@ -108,7 +108,7 @@ public class DumpModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
 
     [Command("dump")]
     [Alias("d")]
-    [Summary("Dumps the Pokémon you show via Link Trade.")]
+    [Summary("Dump los Pokémon que muestras a través de Link Trade.")]
     [RequireQueueRole(nameof(DiscordManager.RolesDump))]
     public async Task DumpAsync()
     {
@@ -148,7 +148,7 @@ public class DumpModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
 
     [Command("dumpList")]
     [Alias("dl", "dq")]
-    [Summary("Prints the users in the Dump queue.")]
+    [Summary("Imprime los usuarios en la cola de Dump.")]
     [RequireSudo]
     public async Task GetListAsync()
     {

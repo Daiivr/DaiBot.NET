@@ -28,7 +28,7 @@ public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T :
     }
 
     [Command("click")]
-    [Summary("Clicks the specified button.")]
+    [Summary("Hace clic en el botón especificado.")]
     [RequireRoleAccess(nameof(DiscordManager.RolesRemoteControl))]
     public async Task ClickAsync(SwitchButton b)
     {
@@ -43,7 +43,7 @@ public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T :
     }
 
     [Command("click")]
-    [Summary("Clicks the specified button.")]
+    [Summary("Hace clic en el botón especificado.")]
     [RequireSudo]
     public async Task ClickAsync(string ip, SwitchButton b)
     {
@@ -58,7 +58,7 @@ public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T :
     }
 
     [Command("setStick")]
-    [Summary("Sets the stick to the specified position.")]
+    [Summary("Coloca el joystick en la posición especificada.")]
     [RequireRoleAccess(nameof(DiscordManager.RolesRemoteControl))]
     public async Task SetStickAsync(SwitchStick s, short x, short y, ushort ms = 1_000)
     {
@@ -73,7 +73,7 @@ public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T :
     }
 
     [Command("setStick")]
-    [Summary("Sets the stick to the specified position.")]
+    [Summary("Coloca el joystick en la posición especificada.")]
     [RequireSudo]
     public async Task SetStickAsync(string ip, SwitchStick s, short x, short y, ushort ms = 1_000)
     {
@@ -89,7 +89,7 @@ public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T :
 
     [Command("setScreenOn")]
     [Alias("screenOn", "scrOn")]
-    [Summary("Turns the screen on")]
+    [Summary("Enciende la pantalla")]
     [RequireSudo]
     public async Task SetScreenOnAsync()
     {
@@ -98,7 +98,7 @@ public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T :
 
     [Command("setScreenOff")]
     [Alias("screenOff", "scrOff")]
-    [Summary("Turns the screen off")]
+    [Summary("Apaga la pantalla")]
     [RequireSudo]
     public async Task SetScreenOffAsync()
     {

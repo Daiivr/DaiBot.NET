@@ -7,7 +7,7 @@ namespace SysBot.Pokemon.Discord;
 public class LegalizerModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new()
 {
     [Command("legalize"), Alias("alm")]
-    [Summary("Tries to legalize the attached pkm data.")]
+    [Summary("Intenta legalizar los datos del pkm adjuntos.")]
     public async Task LegalizeAsync()
     {
         var attachments = Context.Message.Attachments;
@@ -16,7 +16,7 @@ public class LegalizerModule<T> : ModuleBase<SocketCommandContext> where T : PKM
     }
 
     [Command("convert"), Alias("showdown")]
-    [Summary("Tries to convert the Showdown Set to pkm data.")]
+    [Summary("Intenta convertir el Showdown Set a datos pkm.")]
     [Priority(1)]
     public Task ConvertShowdown([Summary("Generation/Format")] byte gen, [Remainder][Summary("Showdown Set")] string content)
     {
@@ -24,7 +24,7 @@ public class LegalizerModule<T> : ModuleBase<SocketCommandContext> where T : PKM
     }
 
     [Command("convert"), Alias("showdown")]
-    [Summary("Tries to convert the Showdown Set to pkm data.")]
+    [Summary("Intenta convertir el Showdown Set a datos pkm.")]
     [Priority(0)]
     public Task ConvertShowdown([Remainder][Summary("Showdown Set")] string content)
     {

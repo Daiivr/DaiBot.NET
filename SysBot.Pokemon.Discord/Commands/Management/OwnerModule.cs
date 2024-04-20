@@ -22,7 +22,7 @@ namespace SysBot.Pokemon.Discord;
 public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
 {
     [Command("addSudo")]
-    [Summary("Adds mentioned user to global sudo")]
+    [Summary("Agrega el usuario mencionado al sudo global")]
     [RequireOwner]
     // ReSharper disable once UnusedParameter.Global
     public async Task SudoUsers([Remainder] string _)
@@ -34,7 +34,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     }
 
     [Command("removeSudo")]
-    [Summary("Removes mentioned user from global sudo")]
+    [Summary("Elimina el usuario mencionado del sudo global")]
     [RequireOwner]
     // ReSharper disable once UnusedParameter.Global
     public async Task RemoveSudoUsers([Remainder] string _)
@@ -46,7 +46,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     }
 
     [Command("addChannel")]
-    [Summary("Adds a channel to the list of channels that are accepting commands.")]
+    [Summary("Agrega un canal a la lista de canales que aceptan comandos.")]
     [RequireOwner]
     // ReSharper disable once UnusedParameter.Global
     public async Task AddChannel()
@@ -58,7 +58,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
 
     [Command("syncChannels")]
     [Alias("sch", "syncchannels")]
-    [Summary("Copies all channels from ChannelWhitelist to AnnouncementChannel.")]
+    [Summary("Copia todos los canales de la Lista blanca de canales al Canal de anuncios.")]
     [RequireOwner]
     public async Task SyncChannels()
     {
@@ -87,7 +87,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     }
 
     [Command("removeChannel")]
-    [Summary("Removes a channel from the list of channels that are accepting commands.")]
+    [Summary("Elimina un canal de la lista de canales que aceptan comandos.")]
     [RequireOwner]
     // ReSharper disable once UnusedParameter.Global
     public async Task RemoveChannel()
@@ -99,7 +99,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
 
     [Command("leave")]
     [Alias("bye")]
-    [Summary("Leaves the current server.")]
+    [Summary("Abandona el servidor actual.")]
     [RequireOwner]
     // ReSharper disable once UnusedParameter.Global
     public async Task Leave()
@@ -110,7 +110,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
 
     [Command("leaveguild")]
     [Alias("lg")]
-    [Summary("Leaves guild based on supplied ID.")]
+    [Summary("Abandona el servidor según la identificación proporcionada.")]
     [RequireOwner]
     // ReSharper disable once UnusedParameter.Global
     public async Task LeaveGuild(string userInput)
@@ -133,7 +133,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     }
 
     [Command("leaveall")]
-    [Summary("Leaves all servers the bot is currently in.")]
+    [Summary("Deja todos los servidores en los que se encuentra actualmente el bot.")]
     [RequireOwner]
     // ReSharper disable once UnusedParameter.Global
     public async Task LeaveAll()
@@ -147,7 +147,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
 
     [Command("repeek")]
     [Alias("peek")]
-    [Summary("Take and send a screenshot from the currently configured Switch.")]
+    [Summary("Toma y envia una captura de pantalla desde el Switch actualmente configurada.")]
     [RequireSudo]
     public async Task RePeek(string address)
     {
@@ -189,7 +189,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
 
     [Command("video")]
     [Alias("video")]
-    [Summary("Take and send a GIF from the currently configured Switch.")]
+    [Summary("Toma y envia un GIF desde el Switch actualmente configurado.")]
     [RequireSudo]
     public async Task RePeekGIF()
     {
@@ -206,7 +206,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
                 var bot = SysCord<T>.Runner.GetBot(ip);
                 if (bot == null)
                 {
-                    await ReplyAsync($"No bot found with the specified IP address ({ip}).").ConfigureAwait(false);
+                    await ReplyAsync($"<a:warning:1206483664939126795> No se encontró ningún bot con la dirección IP: ({ip}).").ConfigureAwait(false);
                     return;
                 }
                 var screenshotCount = 10;
@@ -223,12 +223,12 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
                     }
                     catch (Exception ex)
                     {
-                        await ReplyAsync($"Error while fetching pixels: {ex.Message}").ConfigureAwait(false);
+                        await ReplyAsync($"<a:Error:1223766391958671454> Error al recuperar píxeles: {ex.Message}").ConfigureAwait(false);
                         return;
                     }
                     if (bytes.Length == 0)
                     {
-                        await ReplyAsync("No screenshot data received.").ConfigureAwait(false);
+                        await ReplyAsync("<a:warning:1206483664939126795> No se recibieron datos de captura de pantalla.").ConfigureAwait(false);
                         return;
                     }
                     using (var ms = new MemoryStream(bytes))
@@ -263,7 +263,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
             }
             catch (Exception ex)
             {
-                await ReplyAsync($"Error while processing GIF: {ex.Message}").ConfigureAwait(false);
+                await ReplyAsync($"<a:warning:1206483664939126795> Error al procesar GIF: {ex.Message}").ConfigureAwait(false);
             }
         });
     }
@@ -287,7 +287,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
 
     [Command("kill")]
     [Alias("shutdown")]
-    [Summary("Causes the entire process to end itself!")]
+    [Summary("Hace que todo el proceso termine solo!")]
     [RequireOwner]
     // ReSharper disable once UnusedParameter.Global
     public async Task ExitProgram()
@@ -297,7 +297,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     }
 
     [Command("dm")]
-    [Summary("Sends a direct message to a specified user.")]
+    [Summary("Envía un mensaje directo a un usuario específico.")]
     [RequireOwner]
     public async Task DMUserAsync(SocketUser user, [Remainder] string message)
     {
@@ -367,7 +367,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     }
 
     [Command("say")]
-    [Summary("Sends a message to a specified channel.")]
+    [Summary("Envía un mensaje a un canal específico.")]
     [RequireSudo]
     public async Task SayAsync([Remainder] string message)
     {

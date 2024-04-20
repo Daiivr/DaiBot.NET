@@ -55,7 +55,7 @@ namespace SysBot.Pokemon.Discord
 
         [Command("specialrequestpokemon")]
         [Alias("srp")]
-        [Summary("Lists available wondercard events from the specified generation or game or requests a specific event if a number is provided.")]
+        [Summary("Enumera los eventos de Wondercard disponibles de la generación o juego especificado o solicita un evento específico si se proporciona un número.")]
         public async Task ListSpecialEventsAsync(string generationOrGame, [Remainder] string args = "")
         {
             var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
@@ -103,7 +103,7 @@ namespace SysBot.Pokemon.Discord
 
         [Command("specialrequestpokemon")]
         [Alias("srp")]
-        [Summary("Downloads wondercard event attachments from the specified generation and adds to trade queue.")]
+        [Summary("Descarga archivos adjuntos de eventos de Wondercard de la generación especificada y los agrega a la cola de transacciones.")]
         [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
         public async Task SpecialEventRequestAsync(string generationOrGame, [Remainder] string args = "")
         {

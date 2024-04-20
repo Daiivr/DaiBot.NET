@@ -25,7 +25,7 @@ public class LogModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("logHere")]
-    [Summary("Makes the bot log to the channel.")]
+    [Summary("Hace que el bot inicie sesión en el canal.")]
     [RequireSudo]
     public async Task AddLogAsync()
     {
@@ -52,7 +52,7 @@ public class LogModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("logInfo")]
-    [Summary("Dumps the logging settings.")]
+    [Summary("Dump la configuración de registro.")]
     [RequireSudo]
     public async Task DumpLogInfoAsync()
     {
@@ -61,7 +61,7 @@ public class LogModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("logClear")]
-    [Summary("Clears the logging settings in that specific channel.")]
+    [Summary("Borra la configuración de registro en ese canal específico.")]
     [RequireSudo]
     public async Task ClearLogsAsync()
     {
@@ -78,7 +78,7 @@ public class LogModule : ModuleBase<SocketCommandContext>
     }
 
     [Command("logClearAll")]
-    [Summary("Clears all the logging settings.")]
+    [Summary("Borra todas las configuraciones de registro.")]
     [RequireSudo]
     public async Task ClearLogsAllAsync()
     {

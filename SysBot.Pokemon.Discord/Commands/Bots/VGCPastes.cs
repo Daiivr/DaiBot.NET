@@ -103,7 +103,7 @@ namespace SysBot.Pokemon.Discord
         // Adjusted command method to use the new selection logic with Pokémon name filtering
         [Command("randomteam")]
         [Alias("rt", "RandomTeam", "Rt")]
-        [Summary("Generates a random VGC team from the specified Google Spreadsheet and sends it as files via DM.")]
+        [Summary("Genera un equipo VGC aleatorio a partir de la hoja de cálculo de Google especificada y lo envía como archivos a través de DM.")]
         public async Task GenerateSpreadsheetTeamAsync(string pokemonName = null)
         {
             if (!SysCord<T>.Runner.Config.Trade.VGCPastesConfiguration.AllowRequests)

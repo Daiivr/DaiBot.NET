@@ -23,6 +23,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
     [Command("info")]
     [Alias("about", "whoami", "owner")]
+    [Summary("Muestra información sobre el bot.")]
     public async Task InfoAsync()
     {
         if (Context.User.Id == DisallowedUserId)

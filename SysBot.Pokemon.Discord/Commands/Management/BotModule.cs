@@ -13,7 +13,7 @@ namespace SysBot.Pokemon.Discord
     public class BotModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new()
     {
         [Command("botStatus")]
-        [Summary("Gets the status of the bots.")]
+        [Summary("Obtiene el estado de los bots.")]
         [RequireSudo]
         public async Task GetStatusAsync()
         {
@@ -56,7 +56,7 @@ namespace SysBot.Pokemon.Discord
         }
 
         [Command("botStart")]
-        [Summary("Starts the currently running bot.")]
+        [Summary("Inicia el bot que se está ejecutando actualmente.")]
         [RequireSudo]
         public async Task StartBotAsync([Summary("IP address of the bot")] string ip = null)
         {
@@ -75,7 +75,7 @@ namespace SysBot.Pokemon.Discord
         }
 
         [Command("botStop")]
-        [Summary("Stops the currently running bot.")]
+        [Summary("Detiene el bot que se está ejecutando actualmente.")]
         [RequireSudo]
         public async Task StopBotAsync([Summary("IP address of the bot")] string ip = null)
         {
@@ -95,7 +95,7 @@ namespace SysBot.Pokemon.Discord
 
         [Command("botIdle")]
         [Alias("botPause")]
-        [Summary("Commands the currently running bot to Idle.")]
+        [Summary("Ordena al bot que se está ejecutando actualmente que permanezca inactivo.")]
         [RequireSudo]
         public async Task IdleBotAsync([Summary("IP address of the bot")] string ip = null)
         {
@@ -114,7 +114,7 @@ namespace SysBot.Pokemon.Discord
         }
 
         [Command("botChange")]
-        [Summary("Changes the routine of the currently running bot (trades).")]
+        [Summary("Cambia la rutina del bot actualmente en ejecución (intercambios).")]
         [RequireSudo]
         public async Task ChangeTaskAsync([Summary("Routine enum name")] PokeRoutineType task, [Summary("IP address of the bot")] string ip = null)
         {
@@ -133,7 +133,7 @@ namespace SysBot.Pokemon.Discord
         }
 
         [Command("botRestart")]
-        [Summary("Restarts the currently running bot(s).")]
+        [Summary("Reinicia los bots que se están ejecutando actualmente.")]
         [RequireSudo]
         public async Task RestartBotAsync([Summary("IP address of the bot")] string ip = null)
         {

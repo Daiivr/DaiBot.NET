@@ -14,7 +14,7 @@ public class CloneModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("clone")]
     [Alias("c")]
-    [Summary("Clones the Pokémon you show via Link Trade.")]
+    [Summary("Clona los Pokémon que muestras a través de Link Trade.")]
     [RequireQueueRole(nameof(DiscordManager.RolesClone))]
     public async Task CloneAsync(int code)
     {
@@ -61,7 +61,7 @@ public class CloneModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("clone")]
     [Alias("c")]
-    [Summary("Clones the Pokémon you show via Link Trade.")]
+    [Summary("Clona los Pokémon que muestras a través de Link Trade.")]
     [RequireQueueRole(nameof(DiscordManager.RolesClone))]
     public async Task CloneAsync([Summary("Trade Code")][Remainder] string code)
     {
@@ -109,7 +109,7 @@ public class CloneModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("clone")]
     [Alias("c")]
-    [Summary("Clones the Pokémon you show via Link Trade.")]
+    [Summary("Clona los Pokémon que muestras a través de Link Trade.")]
     [RequireQueueRole(nameof(DiscordManager.RolesClone))]
     public Task CloneAsync()
     {
@@ -121,7 +121,7 @@ public class CloneModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     [Command("cloneList")]
     [Alias("cl", "cq")]
-    [Summary("Prints the users in the Clone queue.")]
+    [Summary("Imprime los usuarios en la cola de clonación.")]
     [RequireSudo]
     public async Task GetListAsync()
     {
