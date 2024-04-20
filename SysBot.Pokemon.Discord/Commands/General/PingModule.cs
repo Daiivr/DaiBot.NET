@@ -13,67 +13,97 @@ using System;
 public class PingModule : ModuleBase<SocketCommandContext>
 {
     private const string StatsFilePath = "user_stats.json";
-    private static Dictionary<ulong, DateTime> _cooldowns = new Dictionary<ulong, DateTime>();
 
     [Command("ping")]
-    [Summary("Makes the bot respond, indicating that it is running.")]
-    public async Task PingAsync()
+    [Summary("Hace que el bot responda, indicando que se está ejecutando. O desafía a otro usuario si se menciona.")]
+    public async Task PingAsync(IUser opponent = null)
     {
-        var userId1 = Context.User.Id;
-        if (_cooldowns.ContainsKey(userId1))
+        var userId = Context.User.Id.ToString();
+        var stats = LoadOrCreateStats();
+
+        if (!stats.ContainsKey(userId))
         {
-            var cooldownEnd = _cooldowns[userId1];
-            if (DateTime.UtcNow < cooldownEnd)
-            {
-                var unixTime = ((DateTimeOffset)cooldownEnd).ToUnixTimeSeconds();
-                await ReplyAsync($"<a:no:1206485104424128593> Lo siento {Context.User.Mention}, debes esperar un poco antes de volver a usar el comando, podras volver a usarlo <t:{unixTime}:R>.");
-                return;
-            }
+            stats[userId] = new UserStats { Wins = 0, Losses = 0, CooldownEnd = DateTime.MinValue };
         }
 
-        // Actualiza el cooldown
-        _cooldowns[userId1] = DateTime.UtcNow.AddMinutes(3);
+        if (DateTime.UtcNow < stats[userId].CooldownEnd)
+        {
+            var unixTime = ((DateTimeOffset)stats[userId].CooldownEnd).ToUnixTimeSeconds();
+            await ReplyAsync($"<a:no:1206485104424128593> Lo siento {Context.User.Mention}, debes esperar un poco antes de volver a usar el comando, podrás volver a usarlo <t:{unixTime}:R>.");
+            return;
+        }
 
-        // Aquí continúa tu lógica del comando
+        // Actualiza el cooldown en las estadísticas solo para el usuario que invocó el comando
+        stats[userId].CooldownEnd = DateTime.UtcNow.AddMinutes(3);
+
         var avatarUrl = Context.User.GetAvatarUrl(size: 128) ?? Context.User.GetDefaultAvatarUrl();
         var color = await GetDominantColorAsync(avatarUrl);
 
-        var stats = LoadOrCreateStats();
-        var userId = Context.User.Id.ToString();
-        if (!stats.ContainsKey(userId))
-        {
-            stats[userId] = new UserStats { Wins = 0, Losses = 0 };
-        }
-
-        var random = new Random();
-        bool botWins = random.Next(2) == 0;
-
-        if (botWins)
-        {
-            stats[userId].Losses++;
-        }
-        else
-        {
-            stats[userId].Wins++;
-        }
-
-        SaveStats(stats);
-
         var userStats = stats[userId];
-        var winner = botWins ? Context.Client.CurrentUser.Mention : Context.User.Mention;
 
         var embed = new EmbedBuilder()
             .WithTitle("¡Partida de Ping-Pong!")
-            .WithDescription($"Jugué una partida de ping-pong contra {Context.User.Mention} y ganó {winner}!")
+            .WithDescription($"Partida de ping-pong entre {Context.User.Mention} y {opponent?.Mention ?? Context.Client.CurrentUser.Mention}")
             .WithColor(color)
             .WithCurrentTimestamp()
             .WithImageUrl("https://i.imgur.com/w7ApP2T.gif")
-            .AddField($"Estadísticas de {Context.User.Username}", $"Ganadas: {userStats.Wins} | Perdidas: {userStats.Losses}")
             .WithFooter(footer =>
             {
                 footer.WithText("Partida jugada por " + Context.User.Username);
                 footer.WithIconUrl(avatarUrl);
             });
+
+        if (opponent == null)
+        {
+            // Juego contra el bot
+            var random = new Random();
+            bool botWins = random.Next(2) == 0;
+
+            if (botWins)
+            {
+                userStats.Losses++;
+                embed.AddField($"Resultado", $"¡{Context.Client.CurrentUser.Mention} ganó la partida!");
+            }
+            else
+            {
+                userStats.Wins++;
+                embed.AddField($"Resultado", $"¡{Context.User.Username} ganó la partida!");
+            }
+            // Agregar estadísticas del jugador al embed
+            embed.AddField($"Estadísticas de {Context.User.Username}", $"Ganadas: {userStats.Wins} | Perdidas: {userStats.Losses}", true);
+        }
+        else
+        {
+            // Juego contra otro usuario
+            var opponentId = opponent.Id.ToString();
+            if (!stats.ContainsKey(opponentId))
+            {
+                stats[opponentId] = new UserStats { Wins = 0, Losses = 0, CooldownEnd = DateTime.MinValue };
+            }
+            var opponentStats = stats[opponentId];
+
+            var random = new Random();
+            bool userWins = random.Next(2) == 0;
+
+            if (userWins)
+            {
+                userStats.Wins++;
+                stats[opponentId].Losses++;
+                embed.AddField($"Resultado", $"¡{Context.User.Username} ganó la partida contra {opponent.Username}!");
+                embed.AddField($"Estadísticas de {Context.User.Username}", $"Ganadas: {userStats.Wins} | Perdidas: {userStats.Losses}", true);
+                embed.AddField($"Estadísticas de {opponent.Username}", $"Ganadas: {opponentStats.Wins} | Perdidas: {opponentStats.Losses}", true);
+            }
+            else
+            {
+                userStats.Losses++;
+                stats[opponentId].Wins++;
+                embed.AddField($"Resultado", $"¡{opponent.Username} ganó la partida contra {Context.User.Username}!");
+                embed.AddField($"Estadísticas de {opponent.Username}", $"Ganadas: {opponentStats.Wins} | Perdidas: {opponentStats.Losses}", true);
+                embed.AddField($"Estadísticas de {Context.User.Username}", $"Ganadas: {userStats.Wins} | Perdidas: {userStats.Losses}", true);
+            }
+        }
+
+        SaveStats(stats);
 
         await ReplyAsync(embed: embed.Build()).ConfigureAwait(false);
     }
@@ -127,4 +157,5 @@ public class UserStats
 {
     public int Wins { get; set; }
     public int Losses { get; set; }
+    public DateTime CooldownEnd { get; set; }  // Propiedad añadida para el manejo del cooldown
 }
