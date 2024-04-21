@@ -155,7 +155,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                     .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()))
                 .WithDescription($"**Procesando**: {tradeTitle}\n**Trade ID**: {detail.ID}")
                 .WithFooter(new EmbedFooterBuilder()
-                    .WithText($"Iniciando el comercio ahora. Disfrute de su {speciesName}!\u200B")
+                    .WithText($"Iniciando el comercio ahora. Disfrute de su {(detail.IsMysteryEgg ? "✨ Mystery Egg" : speciesName)}!\u200B")
                     .WithIconUrl(ballImgUrl))
                 .WithTimestamp(DateTime.Now);
 

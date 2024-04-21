@@ -527,120 +527,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
     }
 
-    [Command("mysteryegg")]
-    [Alias("me")]
-    [Summary("Intercambia un huevo misterioso aleatorio con estadísticas perfectas y apariencia brillante.")]
-    public async Task TradeMysteryEggAsync()
-    {
-        // Check if the user is already in the queue
-        var userID = Context.User.Id;
-        if (Info.IsUserInQueue(userID))
-        {
-            var currentTime = DateTime.UtcNow;
-            var formattedTime = currentTime.ToString("hh:mm tt");
-
-            var queueEmbed = new EmbedBuilder
-            {
-                Color = Color.Red,
-                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
-                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
-            };
-
-            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
-
-            // Añadir un field al Embed para indicar el error
-            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
-            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
-            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
-
-            queueEmbed.Footer = new EmbedFooterBuilder
-            {
-                Text = $"{Context.User.Username} • {formattedTime}",
-                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
-            };
-
-            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
-            return;
-        }
-        var code = Info.GetRandomTradeCode(userID);
-        await TradeMysteryEggAsync(code).ConfigureAwait(false);
-    }
-
-    [Command("mysteryegg")]
-    [Alias("me")]
-    [Summary("Intercambia un huevo misterioso aleatorio con estadísticas perfectas y apariencia brillante.")]
-    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-    public async Task TradeMysteryEggAsync([Summary("Trade Code")] int code)
-    {
-        // Check if the user is already in the queue
-        var userID = Context.User.Id;
-        if (Info.IsUserInQueue(userID))
-        {
-            var currentTime = DateTime.UtcNow;
-            var formattedTime = currentTime.ToString("hh:mm tt");
-
-            var queueEmbed = new EmbedBuilder
-            {
-                Color = Color.Red,
-                ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
-                ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
-            };
-
-            queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
-
-            // Añadir un field al Embed para indicar el error
-            queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
-            queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
-            queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
-
-            queueEmbed.Footer = new EmbedFooterBuilder
-            {
-                Text = $"{Context.User.Username} • {formattedTime}",
-                IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
-            };
-
-            await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
-            return;
-        }
-        try
-        {
-            var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
-            var speciesList = BreedableSpeciesGenerator.GetBreedableSpeciesForSV();
-            var randomIndex = new Random().Next(speciesList.Count);
-            ushort speciesId = speciesList[randomIndex];
-            var context = new EntityContext();
-            var IsEgg = new EncounterEgg(speciesId, 0, 1, 9, GameVersion.SV, context);
-            var pk = IsEgg.ConvertToPKM(sav);
-            TradeModule<T>.SetPerfectIVsAndShiny(pk);
-
-            if (pk is not T pkT)
-            {
-                await ReplyAsync($"<a:warning:1206483664939126795> Oops! {Context.User.Mention}, no pude crear el huevo misterioso.").ConfigureAwait(false);
-                return;
-            }
-
-            AbstractTrade<T>.EggTrade(pkT, null);
-
-            var sig = Context.User.GetFavor();
-            await AddTradeToQueueAsync(code, Context.User.Username, pkT, sig, Context.User, isMysteryEgg: true).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            LogUtil.LogSafe(ex, nameof(TradeModule<T>));
-            await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, se produjo un error al procesar la solicitud.").ConfigureAwait(false);
-        }
-    }
-
-    private static void SetPerfectIVsAndShiny(PKM pk)
-    {
-        // Set IVs to perfect
-        pk.IVs = [31, 31, 31, 31, 31, 31];
-        // Set as shiny
-        pk.SetShiny();
-        // Set hidden ability
-        pk.RefreshAbility(2);
-    }
-
     [Command("hidetrade")]
     [Alias("ht")]
     [Summary("Hace que el bot te intercambie el archivo Pokémon proporcionado sin mostrar los detalles del intercambio.")]
@@ -1852,30 +1738,36 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var la = new LegalityAnalysis(pk);
         if (!la.Valid)
         {
-            var customIconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg"; // Custom icon URL for the embed title
-            var customImageUrl = "https://usagif.com/wp-content/uploads/gify/37-pikachu-usagif.gif"; // Custom image URL for the embed
-            var customthumbnail = "https://i.imgur.com/DWLEXyu.png";
             string legalityReport = la.Report(verbose: false);
+            var customIconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg"; // Custom icon URL for the embed title
+            var embedBuilder = new EmbedBuilder(); // Crear el objeto EmbedBuilder
+            embedBuilder.WithColor(Color.Red); // Opcional: establecer el color del embed
 
-            string responseMessage = pk.IsEgg ? $"<a:no:1206485104424128593> {usr.Mention} El conjunto de showdown __no es válido__ para este **huevo**. Por favor revisa tu __información__ y vuelve a intentarlo." :
-                $"<a:no:1206485104424128593> {usr.Mention} el archivo **{typeof(T).Name}** no es __legal__ y no puede ser tradeado.\n### He aquí la razón:\n```{legalityReport}```\n```🔊Consejo:\n• Por favor verifica detenidamente la informacion en PKHeX e intentalo de nuevo!\n• Puedes utilizar el plugin de ALM para legalizar tus pokemons y ahorrarte estos problemas.```";
-            var embedResponse = new EmbedBuilder()
-                .WithAuthor("Error al intentar agregarte a la cola.", customIconUrl)
-                .WithDescription(responseMessage)
-                .WithColor(Color.Red)
-                .WithImageUrl(customImageUrl)
-                    .WithThumbnailUrl(customthumbnail);
+            if (pk.IsEgg)
+            {
+                string speciesName = GameInfo.GetStrings("en").specieslist[pk.Species];
+                embedBuilder.WithAuthor("Conjunto de showdown no válido!", customIconUrl);
+                embedBuilder.WithDescription($"<a:no:1206485104424128593> {usr.Mention} El conjunto de showdown __no es válido__ para un huevo de **{speciesName}**.");
+                embedBuilder.AddField("__**Error**__", $"Puede que __**{speciesName}**__ no se pueda obtener en un huevo o algún dato esté impidiendo el trade.", inline: true);
+                embedBuilder.AddField("__**Solución**__", $"Revisa tu __información__ y vuelve a intentarlo.", inline: true);
+            }
+            else
+            {
+                embedBuilder.WithAuthor("Archivo adjunto no valido!", customIconUrl);
+                embedBuilder.WithDescription($"<a:no:1206485104424128593> {usr.Mention} el archivo **{typeof(T).Name}** no es __legal__ y no puede ser tradeado.\n### He aquí la razón:\n```{legalityReport}```\n```🔊Consejo:\n• Por favor verifica detenidamente la informacion en PKHeX e intentalo de nuevo!\n• Puedes utilizar el plugin de ALM para legalizar tus pokemons y ahorrarte estos problemas.```");
+            }
+            embedBuilder.WithThumbnailUrl("https://i.imgur.com/DWLEXyu.png");
+            embedBuilder.WithImageUrl("https://usagif.com/wp-content/uploads/gify/37-pikachu-usagif.gif");
+            // Añadir el footer con icono y texto
+            embedBuilder.WithFooter(footer => {
+                footer.WithIconUrl(Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl());
+                footer.WithText($"{Context.User.Username} | {DateTimeOffset.Now.ToString("hh:mm tt")}");
+            });
 
-            // Adding footer with user avatar, username, and current time in 12-hour format
-            var footerBuilder1 = new EmbedFooterBuilder()
-                .WithIconUrl(Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl())
-                .WithText($"{Context.User.Username} | {DateTimeOffset.Now.ToString("hh:mm tt")}"); // "hh:mm tt" formats time in 12-hour format with AM/PM
-
-            var embed2 = embedResponse.Build();
-
-            var reply = await ReplyAsync(embed: embed2).ConfigureAwait(false);
-            await Task.Delay(10000);
-            await reply.DeleteAsync().ConfigureAwait(false);
+            var reply = await ReplyAsync(embed: embedBuilder.Build()).ConfigureAwait(false); // Enviar el embed'
+            await Context.Message.DeleteAsync().ConfigureAwait(false);
+            await Task.Delay(10000); // Esperar antes de borrar
+            await reply.DeleteAsync().ConfigureAwait(false); // Borrar el mensaje
             return;
         }
         if (homeLegalityCfg.DisallowNonNatives && (la.EncounterOriginal.Context != pk.Context || pk.GO))
