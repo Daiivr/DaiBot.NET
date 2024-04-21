@@ -794,9 +794,16 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                          footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
                      });
 
-                await ReplyAsync(embed: embed.Build()).ConfigureAwait(false);
+                // Enviar el mensaje y almacenar la referencia
+                var message = await ReplyAsync(embed: embed.Build()).ConfigureAwait(false);
+                // Esperar 2 segundos antes de eliminar el mensaje original
                 await Task.Delay(2000);
                 await Context.Message.DeleteAsync();
+
+                // Esperar 20 segundos antes de eliminar el mensaje de error
+                await Task.Delay(20000);  // Se ajusta el tiempo a 20 segundos 
+                await message.DeleteAsync();
+
                 return;
             }
             pk.ResetPartyStats();
@@ -972,7 +979,9 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             pkm = EntityConverter.ConvertToType(pkm, typeof(T), out _) ?? pkm;
             if (pkm is not T pk || !la.Valid)
             {
-                var reason = result == "Timeout" ? $"Este **{spec}** tomó demasiado tiempo en generarse." : result == "VersionMismatch" ? "Solicitud denegada: Las versiones de **PKHeX** y **Auto-Legality Mod** no coinciden." : $"{Context.User.Mention} No se puede crear un **{spec}** con los datos proporcionados.";
+                var reason = result == "Timeout" ? $"Este **{spec}** tomó demasiado tiempo en generarse." :
+                             result == "VersionMismatch" ? "Solicitud denegada: Las versiones de **PKHeX** y **Auto-Legality Mod** no coinciden." :
+                             $"{Context.User.Mention} No se puede crear un **{spec}** con los datos proporcionados.";
                 var errorMessage = $"<a:no:1206485104424128593> Oops! {reason}";
                 if (result == "Failed")
                     errorMessage += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
@@ -992,9 +1001,16 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                          footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
                      });
 
-                await ReplyAsync(embed: embed.Build()).ConfigureAwait(false);
+                // Enviar el mensaje y almacenar la referencia
+                var message = await ReplyAsync(embed: embed.Build()).ConfigureAwait(false);
+                // Esperar 2 segundos antes de eliminar el mensaje original
                 await Task.Delay(2000);
                 await Context.Message.DeleteAsync();
+
+                // Esperar 20 segundos antes de eliminar el mensaje de error
+                await Task.Delay(20000);  // Se ajusta el tiempo a 20 segundos 
+                await message.DeleteAsync();
+
                 return;
             }
             pk.ResetPartyStats();

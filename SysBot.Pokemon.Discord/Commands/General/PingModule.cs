@@ -62,12 +62,12 @@ public class PingModule : ModuleBase<SocketCommandContext>
             if (botWins)
             {
                 userStats.Losses++;
-                embed.AddField($"Resultado", $"¡{Context.Client.CurrentUser.Mention} ganó la partida!");
+                embed.AddField($"Resultado", $"¡**{Context.Client.CurrentUser.Username}** ganó la partida!");
             }
             else
             {
                 userStats.Wins++;
-                embed.AddField($"Resultado", $"¡{Context.User.Username} ganó la partida!");
+                embed.AddField($"Resultado", $"¡**{Context.User.Username}** ganó la partida!");
             }
             // Agregar estadísticas del jugador al embed
             embed.AddField($"Estadísticas de {Context.User.Username}", $"Ganadas: {userStats.Wins} | Perdidas: {userStats.Losses}", true);
@@ -89,7 +89,7 @@ public class PingModule : ModuleBase<SocketCommandContext>
             {
                 userStats.Wins++;
                 stats[opponentId].Losses++;
-                embed.AddField($"Resultado", $"¡{Context.User.Username} ganó la partida contra {opponent.Username}!");
+                embed.AddField($"Resultado", $"¡**{Context.User.Username}** ganó la partida contra **{opponent.Username}**!");
                 embed.AddField($"Estadísticas de {Context.User.Username}", $"Ganadas: {userStats.Wins} | Perdidas: {userStats.Losses}", true);
                 embed.AddField($"Estadísticas de {opponent.Username}", $"Ganadas: {opponentStats.Wins} | Perdidas: {opponentStats.Losses}", true);
             }
@@ -97,7 +97,7 @@ public class PingModule : ModuleBase<SocketCommandContext>
             {
                 userStats.Losses++;
                 stats[opponentId].Wins++;
-                embed.AddField($"Resultado", $"¡{opponent.Username} ganó la partida contra {Context.User.Username}!");
+                embed.AddField($"Resultado", $"¡**{opponent.Username}** ganó la partida contra **{Context.User.Username}**!");
                 embed.AddField($"Estadísticas de {opponent.Username}", $"Ganadas: {opponentStats.Wins} | Perdidas: {opponentStats.Losses}", true);
                 embed.AddField($"Estadísticas de {Context.User.Username}", $"Ganadas: {userStats.Wins} | Perdidas: {userStats.Losses}", true);
             }

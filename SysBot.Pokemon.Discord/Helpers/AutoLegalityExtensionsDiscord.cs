@@ -27,7 +27,9 @@ public static class AutoLegalityExtensionsDiscord
             var spec = GameInfo.Strings.Species[template.Species];
             if (!la.Valid)
             {
-                var reason = result == "Timeout" ? $"Este **{spec}** tomó demasiado tiempo para generarse." : result == "VersionMismatch" ? "Solicitud denegada: Las versiones de **PKHeX** y **Auto-Legality Mod** no coinciden." : $"No se puede crear un **{spec}** con esos datos.";
+                var reason = result == "Timeout" ? $"Este **{spec}** tomó demasiado tiempo para generarse." :
+                             result == "VersionMismatch" ? "Solicitud denegada: Las versiones de **PKHeX** y **Auto-Legality Mod** no coinciden." :
+                             $"No se puede crear un **{spec}** con esos datos.";
                 var imsg = $"<a:no:1206485104424128593> Oops! {reason}";
                 if (result == "Failed")
                     imsg += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
@@ -44,7 +46,13 @@ public static class AutoLegalityExtensionsDiscord
                     .WithThumbnailUrl("https://i.imgur.com/DWLEXyu.png")  // Replace with the URL of an image related to the error
                     .Build();
 
-                await channel.SendMessageAsync(embed: embed1).ConfigureAwait(false);
+                // Enviar el mensaje y almacenar la referencia
+                var message = await channel.SendMessageAsync(embed: embed1).ConfigureAwait(false);
+
+                // Esperar 18 segundos antes de eliminar el mensaje
+                await Task.Delay(20000);
+                await message.DeleteAsync();
+
                 return;
             }
 
