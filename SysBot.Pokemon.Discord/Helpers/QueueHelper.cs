@@ -201,6 +201,8 @@ public static class QueueHelper<T> where T : PKM, new()
         // Comprobar si todos los IVs son 31
         bool todosMaximos = ivs.All(iv => iv == 31);
         string ivsDisplay = todosMaximos ? "Máximos" : $"{ivs[0]}/{ivs[1]}/{ivs[2]}/{ivs[3]}/{ivs[4]}/{ivs[5]}";
+        bool isMysteryGif = pk.FatefulEncounter;
+        string MetDate = isMysteryGif ? $"**Obtenido:** {pk.MetDate}" : $"**Atrapado:** {pk.MetDate}";
         string movesDisplay = string.Join("\n", moveNames);
         string shinyEmoji = pk.IsShiny ? "✨ " : "";
         string pokemonDisplayName = pk.IsNicknamed ? pk.Nickname : GameInfo.GetStrings(1).Species[pk.Species];
@@ -392,6 +394,7 @@ public static class QueueHelper<T> where T : PKM, new()
                 (showAbility ? $"**Habilidad:** {translatedAbility}\n" : "") +
                 ($"{scale}\n") +
                 (showNature ? $"**Naturaleza:** {traduccionNature}\n" : "") +
+                (showLevel ? $"{MetDate}\n" : "") +
                 (showIVs ? $"**IVs:** {ivsDisplay}\n" : "");
             var evs = new List<string>();
             // Agregar los EVs no nulos al listado
@@ -448,7 +451,6 @@ public static class QueueHelper<T> where T : PKM, new()
                 return new TradeQueueResult(false);
             }
 
-            // Handling file operations for batch trades and sending messages
             if (isLocalFile)
             {
                 await context.Channel.SendFileAsync(embedImageUrl, embed: embed);
@@ -498,7 +500,6 @@ public static class QueueHelper<T> where T : PKM, new()
         {
             return "Stellar";
         }
-        // Fallback to default TeraType string representation if not Stellar
         else
         {
             return pk9.TeraType.ToString();
@@ -507,13 +508,9 @@ public static class QueueHelper<T> where T : PKM, new()
 
     private static string GetImageFolderPath()
     {
-        // Get the base directory where the executable is located
         string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-
-        // Define the path for the images subfolder
         string imagesFolder = Path.Combine(baseDirectory, "Images");
 
-        // Check if the folder exists, if not, create it
         if (!Directory.Exists(imagesFolder))
         {
             Directory.CreateDirectory(imagesFolder);
@@ -555,11 +552,8 @@ public static class QueueHelper<T> where T : PKM, new()
             embedImageUrl = speciesImageUrl;
         }
 
-        // Determine ball image URL
         var strings = GameInfo.GetStrings(1);
         string ballName = strings.balllist[pk.Ball];
-
-        // Check for "(LA)" in the ball name
         if (ballName.Contains("(LA)"))
         {
             ballName = "la" + ballName.Replace(" ", "").Replace("(LA)", "").ToLower();
@@ -575,29 +569,26 @@ public static class QueueHelper<T> where T : PKM, new()
         if (Uri.TryCreate(embedImageUrl, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeFile)
         {
             // Load local image directly
-            using (var localImage = System.Drawing.Image.FromFile(uri.LocalPath))
-            using (var ballImage = await LoadImageFromUrl(ballImgUrl))
+            using var localImage = System.Drawing.Image.FromFile(uri.LocalPath);
+            using var ballImage = await LoadImageFromUrl(ballImgUrl);
+            if (ballImage != null)
             {
-                if (ballImage != null)
+                using (var graphics = Graphics.FromImage(localImage))
                 {
-                    using (var graphics = Graphics.FromImage(localImage))
-                    {
-                        var ballPosition = new Point(localImage.Width - ballImage.Width, localImage.Height - ballImage.Height);
-                        graphics.DrawImage(ballImage, ballPosition);
-                    }
-                    embedImageUrl = SaveImageLocally(localImage);
+                    var ballPosition = new Point(localImage.Width - ballImage.Width, localImage.Height - ballImage.Height);
+                    graphics.DrawImage(ballImage, ballPosition);
                 }
+                embedImageUrl = SaveImageLocally(localImage);
             }
         }
         else
         {
-            // Load web image and overlay ball
             (System.Drawing.Image finalCombinedImage, bool ballImageLoaded) = await OverlayBallOnSpecies(speciesImageUrl, ballImgUrl);
             embedImageUrl = SaveImageLocally(finalCombinedImage);
 
             if (!ballImageLoaded)
             {
-                Console.WriteLine($"No se pudo cargar la imagen de la pelota: {ballImgUrl}");
+                Console.WriteLine($"No se pudo cargar la imagen de la pokeball: {ballImgUrl}");
                 // await context.Channel.SendMessageAsync($"Ball image could not be loaded: {ballImgUrl}");
             }
         }
@@ -620,7 +611,7 @@ public static class QueueHelper<T> where T : PKM, new()
             if (ballImage == null)
             {
                 Console.WriteLine($"No se pudo cargar la imagen de la pelota: {ballImageUrl}");
-                return ((System.Drawing.Image)speciesImage.Clone(), false); // Return false indicating failure
+                return ((System.Drawing.Image)speciesImage.Clone(), false);
             }
 
             using (ballImage)
@@ -631,26 +622,17 @@ public static class QueueHelper<T> where T : PKM, new()
                     graphics.DrawImage(ballImage, ballPosition);
                 }
 
-                return ((System.Drawing.Image)speciesImage.Clone(), true); // Return true indicating success
+                return ((System.Drawing.Image)speciesImage.Clone(), true);
             }
         }
     }
     private static async Task<System.Drawing.Image> OverlaySpeciesOnEgg(string eggImageUrl, string speciesImageUrl)
     {
-        // Load both images
         System.Drawing.Image eggImage = await LoadImageFromUrl(eggImageUrl);
         System.Drawing.Image speciesImage = await LoadImageFromUrl(speciesImageUrl);
-
-        // Calculate the ratio to scale the species image to fit within the egg image size
         double scaleRatio = Math.Min((double)eggImage.Width / speciesImage.Width, (double)eggImage.Height / speciesImage.Height);
-
-        // Create a new size for the species image, ensuring it does not exceed the egg dimensions
         Size newSize = new Size((int)(speciesImage.Width * scaleRatio), (int)(speciesImage.Height * scaleRatio));
-
-        // Resize species image
         System.Drawing.Image resizedSpeciesImage = new Bitmap(speciesImage, newSize);
-
-        // Create a graphics object for the egg image
         using (Graphics g = Graphics.FromImage(eggImage))
         {
             // Calculate the position to center the species image on the egg image
@@ -672,7 +654,6 @@ public static class QueueHelper<T> where T : PKM, new()
         int newWidth = (int)(eggImage.Width * scale);
         int newHeight = (int)(eggImage.Height * scale);
 
-        // Create a new 128x128 bitmap
         Bitmap finalImage = new Bitmap(128, 128);
 
         // Draw the resized egg image onto the new bitmap, centered
@@ -685,41 +666,35 @@ public static class QueueHelper<T> where T : PKM, new()
             // Draw the image
             g.DrawImage(eggImage, x, y, newWidth, newHeight);
         }
-
-        // Dispose of the original egg image if it's no longer needed
         eggImage.Dispose();
-
-        // The finalImage now contains the overlay, is resized, and maintains aspect ratio
         return finalImage;
     }
 
-    private static async Task<System.Drawing.Image> LoadImageFromUrl(string url)
+    private static async Task<System.Drawing.Image?> LoadImageFromUrl(string url)
     {
-        using (HttpClient client = new HttpClient())
+        using HttpClient client = new();
+        HttpResponseMessage response = await client.GetAsync(url);
+        if (!response.IsSuccessStatusCode)
         {
-            HttpResponseMessage response = await client.GetAsync(url);
-            if (!response.IsSuccessStatusCode)
-            {
-                Console.WriteLine($"Failed to load image from {url}. Status code: {response.StatusCode}");
-                return null;
-            }
+            Console.WriteLine($"Failed to load image from {url}. Status code: {response.StatusCode}");
+            return null;
+        }
 
-            Stream stream = await response.Content.ReadAsStreamAsync();
-            if (stream == null || stream.Length == 0)
-            {
-                Console.WriteLine($"No data or empty stream received from {url}");
-                return null;
-            }
+        Stream stream = await response.Content.ReadAsStreamAsync();
+        if (stream == null || stream.Length == 0)
+        {
+            Console.WriteLine($"No data or empty stream received from {url}");
+            return null;
+        }
 
-            try
-            {
-                return System.Drawing.Image.FromStream(stream);
-            }
-            catch (ArgumentException ex)
-            {
-                Console.WriteLine($"Failed to create image from stream. URL: {url}, Exception: {ex}");
-                return null;
-            }
+        try
+        {
+            return System.Drawing.Image.FromStream(stream);
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"Failed to create image from stream. URL: {url}, Exception: {ex}");
+            return null;
         }
     }
 
@@ -728,12 +703,13 @@ public static class QueueHelper<T> where T : PKM, new()
         if (batchTradeId != -1)
         {
             // If this is part of a batch trade, add the file path to the dictionary
-            if (!batchTradeFiles.ContainsKey(batchTradeId))
+            if (!batchTradeFiles.TryGetValue(batchTradeId, out List<string>? value))
             {
-                batchTradeFiles[batchTradeId] = [];
+                value = ([]);
+                batchTradeFiles[batchTradeId] = value;
             }
 
-            batchTradeFiles[batchTradeId].Add(filePath);
+            value.Add(filePath);
         }
         else
         {
@@ -895,8 +871,6 @@ public static class QueueHelper<T> where T : PKM, new()
         List<System.Drawing.Image> spritearray = [];
         foreach (Pictocodes cd in lgcode)
         {
-
-
             var showdown = new ShowdownSet(cd.ToString());
             var sav = SaveUtil.GetBlankSAV(EntityContext.Gen7b, "pip");
             PKM pk = sav.GetLegalFromSet(showdown).Created;
@@ -936,11 +910,10 @@ public static class QueueHelper<T> where T : PKM, new()
                 new Rectangle(new Point(), spritearray[2].Size), GraphicsUnit.Pixel);
         }
         System.Drawing.Image finalembedpic = outputImage;
-        var filename = $"{System.IO.Directory.GetCurrentDirectory()}//finalcode.png";
+        var filename = $"{Directory.GetCurrentDirectory()}//finalcode.png";
         finalembedpic.Save(filename);
-        filename = System.IO.Path.GetFileName($"{System.IO.Directory.GetCurrentDirectory()}//finalcode.png");
+        filename = Path.GetFileName($"{Directory.GetCurrentDirectory()}//finalcode.png");
         Embed returnembed = new EmbedBuilder().WithTitle($"{lgcode[0]}, {lgcode[1]}, {lgcode[2]}").WithImageUrl($"attachment://{filename}").Build();
         return (filename, returnembed);
     }
-
 }

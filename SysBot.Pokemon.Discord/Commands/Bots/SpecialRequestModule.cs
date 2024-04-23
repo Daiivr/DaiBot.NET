@@ -63,7 +63,7 @@ namespace SysBot.Pokemon.Discord
 
             if (parts.Length == 1 && int.TryParse(parts[0], out int index))
             {
-                await SpecialEventRequestAsync(generationOrGame, index.ToString());
+                await SpecialEventRequestAsync(generationOrGame, index.ToString()).ConfigureAwait(false);
                 return;
             }
 
@@ -72,7 +72,7 @@ namespace SysBot.Pokemon.Discord
 
             foreach (string part in parts)
             {
-                if (part.StartsWith("page", StringComparison.OrdinalIgnoreCase) && int.TryParse(part.Substring(4), out int pageNumber))
+                if (part.StartsWith("page", StringComparison.OrdinalIgnoreCase) && int.TryParse(part.AsSpan(4), out int pageNumber))
                 {
                     page = pageNumber;
                     continue;
@@ -83,22 +83,22 @@ namespace SysBot.Pokemon.Discord
             var eventData = GetEventData(generationOrGame);
             if (eventData == null)
             {
-                await ReplyAsync($"<a:warning:1206483664939126795> Generación o juego no válido: {generationOrGame}");
+                await ReplyAsync($"<a:warning:1206483664939126795> Generación o juego no válido: {generationOrGame}").ConfigureAwait(false); ;
                 return;
             }
 
             var allEvents = GetFilteredEvents(eventData, speciesName);
             if (!allEvents.Any())
             {
-                await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention} No se han encontrado eventos para {generationOrGame} con el filtro especificado.");
+                await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention} No se han encontrado eventos para {generationOrGame} con el filtro especificado.").ConfigureAwait(false); ;
                 return;
             }
 
             var pageCount = (int)Math.Ceiling((double)allEvents.Count() / itemsPerPage);
             page = Math.Clamp(page, 1, pageCount);
             var embed = BuildEventListEmbed(generationOrGame, allEvents, page, pageCount, botPrefix);
-            await SendEventListAsync(embed);
-            await CleanupMessagesAsync();
+            await SendEventListAsync(embed).ConfigureAwait(false);
+            await CleanupMessagesAsync().ConfigureAwait(false);
         }
 
         [Command("specialrequestpokemon")]
@@ -109,7 +109,7 @@ namespace SysBot.Pokemon.Discord
         {
             if (!int.TryParse(args, out int index))
             {
-                await ReplyAsync("<a:warning:1206483664939126795> Índice de eventos no válido. Utilice un número de evento válido del comando");
+                await ReplyAsync("<a:warning:1206483664939126795> Índice de eventos no válido. Utilice un número de evento válido del comando").ConfigureAwait(false); ;
                 return;
             }
 
@@ -148,14 +148,14 @@ namespace SysBot.Pokemon.Discord
                 var eventData = GetEventData(generationOrGame);
                 if (eventData == null)
                 {
-                    await ReplyAsync($"<a:warning:1206483664939126795> Generación o juego no válido: {generationOrGame}");
+                    await ReplyAsync($"<a:warning:1206483664939126795> Generación o juego no válido: {generationOrGame}").ConfigureAwait(false);
                     return;
                 }
 
                 var entityEvents = eventData.Where(gift => gift.IsEntity && !gift.IsItem).ToArray();
                 if (index < 1 || index > entityEvents.Length)
                 {
-                    await ReplyAsync($"<a:warning:1206483664939126795> Índice de eventos no válido. Utilice un número de evento válido del comando `{SysCord<T>.Runner.Config.Discord.CommandPrefix}srp {generationOrGame}` command.");
+                    await ReplyAsync($"<a:warning:1206483664939126795> Índice de eventos no válido. Utilice un número de evento válido del comando `{SysCord<T>.Runner.Config.Discord.CommandPrefix}srp {generationOrGame}`.").ConfigureAwait(false);
                     return;
                 }
 
@@ -163,36 +163,25 @@ namespace SysBot.Pokemon.Discord
                 var pk = ConvertEventToPKM(selectedEvent);
                 if (pk == null)
                 {
-                    await ReplyAsync("<a:warning:1206483664939126795> Los datos de Wondercard proporcionados no son compatibles con este módulo!");
+                    await ReplyAsync("<a:warning:1206483664939126795> Los datos de Wondercard proporcionados no son compatibles con este módulo!").ConfigureAwait(false);
                     return;
                 }
 
                 var code = Info.GetRandomTradeCode(userID);
                 var lgcode = Info.GetRandomLGTradeCode();
                 var sig = Context.User.GetFavor();
-                await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention} Solicitud de evento especial agregada a la cola.");
-                await AddTradeToQueueAsync(code, Context.User.Username, pk as T, sig, Context.User, lgcode: lgcode);
+                await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention} Solicitud de evento especial agregada a la cola.").ConfigureAwait(false);
+
+                await AddTradeToQueueAsync(code, Context.User.Username, pk as T, sig, Context.User, lgcode: lgcode).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                await ReplyAsync($"<a:Error:1223766391958671454> Ocurrió un error: {ex.Message}");
+                await ReplyAsync($"<a:Error:1223766391958671454> Ocurrió un error: {ex.Message}").ConfigureAwait(false);
             }
             finally
             {
-                await CleanupUserMessageAsync();
+                await CleanupUserMessageAsync().ConfigureAwait(false);
             }
-        }
-
-        private static int GetPageNumber(string[] parts)
-        {
-            var pagePart = parts.FirstOrDefault(p => p.StartsWith("page", StringComparison.OrdinalIgnoreCase));
-            if (pagePart != null && int.TryParse(pagePart.AsSpan(4), out int pageNumber))
-                return pageNumber;
-
-            if (parts.Length > 0 && int.TryParse(parts.Last(), out int parsedPage))
-                return parsedPage;
-
-            return 1;
         }
 
         private static MysteryGift[]? GetEventData(string generationOrGame)
@@ -224,7 +213,7 @@ namespace SysBot.Pokemon.Discord
                 .Select((gift, index) =>
                 {
                     string species = GameInfo.Strings.Species[gift.Species];
-                    string levelInfo = $"{gift.Level}"; 
+                    string levelInfo = $"{gift.Level}";
                     string formName = ShowdownParsing.GetStringFromForm(gift.Form, GameInfo.Strings, gift.Species, gift.Context);
                     formName = !string.IsNullOrEmpty(formName) ? $"-{formName}" : "";
                     string trainerName = gift.OriginalTrainerName;
@@ -272,8 +261,8 @@ namespace SysBot.Pokemon.Discord
 
         private async Task CleanupMessagesAsync()
         {
-            await Task.Delay(10_000);
-            await CleanupUserMessageAsync();
+            await Task.Delay(10_000).ConfigureAwait(false);
+            await CleanupUserMessageAsync().ConfigureAwait(false);
         }
 
         private async Task CleanupUserMessageAsync()
@@ -290,39 +279,78 @@ namespace SysBot.Pokemon.Discord
                 Success = true
             };
 
-            return download.Data is null ? null : GetRequest(download);
+            if (download.Data is null)
+                return null;
+
+            var pk = GetRequest(download);
+            if (pk is null)
+                return null;
+            if (selectedEvent is IEncounterServerDate)
+            {
+                var (start, end) = GetEncounterDateRange(selectedEvent);
+                if (start.HasValue && end.HasValue)
+                {
+                    var randomDate = GenerateRandomDateInRange(start.Value, end.Value);
+                    pk.MetDate = randomDate;
+                }
+                else
+                {
+                    // Date not found, using current date
+                    pk.MetDate = DateOnly.FromDateTime(DateTime.Now);
+                }
+            }
+            else
+            {
+                // Date not found, using current date
+                pk.MetDate = DateOnly.FromDateTime(DateTime.Now);
+            }
+
+            return pk;
+        }
+
+        private static (DateOnly? Start, DateOnly? End) GetEncounterDateRange(MysteryGift selectedEvent)
+        {
+            if (selectedEvent is WC8 wc8)
+            {
+                if (EncounterServerDate.WC8Gifts.TryGetValue(wc8.CardID, out var wc8Range))
+                    return wc8Range;
+                else if (EncounterServerDate.WC8GiftsChk.TryGetValue(wc8.Checksum, out var wc8ChkRange))
+                    return wc8ChkRange;
+            }
+            else if (selectedEvent is WA8 wa8 && EncounterServerDate.WA8Gifts.TryGetValue(wa8.CardID, out var wa8Range))
+            {
+                return wa8Range;
+            }
+            else if (selectedEvent is WB8 wb8 && EncounterServerDate.WB8Gifts.TryGetValue(wb8.CardID, out var wb8Range))
+            {
+                return wb8Range;
+            }
+            else if (selectedEvent is WC9 wc9)
+            {
+                if (EncounterServerDate.WC9Gifts.TryGetValue(wc9.CardID, out var wc9Range))
+                    return wc9Range;
+                else if (EncounterServerDate.WC9GiftsChk.TryGetValue(wc9.Checksum, out var wc9ChkRange))
+                    return wc9ChkRange;
+            }
+
+            return (null, null);
+        }
+
+        private static DateOnly GenerateRandomDateInRange(DateOnly startDate, DateOnly endDate)
+        {
+            var random = new Random();
+            var totalDays = (endDate.DayNumber - startDate.DayNumber) + 1;
+            var randomDays = random.Next(totalDays);
+            return startDate.AddDays(randomDays);
         }
 
         private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false, bool isHiddenTrade = false)
         {
-            lgcode ??= GenerateRandomPictocodes(3);
-            if (!pk.CanBeTraded())
-            {
-                var errorMessage = $"<a:no:1206485104424128593> {usr.Mention} revisa el conjunto enviado, algun dato esta bloqueando el intercambio.\n\n```📝Soluciones:\n• Revisa detenidamente cada detalle del conjunto y vuelve a intentarlo!```";
-                var errorEmbed = new EmbedBuilder
-                {
-                    Description = errorMessage,
-                    Color = Color.Red,
-                    ImageUrl = "https://media.tenor.com/vjgjHDFwyOgAAAAM/pysduck-confused.gif",
-                    ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
-                };
-
-                errorEmbed.WithAuthor("Error al crear conjunto!", "https://img.freepik.com/free-icon/warning_318-478601.jpg")
-                     .WithFooter(footer =>
-                     {
-                         footer.Text = $"{Context.User.Username} • {DateTime.UtcNow.ToString("hh:mm tt")}";
-                         footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
-                     });
-
-                var reply = await ReplyAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
-                await Task.Delay(6000); // Delay for 6 seconds
-                await reply.DeleteAsync().ConfigureAwait(false);
-                return;
-            }
+            lgcode ??= TradeModule<T>.GenerateRandomPictocodes(3);
             var homeLegalityCfg = Info.Hub.Config.Trade.HomeLegalitySettings;
             var la = new LegalityAnalysis(pk);
             if(!la.Valid)
-        {
+            {
                 var customIconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg"; // Custom icon URL for the embed title
                 var customImageUrl = "https://usagif.com/wp-content/uploads/gify/37-pikachu-usagif.gif"; // Custom image URL for the embed
                 var customthumbnail = "https://i.imgur.com/DWLEXyu.png";
@@ -349,60 +377,6 @@ namespace SysBot.Pokemon.Discord
                 await reply.DeleteAsync().ConfigureAwait(false);
                 return;
             }
-            if (homeLegalityCfg.DisallowNonNatives && (la.EncounterOriginal.Context != pk.Context || pk.GO))
-            {
-                var customIconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg"; // Custom icon URL for the embed title
-                var customImageUrl = "https://usagif.com/wp-content/uploads/gify/37-pikachu-usagif.gif"; // Custom image URL for the embed
-                var customthumbnail = "https://i.imgur.com/DWLEXyu.png";
-                // Allow the owner to prevent trading entities that require a HOME Tracker even if the file has one already.
-                var embedBuilder = new EmbedBuilder()
-                    .WithAuthor("Error al intentar agregarte a la cola.", customIconUrl)
-                    .WithDescription($"<a:no:1206485104424128593> {usr.Mention}, este archivo Pokemon **{typeof(T).Name}** no cuenta con un **HOME TRACKER** y no puede ser tradeado!")
-                    .WithColor(Color.Red)
-                    .WithImageUrl(customImageUrl)
-                    .WithThumbnailUrl(customthumbnail);
-
-                // Adding footer with user avatar, username, and current time in 12-hour format
-                var footerBuilder = new EmbedFooterBuilder()
-                    .WithIconUrl(Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl())
-                    .WithText($"{Context.User.Username} | {DateTimeOffset.Now.ToString("hh:mm tt")}"); // "hh:mm tt" formats time in 12-hour format with AM/PM
-
-                embedBuilder.WithFooter(footerBuilder);
-
-                var embed = embedBuilder.Build();
-
-                var reply2 = await ReplyAsync(embed: embed).ConfigureAwait(false);
-                await Task.Delay(10000); // Delay for 20 seconds
-                await reply2.DeleteAsync().ConfigureAwait(false);
-                return;
-            }
-            if (homeLegalityCfg.DisallowTracked && pk is IHomeTrack { HasTracker: true })
-            {
-                var customIconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg"; // Custom icon URL for the embed title
-                var customImageUrl = "https://usagif.com/wp-content/uploads/gify/37-pikachu-usagif.gif"; // Custom image URL for the embed
-                var customthumbnail = "https://i.imgur.com/DWLEXyu.png";
-                // Allow the owner to prevent trading entities that already have a HOME Tracker.
-                var embedBuilder = new EmbedBuilder()
-                    .WithAuthor("Error al intentar agregarte a la cola.", customIconUrl)
-                    .WithDescription($"<a:no:1206485104424128593> {usr.Mention}, este archivo Pokemon **{typeof(T).Name}** ya tiene un **HOME TRACKER** y no puede ser tradeado!")
-                    .WithColor(Color.Red)
-                    .WithImageUrl(customImageUrl)
-                    .WithThumbnailUrl(customthumbnail);
-
-                // Adding footer with user avatar, username, and current time in 12-hour format
-                var footerBuilder = new EmbedFooterBuilder()
-                    .WithIconUrl(Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl())
-                    .WithText($"{Context.User.Username} | {DateTimeOffset.Now.ToString("hh:mm tt")}"); // "hh:mm tt" formats time in 12-hour format with AM/PM
-
-                var embed1 = embedBuilder.Build();
-
-                var reply1 = await ReplyAsync(embed: embed1).ConfigureAwait(false);
-                await Task.Delay(10000); // Delay for 20 seconds
-                await reply1.DeleteAsync().ConfigureAwait(false);
-                return;
-            }
-            // handle past gen file requests
-            // thanks manu https://github.com/Manu098vm/SysBot.NET/commit/d8c4b65b94f0300096704390cce998940413cc0d
             if (!la.Valid && la.Results.Any(m => m.Identifier is CheckIdentifier.Memory))
             {
                 var clone = (T)pk.Clone();
@@ -421,21 +395,6 @@ namespace SysBot.Pokemon.Discord
             }
 
             await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryEgg, lgcode, ignoreAutoOT).ConfigureAwait(false);
-        }
-
-        private static List<Pictocodes> GenerateRandomPictocodes(int count)
-        {
-            Random rnd = new();
-            List<Pictocodes> randomPictocodes = [];
-            Array pictocodeValues = Enum.GetValues(typeof(Pictocodes));
-
-            for (int i = 0; i < count; i++)
-            {
-                Pictocodes randomPictocode = (Pictocodes)pictocodeValues.GetValue(rnd.Next(pictocodeValues.Length));
-                randomPictocodes.Add(randomPictocode);
-            }
-
-            return randomPictocodes;
         }
     }
 }

@@ -100,6 +100,10 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                 {
                     ballName = "la" + ballName.Replace(" ", "").Replace("(LA)", "").ToLower();
                 }
+                else if (ballName == "Poké Ball")
+                {
+                    ballName = "pokeball";
+                }
                 else
                 {
                     ballName = ballName.Replace(" ", "").ToLower();
@@ -155,7 +159,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                     .WithIconUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()))
                 .WithDescription($"**Procesando**: {tradeTitle}\n**Trade ID**: {detail.ID}")
                 .WithFooter(new EmbedFooterBuilder()
-                    .WithText($"Iniciando el comercio ahora. Disfrute de su {(detail.IsMysteryEgg ? "✨ Mystery Egg" : speciesName)}!\u200B")
+                    .WithText($"Iniciando el comercio ahora.\nDisfrute de su {(detail.IsMysteryEgg ? "✨ Mystery Egg" : speciesName)}!\u200B")
                     .WithIconUrl(ballImgUrl))
                 .WithTimestamp(DateTime.Now);
 
