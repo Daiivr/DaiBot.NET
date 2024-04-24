@@ -159,31 +159,31 @@ namespace SysBot.Pokemon.Helpers
                 if (ribbonSetMark.RibbonMarkMightiest)
                 {
                     result = RibbonIndex.MarkMightiest;
-                    markTitle = " el Imbatible";
+                    markTitle = "el Imbatible";
                     return true;
                 }
                 else if (ribbonSetMark.RibbonMarkAlpha)
                 {
                     result = RibbonIndex.MarkAlpha;
-                    markTitle = " el Antiguo Alfa";
+                    markTitle = "el Antiguo Alfa";
                     return true;
                 }
                 else if (ribbonSetMark.RibbonMarkTitan)
                 {
                     result = RibbonIndex.MarkTitan;
-                    markTitle = " el Antiguo Dominante";
+                    markTitle = "el Antiguo Dominante";
                     return true;
                 }
                 else if (ribbonSetMark.RibbonMarkJumbo)
                 {
                     result = RibbonIndex.MarkJumbo;
-                    markTitle = " el Gigante";
+                    markTitle = "el Gigante";
                     return true;
                 }
                 else if (ribbonSetMark.RibbonMarkMini)
                 {
                     result = RibbonIndex.MarkMini;
-                    markTitle = " el Diminuto";
+                    markTitle = "el Diminuto";
                     return true;
                 }
             }
@@ -203,63 +203,63 @@ namespace SysBot.Pokemon.Helpers
 
         public static readonly string[] MarkTitle =
         [
-            " el Hambriento",
-            " el Somnoliento",
-            " el Adormilado",
-            " el Madrugador",
-            " el Obnubilado",
-            " el Empapado",
-            " el Atronador",
-            " el Níveo",
-            " el Aterido",
-            " el Sediento",
-            " el Arenoso",
-            " el Errante de la Niebla",
-            " el Predestinado",
-            " el Recién Pescado",
-            " el Entusiasta del Curri",
-            " el Sociable",
-            " el Ermitaño",
-            " el Travieso",
-            " el Despreocupado",
-            " el Nervioso",
-            " el Ilusionado",
-            " el Carismático",
-            " el Sereno",
-            " el Apasionado",
-            " el Distraído",
-            " el Feliz",
-            " el Colérico",
-            " el Sonriente",
-            " el Llorón",
-            " el Bienhumorado",
-            " el Malhumorado",
-            " el Intelectual",
-            " el Impulsivo",
-            " el Astuto",
-            " el Amenazante",
-            " el Amable",
-            " el Aturullado",
-            " el Motivado",
-            " el Desidioso",
-            " el Confiado",
-            " el Inseguro",
-            " el Humilde",
-            " el Pretencioso",
-            " el Vigoroso",
-            " el Extenuado",
-            " el Viajero del Pasado",
-            " el Rutilante",
-            " el Campeón de Paldea",
-            " el Gigante",
-            " el Diminuto",
-            " el Recolector",
-            " el Compañero Leal",
-            " el Sibarita",
-            " el Excepcional",
-            " el Antiguo Alfa",
-            " el Imbatible",
-            " el Antiguo Dominante",
+            "el Hambriento",
+            "el Somnoliento",
+            "el Adormilado",
+            "el Madrugador",
+            "el Obnubilado",
+            "el Empapado",
+            "el Atronador",
+            "el Níveo",
+            "el Aterido",
+            "el Sediento",
+            "el Arenoso",
+            "el Errante de la Niebla",
+            "el Predestinado",
+            "el Recién Pescado",
+            "el Entusiasta del Curri",
+            "el Sociable",
+            "el Ermitaño",
+            "el Travieso",
+            "el Despreocupado",
+            "el Nervioso",
+            "el Ilusionado",
+            "el Carismático",
+            "el Sereno",
+            "el Apasionado",
+            "el Distraído",
+            "el Feliz",
+            "el Colérico",
+            "el Sonriente",
+            "el Llorón",
+            "el Bienhumorado",
+            "el Malhumorado",
+            "el Intelectual",
+            "el Impulsivo",
+            "el Astuto",
+            "el Amenazante",
+            "el Amable",
+            "el Aturullado",
+            "el Motivado",
+            "el Desidioso",
+            "el Confiado",
+            "el Inseguro",
+            "el Humilde",
+            "el Pretencioso",
+            "el Vigoroso",
+            "el Extenuado",
+            "el Viajero del Pasado",
+            "el Rutilante",
+            "el Campeón de Paldea",
+            "el Gigante",
+            "el Diminuto",
+            "el Recolector",
+            "el Compañero Leal",
+            "el Sibarita",
+            "el Excepcional",
+            "el Antiguo Alfa",
+            "el Imbatible",
+            "el Antiguo Dominante",
         ];
 
         public static PKM TrashBytes(PKM pkm, LegalityAnalysis? la = null)

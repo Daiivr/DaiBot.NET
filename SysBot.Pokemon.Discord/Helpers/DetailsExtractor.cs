@@ -155,7 +155,7 @@ public class DetailsExtractor<T> where T : PKM, new()
         }
         else
         {
-            scaleText = $"{scaleText }({scaleNumber})"; // Solo muestra el texto y el número de la escala
+            scaleText = $"{scaleText} ({scaleNumber})"; // Solo muestra el texto y el número de la escala
         }
 
         return (scaleText, scaleNumber);
@@ -174,6 +174,19 @@ public class DetailsExtractor<T> where T : PKM, new()
         return NatureTranslations.TraduccionesNaturalezas.TryGetValue(natureName, out var translatedName) ? translatedName : natureName;
     }
 
+    private static string GetShinySymbol(T pk)
+    {
+        if (pk.ShinyXor == 0)
+        {
+            return "<:square:1134580807529398392> "; // Representa un shiny "Square"
+        }
+        else if (pk.IsShiny)
+        {
+            return "<:shiny:1134580552926777385> "; // Representa un shiny normal
+        }
+        return string.Empty; // No shiny
+    }
+
     private static string GetSpecialSymbols(T pk)
     {
         string alphaMarkSymbol = string.Empty;
@@ -189,7 +202,6 @@ public class DetailsExtractor<T> where T : PKM, new()
             AbstractTrade<T>.HasMark(ribbonIndex, out RibbonIndex result, out markTitle);
         }
         string alphaSymbol = (pk is IAlpha alpha && alpha.IsAlpha) ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.AlphaPLAEmoji.EmojiString : string.Empty;
-        string shinySymbol = pk.ShinyXor == 0 ? "<:square:1134580807529398392> " : pk.IsShiny ? "<:shiny:1134580552926777385> " : string.Empty;
         string genderSymbol = GameInfo.GenderSymbolASCII[pk.Gender];
         string maleEmojiString = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MaleEmoji.EmojiString;
         string femaleEmojiString = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.FemaleEmoji.EmojiString;
@@ -201,7 +213,7 @@ public class DetailsExtractor<T> where T : PKM, new()
         };
         string mysteryGiftEmoji = pk.FatefulEncounter ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.MysteryGiftEmoji.EmojiString : "";
 
-        return shinySymbol + alphaSymbol + mightyMarkSymbol + alphaMarkSymbol + mysteryGiftEmoji + displayGender + (!string.IsNullOrEmpty(markTitle) ? $"{markTitle} " : "");
+        return (!string.IsNullOrEmpty(markTitle) ? $"{markTitle} " : "") + alphaSymbol + mightyMarkSymbol + alphaMarkSymbol + mysteryGiftEmoji + displayGender;
     }
 
     private static string GetTradeTitle(bool isMysteryEgg, bool isCloneRequest, bool isDumpRequest, bool isFixOTRequest, bool isSpecialRequest, bool isBatchTrade, int batchTradeNumber, string pokemonDisplayName, bool isShiny)
@@ -268,7 +280,8 @@ public class DetailsExtractor<T> where T : PKM, new()
         leftSideContent += $"\n{trainerMention}\nAgregado a la cola de tradeo.";
 
         leftSideContent = leftSideContent.TrimEnd('\n');
-        embedBuilder.AddField($"**{embedData.SpeciesName}{(string.IsNullOrEmpty(embedData.FormName) ? "" : $"-{embedData.FormName}")} {embedData.SpecialSymbols}**", leftSideContent, inline: true);
+        string shinySymbol = GetShinySymbol(pk);
+        embedBuilder.AddField($"**{shinySymbol}{embedData.SpeciesName}{(string.IsNullOrEmpty(embedData.FormName) ? "" : $"-{embedData.FormName}")} {embedData.SpecialSymbols}**", leftSideContent, inline: true);
         embedBuilder.AddField("\u200B", "\u200B", inline: true); // Spacer
         embedBuilder.AddField("**Movimientos:**", embedData.MovesDisplay, inline: true);
     }
