@@ -178,10 +178,6 @@ namespace SysBot.Pokemon.Discord
             {
                 await ReplyAsync($"<a:Error:1223766391958671454> Ocurrió un error: {ex.Message}").ConfigureAwait(false);
             }
-            finally
-            {
-                await CleanupUserMessageAsync().ConfigureAwait(false);
-            }
         }
 
         private static MysteryGift[]? GetEventData(string generationOrGame)
