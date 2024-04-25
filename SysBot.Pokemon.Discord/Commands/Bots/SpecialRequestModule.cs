@@ -170,7 +170,6 @@ namespace SysBot.Pokemon.Discord
                 var code = Info.GetRandomTradeCode(userID);
                 var lgcode = Info.GetRandomLGTradeCode();
                 var sig = Context.User.GetFavor();
-                await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention} Solicitud de evento especial agregada a la cola.").ConfigureAwait(false);
 
                 await AddTradeToQueueAsync(code, Context.User.Username, pk as T, sig, Context.User, lgcode: lgcode).ConfigureAwait(false);
             }

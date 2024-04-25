@@ -129,7 +129,7 @@ public class DetailsExtractor<T> where T : PKM, new()
         // Verifica si hay un override especial o un valor específico que traduce a "Stellar"
         if (pk9.TeraTypeOverride == (MoveType)TeraTypeUtil.Stellar || (int)pk9.TeraType == 99) // Terapagos
         {
-            teraTypeKey = "<:Stellar:1186199337177468929> Stellar";
+            teraTypeKey = "<:Stellar:1186199337177468929> Astral";
         }
 
         // Utiliza el diccionario para obtener la traducción y el emoji
