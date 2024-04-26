@@ -6,8 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static MovesTranslationDictionary;
-using static AbilityTranslationDictionary;
-using static NatureTranslations;
+
+using Discord.Commands;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -88,7 +88,7 @@ public class DetailsExtractor<T> where T : PKM, new()
         embedData.TradeTitle = GetTradeTitle(isMysteryEgg, isCloneRequest, isDumpRequest, isFixOTRequest, isSpecialRequest, isBatchTrade, batchTradeNumber, embedData.PokemonDisplayName, pk.IsShiny);
 
         // Author name
-        embedData.AuthorName = GetAuthorName(user.Username, embedData.TradeTitle, isMysteryEgg, isFixOTRequest, isCloneRequest, isDumpRequest, isSpecialRequest, isBatchTrade, embedData.PokemonDisplayName, pk.IsShiny);
+        embedData.AuthorName = GetAuthorName(user.Username, user.GlobalName, embedData.TradeTitle, isMysteryEgg, isFixOTRequest, isCloneRequest, isDumpRequest, isSpecialRequest, isBatchTrade, embedData.PokemonDisplayName, pk.IsShiny);
 
         return embedData;
     }
@@ -228,12 +228,13 @@ public class DetailsExtractor<T> where T : PKM, new()
                "";
     }
 
-    private static string GetAuthorName(string username, string tradeTitle, bool isMysteryEgg, bool isFixOTRequest, bool isCloneRequest, bool isDumpRequest, bool isSpecialRequest, bool isBatchTrade, string pokemonDisplayName, bool isShiny)
+    private static string GetAuthorName(string username, string globalname, string tradeTitle, bool isMysteryEgg, bool isFixOTRequest, bool isCloneRequest, bool isDumpRequest, bool isSpecialRequest, bool isBatchTrade, string pokemonDisplayName, bool isShiny)
     {
+        string userName = string.IsNullOrEmpty(globalname) ? username : globalname;
         string isPkmShiny = isShiny ? " Shiny" : "";
         return isMysteryEgg || isFixOTRequest || isCloneRequest || isDumpRequest || isSpecialRequest || isBatchTrade ?
                $"{tradeTitle} {username}" :
-               $"Pokémon{isPkmShiny} solicitado por {username} ";
+               $"Pokémon{isPkmShiny} solicitado por {userName} ";
     }
 
     public static string GetUserDetails(int totalTradeCount, TradeCodeStorage.TradeCodeDetails? tradeDetails)
