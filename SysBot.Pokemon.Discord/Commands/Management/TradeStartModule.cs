@@ -99,7 +99,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                 _ => speciesName
             };
 
-            string embedImageUrl = detail.IsMysteryEgg ? "https://raw.githubusercontent.com/bdawg1989/sprites/main/mysteryegg2.png" : detail.Type switch
+            string embedImageUrl = detail.IsMysteryEgg ? "https://i.imgur.com/RAj0syZ.png" : detail.Type switch
             {
                 PokeTradeType.Clone => "https://i.imgur.com/aSTCjUn.png",
                 PokeTradeType.Dump => "https://i.imgur.com/9wfEHwZ.png",

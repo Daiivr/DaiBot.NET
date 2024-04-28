@@ -113,7 +113,7 @@ namespace SysBot.Pokemon.Discord
 
                 if (pkm is not T pk)
                 {
-                    await ReplyAsync($"<a:warning:1206483664939126795> Oops! {Context.User.Mention}, no pude crear el huevo misterioso, inténtelo mas tarde.").ConfigureAwait(false);
+                    await ReplyAsync($"<a:warning:1206483664939126795> Oops! {Context.User.Mention}, no pude crear el huevo misterioso, inténtelo de nuevo.").ConfigureAwait(false);
                     return;
                 }
                 AbstractTrade<T>.EggTrade(pk, template);
@@ -221,17 +221,17 @@ namespace SysBot.Pokemon.Discord
                 var ThumbnailURL = "https://i.imgur.com/DWLEXyu.png";
 
                 // Crear el mensaje de respuesta
-                string responseMessage = $"<a:no:1206485104424128593> {usr.Mention} El conjunto de showdown __no es válido__ para un huevo de **{speciesName}**.";
+                string responseMessage = $"<a:no:1206485104424128593> {usr.Mention} No fue posible crear un huevo de **{speciesName}**.";
 
                 // Crear un embed builder
                 var builder = new EmbedBuilder()
-                    .WithAuthor("Conjunto de showdown no válido!", customIconUrl)
+                    .WithAuthor("Error!", customIconUrl)
                     .WithDescription(responseMessage)
                     .WithImageUrl(ImgURL)
                     .WithThumbnailUrl(ThumbnailURL)
                     .WithColor(Color.Red) // Puedes cambiar el color del embed
-                    .AddField("__**Error**__", $"Puede que __**{speciesName}**__ no se pueda obtener en un huevo o algún dato esté impidiendo el trade.", inline: false)
-                    .AddField("__**Solución**__", $"No necesitas hacer nada, el bot intentará generar un huevo misterioso de otro Pokémon constantemente hasta lograrlo.", inline: false)
+                    .AddField("__**Error**__", $"Puede que el conjunto showdown que el bot intento utilizar para crear el huevo de __**{speciesName}**__ no fuera valido.", inline: false)
+                    .AddField("__**Solución**__", $"Espera unos segunos e intentelo nuevamente.", inline: false)
                     .WithFooter(footer => {
                         footer.WithIconUrl(Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl());
                         footer.WithText($"{Context.User.Username} | {DateTimeOffset.Now.ToString("hh:mm tt")}");

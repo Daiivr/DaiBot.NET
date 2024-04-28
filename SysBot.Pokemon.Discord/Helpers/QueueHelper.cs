@@ -107,7 +107,7 @@ public static class QueueHelper<T> where T : PKM, new()
         {
             (string embedImageUrl, DiscordColor embedColor) = await PrepareEmbedDetails(pk);
 
-            embedData.EmbedImageUrl = isMysteryEgg ? "https://raw.githubusercontent.com/bdawg1989/sprites/main/mysteryegg2.png" :
+            embedData.EmbedImageUrl = isMysteryEgg ? "https://i.imgur.com/RAj0syZ.png" :
                                        type == PokeRoutineType.Dump ? "https://i.imgur.com/9wfEHwZ.png" :
                                        type == PokeRoutineType.Clone ? "https://i.imgur.com/aSTCjUn.png" :
                                        type == PokeRoutineType.SeedCheck ? "https://i.imgur.com/EI1BHr5.png" :
@@ -142,8 +142,7 @@ public static class QueueHelper<T> where T : PKM, new()
                 .WithFooter(footerText)
                 .WithAuthor(new EmbedAuthorBuilder()
                     .WithName(embedData.AuthorName)
-                    .WithIconUrl(trader.GetAvatarUrl() ?? trader.GetDefaultAvatarUrl())
-                    .WithUrl("https://genpkm.com"));
+                    .WithIconUrl(trader.GetAvatarUrl() ?? trader.GetDefaultAvatarUrl()));
 
             DetailsExtractor<T>.AddAdditionalText(embedBuilder);
 
@@ -247,7 +246,7 @@ public static class QueueHelper<T> where T : PKM, new()
 
         if (pk.IsEgg)
         {
-            string eggImageUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/egg.png";
+            string eggImageUrl = "https://i.imgur.com/3Tb8VX3.png";
             speciesImageUrl = AbstractTrade<T>.PokeImg(pk, false, true, null);
             System.Drawing.Image combinedImage = await OverlaySpeciesOnEgg(eggImageUrl, speciesImageUrl);
             embedImageUrl = SaveImageLocally(combinedImage);
