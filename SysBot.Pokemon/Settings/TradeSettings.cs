@@ -175,6 +175,9 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         [Category(EmbedSettings), Description("Preferred Species Image Size for Embeds."), DisplayName("Species Image Size")]
         public ImageSize PreferredImageSize { get; set; } = ImageSize.Size256x256;
 
+        [Category(TradeConfig), Description("URL of the Emebed Title."), DisplayName("Trade Embed Title URL")]
+        public string TradingBotUrl { get; set; } = "";
+
         [Category(EmbedSettings), Description("Will show Move Type Icons next to moves in trade embed (Discord only). Requires user to upload the emojis to their server."), DisplayName("Show Move Type Emojis")]
         public bool MoveTypeEmojis { get; set; } = true;
 

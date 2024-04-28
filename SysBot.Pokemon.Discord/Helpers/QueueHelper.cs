@@ -70,6 +70,7 @@ public static class QueueHelper<T> where T : PKM, new()
 
     private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, bool isHiddenTrade, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, bool ignoreAutoOT = false)
     {
+        string tradingUrl = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.TradingBotUrl;
         var user = trader;
         var userID = user.Id;
         var name = user.Username;
@@ -141,8 +142,9 @@ public static class QueueHelper<T> where T : PKM, new()
                 .WithImageUrl(embedData.IsLocalFile ? $"attachment://{Path.GetFileName(embedData.EmbedImageUrl)}" : embedData.EmbedImageUrl)
                 .WithFooter(footerText)
                 .WithAuthor(new EmbedAuthorBuilder()
-                    .WithName(embedData.AuthorName)
-                    .WithIconUrl(trader.GetAvatarUrl() ?? trader.GetDefaultAvatarUrl()));
+                .WithName(embedData.AuthorName)
+                    .WithIconUrl(trader.GetAvatarUrl() ?? trader.GetDefaultAvatarUrl())
+                    .WithUrl(tradingUrl));
 
             DetailsExtractor<T>.AddAdditionalText(embedBuilder);
 
