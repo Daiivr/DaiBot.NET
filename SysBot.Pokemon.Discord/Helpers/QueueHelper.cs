@@ -301,7 +301,7 @@ public static class QueueHelper<T> where T : PKM, new()
             }
         }
 
-        (int R, int G, int B) = await GetDominantColorAsync(embedImageUrl);
+        (int R, int G, int B) = await GetDominantColorAsync(speciesImageUrl);
         return (embedImageUrl, new DiscordColor(R, G, B));
     }
 

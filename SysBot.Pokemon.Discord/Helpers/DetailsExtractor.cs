@@ -124,22 +124,41 @@ public class DetailsExtractor<T> where T : PKM, new()
 
     private static string GetTeraTypeString(PK9 pk9)
     {
+        // Verifica si se deben usar emojis para el tipo Tera y maneja el caso especial para 'Stellar'
+        if (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.UseTeraEmojis)
+        {
+            // Caso especial para 'Stellar' o 'Terapagos' (si usa el mismo emoji)
+            if (pk9.TeraTypeOverride == (MoveType)TeraTypeUtil.Stellar || (int)pk9.TeraType == 99)
+            {
+                return SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.TeraEmojis.StellarTeraTypeEmoji.EmojiString + " Astral";
+            }
+
+            // Busca el emoji para el tipo Tera normal
+            var emojiInfo = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.TeraEmojis.TeraTypeEmojis
+                            .FirstOrDefault(e => e.MoveType == pk9.TeraType);
+            if (emojiInfo != null && !string.IsNullOrEmpty(emojiInfo.EmojiCode))
+            {
+                // Obtiene la traducción del tera type
+                string translatedNames = TeraTypeDictionaries.TeraTranslations.TryGetValue(pk9.TeraType.ToString(), out var name) ? name : pk9.TeraType.ToString();
+                return emojiInfo.EmojiCode + " " + translatedNames; // Retorna el emoji y el texto
+            }
+        }
+        else
+        {
+            // Si los emojis están desactivados y el tipo Tera es 'Stellar' o 'Terapagos', muestra 'Astral' como texto
+            if (pk9.TeraTypeOverride == (MoveType)TeraTypeUtil.Stellar || (int)pk9.TeraType == 99)
+            {
+                return "Astral";
+            }
+        }
+
+        // Si no se usan emojis o no se encuentra un emoji específico, retorna el tipo Tera en inglés o su traducción
         string teraTypeKey = pk9.TeraType.ToString();
-
-        // Verifica si hay un override especial o un valor específico que traduce a "Stellar"
-        if (pk9.TeraTypeOverride == (MoveType)TeraTypeUtil.Stellar || (int)pk9.TeraType == 99) // Terapagos
+        if (TeraTypeDictionaries.TeraTranslations.TryGetValue(teraTypeKey, out var translatedName))
         {
-            teraTypeKey = "<:Stellar:1186199337177468929> Astral";
+            return translatedName;
         }
 
-        // Utiliza el diccionario para obtener la traducción y el emoji
-        if (TeraTypeDictionaries.TeraTranslations.TryGetValue(teraTypeKey, out var translatedType) &&
-            TeraTypeDictionaries.TeraEmojis.TryGetValue(teraTypeKey, out var emoji))
-        {
-            return $"{emoji} {translatedType}";
-        }
-
-        // Devuelve el tipo original si no se encuentra en el diccionario
         return teraTypeKey;
     }
 
@@ -148,17 +167,24 @@ public class DetailsExtractor<T> where T : PKM, new()
         string scaleText = $"{PokeSizeDetailedUtil.GetSizeRating(pk9.Scale)}";
         byte scaleNumber = pk9.Scale;
 
-        // Busca el emoji correspondiente en el diccionario si la escala es XXXS o XXXL
-        if (ScaleEmojisDictionary.ScaleEmojis.TryGetValue(scaleText, out var emoji))
+        // Formato inicial que incluye siempre el número de escala
+        string scaleTextWithNumber = $"{scaleText} ({scaleNumber})";
+
+        // Aplica los emojis si están habilitados
+        if (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.UseScaleEmojis)
         {
-            scaleText = $"{emoji} {scaleText} ({scaleNumber})"; // Añade el emoji antes del texto y muestra el número de la escala
-        }
-        else
-        {
-            scaleText = $"{scaleText} ({scaleNumber})"; // Solo muestra el texto y el número de la escala
+            if (scaleText == "XXXS")
+            {
+                scaleTextWithNumber = $"{SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ScaleEmojis.ScaleXXXSEmoji} {scaleTextWithNumber}";
+            }
+            else if (scaleText == "XXXL")
+            {
+                scaleTextWithNumber = $"{SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ScaleEmojis.ScaleXXXLEmoji} {scaleTextWithNumber}";
+            }
         }
 
-        return (scaleText, scaleNumber);
+        // Retorna el texto completo de la escala y el número de escala como un tuple
+        return (scaleTextWithNumber, scaleNumber);
     }
 
 
@@ -176,13 +202,18 @@ public class DetailsExtractor<T> where T : PKM, new()
 
     private static string GetShinySymbol(T pk)
     {
+        // Accede a la configuración de emojis Shiny desde TradeSettings
+        var shinySettings = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShinyEmojis;
+
         if (pk.ShinyXor == 0)
         {
-            return "<:square:1134580807529398392> "; // Representa un shiny "Square"
+            // Usa el emoji configurado para Shiny Square
+            return shinySettings.ShinySquareEmoji + " "; // Asegúrate de mantener un espacio al final para la presentación
         }
         else if (pk.IsShiny)
         {
-            return "<:shiny:1134580552926777385> "; // Representa un shiny normal
+            // Usa el emoji configurado para Shiny normal
+            return shinySettings.ShinyNormalEmoji + " "; // Asegúrate de mantener un espacio al final para la presentación
         }
         return string.Empty; // No shiny
     }
