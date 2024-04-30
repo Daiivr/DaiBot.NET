@@ -528,13 +528,4 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             return $"{EmojiCode}";
         }
     }
-
-    public enum MoveTypeExtended
-    {
-        Bug = MoveType.Bug,
-        Fire = MoveType.Fire,
-        
-        Fairy = MoveType.Fairy,
-        Stellar = 99 // Asumiendo que 1000 es un valor fuera del rango normal de MoveType
-    }
 }
