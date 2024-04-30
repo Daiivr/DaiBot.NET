@@ -2,6 +2,8 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using PKHeX.Core;
+using SysBot.Base;
+using System;
 using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.Discord;
@@ -30,19 +32,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             msg = Context.User.Mention + " - Actualmente no estás en la cola.";
         }
 
-        // Send the reply and capture the response message
-        var response = await ReplyAsync(msg).ConfigureAwait(false);
-
-        // Delay for 5 seconds
-        await Task.Delay(6000).ConfigureAwait(false);
-
-        // Delete user message
-        if (Context.Message is IUserMessage userMessage)
-            await userMessage.DeleteAsync().ConfigureAwait(false);
-
-        // Delete bot response
-        if (response is IUserMessage responseMessage)
-            await responseMessage.DeleteAsync().ConfigureAwait(false);
+        await ReplyAndDeleteAsync(msg, 5, Context.Message).ConfigureAwait(false);
     }
 
     [Command("queueClear")]
@@ -50,22 +40,8 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Summary("Borra al usuario de las colas comerciales. No eliminará a un usuario si está siendo procesado.")]
     public async Task ClearTradeAsync()
     {
-        string msg = ClearTrade();
-
-        // Send the reply and capture the response message
-        var response = await ReplyAsync(msg).ConfigureAwait(false);
-
-        // Wait for 5 seconds
-        await Task.Delay(6000).ConfigureAwait(false);
-
-        // Delete the user's command message if possible
-        if (Context.Message is IUserMessage userMessage)
-        {
-            await userMessage.DeleteAsync().ConfigureAwait(false);
-        }
-
-        // Delete the bot's response message
-        await response.DeleteAsync().ConfigureAwait(false);
+        string msg = ClearTrade(Context.User.Id);
+        await ReplyAndDeleteAsync(msg, 5, Context.Message).ConfigureAwait(false);
     }
 
 
@@ -260,58 +236,49 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             return $"<a:warning:1206483664939126795> {userMention} No se encontró ningún código de tradeo para su ID de usuario.";
     }
 
-    private string ClearTrade()
-    {
-        var userID = Context.User.Id;
-        return ClearTrade(userID);
-    }
-
-    //private static string ClearTrade(string username)
-    //{
-    //    var result = Info.ClearTrade(username);
-    //    return GetClearTradeMessage(result);
-    //}
-
     private static string ClearTrade(ulong userID)
     {
-        var userEntries = Info.GetIsUserQueued(entry => entry.UserID == userID);
+        var result = Info.ClearTrade(userID);
+        return GetClearTradeMessage(result);
+    }
 
-        if (userEntries.Count == 0)
-            return "<a:warning:1206483664939126795> Lo sentimos, actualmente no estás en la cola..";
-
-        bool removedAll = true;
-        bool currentlyProcessing = false;
-        bool removedPending = false;
-
-        foreach (var entry in userEntries)
+    private async Task ReplyAndDeleteAsync(string message, int delaySeconds, IMessage? messageToDelete = null)
+    {
+        try
         {
-            if (entry.Trade.IsProcessing)
-            {
-                currentlyProcessing = true;
-                if (!Info.Hub.Config.Queues.CanDequeueIfProcessing)
-                {
-                    removedAll = false;
-                    entry.Trade.IsCanceled = true; // Set the trade as canceled
-                    continue;
-                }
-            }
-            else
-            {
-                entry.Trade.IsCanceled = true; // Set the trade as canceled
-                Info.Remove(entry);
-                removedPending = true;
-            }
+            var sentMessage = await ReplyAsync(message).ConfigureAwait(false);
+            _ = DeleteMessagesAfterDelayAsync(sentMessage, messageToDelete, delaySeconds);
         }
+        catch (Exception ex)
+        {
+            LogUtil.LogSafe(ex, nameof(QueueModule<T>));
+        }
+    }
 
-        if (!removedAll && currentlyProcessing && !removedPending)
-            return "<a:warning:1206483664939126795> Parece que estás siendo procesado actualmente! No se te eliminó de la lista.";
+    private async Task DeleteMessagesAfterDelayAsync(IMessage sentMessage, IMessage? messageToDelete, int delaySeconds)
+    {
+        try
+        {
+            await Task.Delay(delaySeconds * 1000);
+            await sentMessage.DeleteAsync();
+            if (messageToDelete != null)
+                await messageToDelete.DeleteAsync();
+        }
+        catch (Exception ex)
+        {
+            LogUtil.LogSafe(ex, nameof(QueueModule<T>));
+        }
+    }
 
-        if (currentlyProcessing && removedPending)
-            return "<a:warning:1206483664939126795> Parece que tiene operaciones en proceso. Se han eliminado otras operaciones pendientes de la cola.";
-
-        if (removedPending)
-            return "<a:yes:1206485105674166292> Te he eliminado de la lista.";
-
-        return "<a:warning:1206483664939126795> Lo sentimos, actualmente no estás en la lista.";
+    private static string GetClearTradeMessage(QueueResultRemove result)
+    {
+        return result switch
+        {
+            QueueResultRemove.Removed => $"<a:yes:1206485105674166292> Eliminé tus operaciones pendientes de la cola.",
+            QueueResultRemove.CurrentlyProcessing => "<a:warning:1206483664939126795> Parece que actualmente tienes operaciones en proceso! No lass eliminé de la cola.",
+            QueueResultRemove.CurrentlyProcessingRemoved => "<a:warning:1206483664939126795> Parece que tiene operaciones en proceso. Se han eliminado otras operaciones pendientes de la cola.",
+            QueueResultRemove.NotInQueue => "<a:warning:1206483664939126795> Lo sentimos, actualmente no estás en la lista.",
+            _ => throw new ArgumentOutOfRangeException(nameof(result), result, null),
+        };
     }
 }
