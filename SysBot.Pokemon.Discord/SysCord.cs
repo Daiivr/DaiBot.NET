@@ -373,6 +373,17 @@ public sealed class SysCord<T> where T : PKM, new()
     {
         // Create a Command Context.
         var context = new SocketCommandContext(_client, msg);
+        var AbuseSettings = Hub.Config.TradeAbuse;
+
+        // Check if the user is in the bannedIDs list
+        if (msg.Author is SocketGuildUser user)
+        {
+            if (AbuseSettings.BannedIDs.List.Any(z => z.ID == user.Id))
+            {
+                await msg.Channel.SendMessageAsync($"<a:no:1206485104424128593> {user.Mention} Tienes prohibido usar este bot.").ConfigureAwait(false);
+                return true;
+            }
+        }
 
         // Check Permission
         var mgr = Manager;
