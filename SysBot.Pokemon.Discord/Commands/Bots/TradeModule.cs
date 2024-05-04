@@ -751,6 +751,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     public async Task TradeAsync([Summary("Trade Code")] int code, [Summary("Showdown Set")][Remainder] string content)
     {
         List<Pictocodes>? lgcode = null;
+
         // Check if the user is already in the queue
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
@@ -782,7 +783,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             return;
         }
 
-        content = ReusableActions.StripCodeBlock(content);
         var ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
         var set = new ShowdownSet(content);
         var template = AutoLegalityWrapper.GetTemplate(set);
@@ -815,7 +815,60 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
             var pkm = sav.GetLegal(template, out var result);
+            var la = new LegalityAnalysis(pkm);
+            var spec = GameInfo.Strings.Species[template.Species];
 
+            if (pkm is not T pk || !la.Valid)
+            {
+                // Perform spellcheck / other legality corrections if SpellCheck is enabled
+                if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SpellCheck)
+                {
+                    var correctedContent = PostCorrectShowdown<T>.PerformSpellCheck(content, la);
+                    set = new ShowdownSet(correctedContent);
+                    template = AutoLegalityWrapper.GetTemplate(set);
+                    pkm = sav.GetLegal(template, out result);
+                    la = new LegalityAnalysis(pkm);
+                }
+
+                if (pkm is not T correctedPk || !la.Valid)
+                {
+                    var reason = result == "Timeout" ? $"Este **{spec}** tomó demasiado tiempo en generarse." :
+                             result == "VersionMismatch" ? "Solicitud denegada: Las versiones de **PKHeX** y **Auto-Legality Mod** no coinciden." :
+                             $"{Context.User.Mention} No se puede crear un **{spec}** con los datos proporcionados.";
+                    var errorMessage = $"<a:no:1206485104424128593> Oops! {reason}";
+                    if (result == "Failed")
+                        errorMessage += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
+
+                    var embed = new EmbedBuilder
+                    {
+                        Description = errorMessage,
+                        Color = Color.Red,
+                        ImageUrl = "https://i.imgur.com/Y64hLzW.gif",
+                        ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+                    };
+
+                    embed.WithAuthor("Error en la Legalidad del Conjunto", "https://img.freepik.com/free-icon/warning_318-478601.jpg")
+                         .WithFooter(footer =>
+                         {
+                             footer.Text = $"{Context.User.Username} • {DateTime.UtcNow.ToString("hh:mm tt")}";
+                             footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
+                         });
+
+                    // Enviar el mensaje y almacenar la referencia
+                    var message = await ReplyAsync(embed: embed.Build()).ConfigureAwait(false);
+                    // Esperar 2 segundos antes de eliminar el mensaje original
+                    await Task.Delay(2000);
+                    await Context.Message.DeleteAsync();
+
+                    // Esperar 20 segundos antes de eliminar el mensaje de error
+                    await Task.Delay(20000);  // Se ajusta el tiempo a 20 segundos 
+                    await message.DeleteAsync();
+
+                    return;
+                }
+
+                pk = correctedPk;
+            }
             if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
             {
                 if (pkm is PK9 pk9)
@@ -859,45 +912,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                         return;
                     }
                 }
-            }
-            var la = new LegalityAnalysis(pkm);
-            var spec = GameInfo.Strings.Species[template.Species];
-            pkm = EntityConverter.ConvertToType(pkm, typeof(T), out _) ?? pkm;
-            if (pkm is not T pk || !la.Valid)
-            {
-                var reason = result == "Timeout" ? $"Este **{spec}** tomó demasiado tiempo en generarse." :
-                             result == "VersionMismatch" ? "Solicitud denegada: Las versiones de **PKHeX** y **Auto-Legality Mod** no coinciden." :
-                             $"{Context.User.Mention} No se puede crear un **{spec}** con los datos proporcionados.";
-                var errorMessage = $"<a:no:1206485104424128593> Oops! {reason}";
-                if (result == "Failed")
-                    errorMessage += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
-
-                var embed = new EmbedBuilder
-                {
-                    Description = errorMessage,
-                    Color = Color.Red,
-                    ImageUrl = "https://i.imgur.com/Y64hLzW.gif",
-                    ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
-                };
-
-                embed.WithAuthor("Error en la Legalidad del Conjunto", "https://img.freepik.com/free-icon/warning_318-478601.jpg")
-                     .WithFooter(footer =>
-                     {
-                         footer.Text = $"{Context.User.Username} • {DateTime.UtcNow.ToString("hh:mm tt")}";
-                         footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
-                     });
-
-                // Enviar el mensaje y almacenar la referencia
-                var message = await ReplyAsync(embed: embed.Build()).ConfigureAwait(false);
-                // Esperar 2 segundos antes de eliminar el mensaje original
-                await Task.Delay(2000);
-                await Context.Message.DeleteAsync();
-
-                // Esperar 20 segundos antes de eliminar el mensaje de error
-                await Task.Delay(20000);  // Se ajusta el tiempo a 20 segundos 
-                await message.DeleteAsync();
-
-                return;
             }
             pk.ResetPartyStats();
 

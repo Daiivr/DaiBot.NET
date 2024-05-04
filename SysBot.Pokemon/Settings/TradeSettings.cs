@@ -78,6 +78,9 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         [Category(TradeConfig), Description("Si se establece en True, cada Pokemon válido vendrá con todos los Movimientos Reaprendibles sugeridos sin necesidad de utilizar un batch command."), DisplayName("Sugerir movimientos reaprendibles por defecto")]
         public bool SuggestRelearnMoves { get; set; } = true;
 
+        [Category(TradeConfig), Description("If set to True, each showdown set will go through a spell check first to make sure species name is correct."), DisplayName("Habilitar revisión ortográfica?")]
+        public bool SpellCheck { get; set; } = true;
+
         [Category(TradeConfig), Description("Activar o desactivar los trades por lotes."), DisplayName("Permitir trades por lotes")]
         public bool AllowBatchTrades { get; set; } = true;
 
