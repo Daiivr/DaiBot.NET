@@ -218,21 +218,20 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             };
 
             [Description("Emoji para el tipo Tera 'Stellar'."), DisplayName("Emoji Tera Tipo Stellar")]
-            public EmojiInfo StellarTeraTypeEmoji { get; set; } = new EmojiInfo { EmojiString = "" }; // Configuración inicial para el emoji.
+            public EmojiInfo StellarTeraTypeEmoji { get; set; } = new EmojiInfo();
         }
-
         public TeraTypeEmojisSettings TeraEmojis { get; set; } = new TeraTypeEmojisSettings(); // Instancia de la configuración de emojis de tipo Tera.
 
-        [Category(EmbedSettings), TypeConverter(typeof(ExpandableObjectConverter)), Description("Configuración de emojis para las escalas XXXS y XXXL."), DisplayName("Emojis de Escala")]
+        [Category(EmbedSettings), TypeConverter(typeof(ExpandableObjectConverter)), Description("Configuración de emojis para las escalas XXXS y XXXL."), DisplayName("Emojis de tamaño")]
         public class ScaleEmojisSettings
         {
             public override string ToString() => "(Collection)";
 
             [Description("Emoji para la escala XXXS."), DisplayName("Emoji Escala XXXS")]
-            public string ScaleXXXSEmoji { get; set; } = ""; // Configuración inicial para el emoji XXXS.
+            public EmojiInfo ScaleXXXSEmoji { get; set; } = new EmojiInfo();
 
             [Description("Emoji para la escala XXXL."), DisplayName("Emoji Escala XXXL")]
-            public string ScaleXXXLEmoji { get; set; } = ""; // Configuración inicial para el emoji XXXL.
+            public EmojiInfo ScaleXXXLEmoji { get; set; } = new EmojiInfo();
         }
         public ScaleEmojisSettings ScaleEmojis { get; set; } = new ScaleEmojisSettings(); // Instancia de la configuración de emojis de escala.
 
@@ -242,12 +241,11 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             public override string ToString() => "(Collection)";
 
             [Description("Emoji para Pokémon con Shiny Square."), DisplayName("Emoji Shiny Square")]
-            public string ShinySquareEmoji { get; set; } = ""; // Configuración inicial para el emoji Shiny Square.
+            public EmojiInfo ShinySquareEmoji { get; set; } = new EmojiInfo();
 
             [Description("Emoji para Pokémon Shiny normal."), DisplayName("Emoji Shiny Normal")]
-            public string ShinyNormalEmoji { get; set; } = ""; // Configuración inicial para el emoji Shiny normal.
+            public EmojiInfo ShinyNormalEmoji { get; set; } = new EmojiInfo();
         }
-
         public ShinyEmojisSettings ShinyEmojis { get; set; } = new ShinyEmojisSettings(); // Instancia de la configuración de emojis Shiny.
 
         [Category(EmbedSettings), Description("La cadena completa para el emoji de género masculino."), DisplayName("Emoji Masculino")]
