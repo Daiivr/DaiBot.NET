@@ -12,16 +12,16 @@ public abstract class BaseConfig
     [Browsable(false)]
     private const string Debug = nameof(Debug);
 
-    [Category(FeatureToggle), Description("When enabled, the bot will press the B button occasionally when it is not processing anything (to avoid sleep).")]
+    [Category(FeatureToggle), Description("Cuando está habilitado, el bot presionará el botón B ocasionalmente cuando no esté procesando nada (para evitar suspenderse)."), DisplayName("Anti Modo Suspenso")]
     public bool AntiIdle { get; set; }
 
-    [Category(FeatureToggle), Description("When enabled, the bot will Enter Link Trade Code via Keyboard (faster).")]
+    [Category(FeatureToggle), Description("Cuando esté habilitado, el bot ingresará el código comercial del trade a través del teclado (más rápido)."), DisplayName("Usar Teclado?")]
     public bool UseKeyboard { get; set; } = true;
 
-    [Category(FeatureToggle), Description("Enables text logs. Restart to apply changes.")]
+    [Category(FeatureToggle), Description("Habilita registros de texto. Reinicie para aplicar los cambios."), DisplayName("Habilitar registros?")]
     public bool LoggingEnabled { get; set; } = true;
 
-    [Category(FeatureToggle), Description("Maximum number of old text log files to retain. Set this to <= 0 to disable log cleanup. Restart to apply changes.")]
+    [Category(FeatureToggle), Description("Número máximo de archivos de registro de texto antiguos que se conservarán. Establezca esto en <= 0 para deshabilitar la limpieza de registros. Reinicie para aplicar los cambios."), DisplayName("Maximo de Archivos de Registro")]
     public int MaxArchiveFiles { get; set; } = 14;
 
     [Browsable(false)]

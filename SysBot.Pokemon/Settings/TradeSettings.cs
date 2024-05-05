@@ -26,7 +26,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
 
         public override string ToString()
         {
-            return string.IsNullOrEmpty(EmojiString) ? "Not Set" : EmojiString;
+            return string.IsNullOrEmpty(EmojiString) ? "No establecido" : EmojiString;
         }
     }
 
@@ -248,23 +248,38 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
         public ShinyEmojisSettings ShinyEmojis { get; set; } = new ShinyEmojisSettings(); // Instancia de la configuración de emojis Shiny.
 
-        [Category(EmbedSettings), Description("La cadena completa para el emoji de género masculino."), DisplayName("Emoji Masculino")]
-        public EmojiInfo MaleEmoji { get; set; } = new EmojiInfo();
+        [Category(EmbedSettings), TypeConverter(typeof(ExpandableObjectConverter)), Description("Configuración de emojis para géneros."), DisplayName("Emojis de Género")]
+        public class GenderEmojisSettings
+        {
+            public override string ToString() => "(Collection)";
 
-        [Category(EmbedSettings), Description("La cadena completa para el emoji de género femenino."), DisplayName("Emoji Femenino")]
-        public EmojiInfo FemaleEmoji { get; set; } = new EmojiInfo();
+            [Description("La cadena completa para el emoji de género masculino."), DisplayName("Emoji Masculino")]
+            public EmojiInfo MaleEmoji { get; set; } = new EmojiInfo();
 
-        [Category(EmbedSettings), Description("La información del emoji para mostrar el estado del regalo misterioso."), DisplayName("Emoji Regalo Misterioso")]
-        public EmojiInfo MysteryGiftEmoji { get; set; } = new EmojiInfo();
+            [Description("La cadena completa para el emoji de género femenino."), DisplayName("Emoji Femenino")]
+            public EmojiInfo FemaleEmoji { get; set; } = new EmojiInfo();
+        }
+        public GenderEmojisSettings GenderEmojis { get; set; } = new GenderEmojisSettings(); // Instancia de la configuración de emojis de género.
 
-        [Category(EmbedSettings), Description("La información del emoji para mostrar la marca alfa."), DisplayName("Emoji Marca Alfa")]
-        public EmojiInfo AlphaMarkEmoji { get; set; } = new EmojiInfo();
+        [Category(EmbedSettings), TypeConverter(typeof(ExpandableObjectConverter)), Description("Configuración de emojis para marcas especiales y estados."), DisplayName("Emojis de Marcas y Estados Especiales")]
+        public class SpecialMarksEmojisSettings
+        {
+            public override string ToString() => "(Collection)";
 
-        [Category(EmbedSettings), Description("La información emoji para mostrar la marca Imbatible."), DisplayName("Emoji Imbatible")]
-        public EmojiInfo MightiestMarkEmoji { get; set; } = new EmojiInfo();
+            [Description("La información del emoji para mostrar el estado del regalo misterioso."), DisplayName("Emoji Regalo Misterioso")]
+            public EmojiInfo MysteryGiftEmoji { get; set; } = new EmojiInfo();
 
-        [Category(EmbedSettings), Description("La información emoji para mostrar el emoji alfa en Legends: Arceus."), DisplayName("Emoji Alfa PLA")]
-        public EmojiInfo AlphaPLAEmoji { get; set; } = new EmojiInfo();
+            [Description("La información del emoji para mostrar la marca alfa."), DisplayName("Emoji Marca Alfa")]
+            public EmojiInfo AlphaMarkEmoji { get; set; } = new EmojiInfo();
+
+            [Description("La información emoji para mostrar la marca Imbatible."), DisplayName("Emoji Imbatible")]
+            public EmojiInfo MightiestMarkEmoji { get; set; } = new EmojiInfo();
+
+            [Description("La información emoji para mostrar el emoji alfa en Legends: Arceus."), DisplayName("Emoji Alfa PLA")]
+            public EmojiInfo AlphaPLAEmoji { get; set; } = new EmojiInfo();
+        }
+        public SpecialMarksEmojisSettings SpecialMarksEmojis { get; set; } = new SpecialMarksEmojisSettings(); // Instancia de la configuración de emojis de marcas y estados especiales.
+
 
         [Category(EmbedSettings), Description("Se mostrará la Escala en el Embed Trade (SV y Discord solamente). Requiere que el usuario suba los emojis a su servidor."), DisplayName("Mostrar Tamaño")]
         public bool ShowScale { get; set; } = true;

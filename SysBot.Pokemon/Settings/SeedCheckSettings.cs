@@ -1,16 +1,16 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 
 namespace SysBot.Pokemon;
 
 public class SeedCheckSettings
 {
     private const string FeatureToggle = nameof(FeatureToggle);
-    public override string ToString() => "Seed Check Settings";
+    public override string ToString() => "Configuración de verificación de semillas";
 
-    [Category(FeatureToggle), Description("When enabled, seed checks will return all possible seed results instead of the first valid match.")]
+    [Category(FeatureToggle), Description("Cuando está habilitada, las comprobaciones de semillas devolverán todos los resultados posibles en lugar de la primera coincidencia válida.")]
     public bool ShowAllZ3Results { get; set; }
 
-    [Category(FeatureToggle), Description("Allows returning only the closest shiny frame, the first star and square shiny frames, or the first three shiny frames.")]
+    [Category(FeatureToggle), Description("Permite devolver solo el cuadro brillante más cercano, los primeros cuadros brillantes de estrella y cuadrados, o los primeros tres cuadros brillantes.")]
     public SeedCheckResults ResultDisplayMode { get; set; }
 }
 
