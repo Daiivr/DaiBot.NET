@@ -61,6 +61,12 @@ public class LegalitySettings
     [Category(Generate), Description("Requiere el rastreador HOME al intercambiar Pokémon que debieron haber viajado entre los juegos de Switch."), DisplayName("Habilitar la comprobación del rastreador HOME")]
     public bool EnableHOMETrackerCheck { get; set; } = false;
 
+    [Category(Generate), Description("Evita el intercambio de Pokémon que requieren un HOME Tracker, incluso si el archivo ya tiene uno."), DisplayName("No permitir Pokémon no nativos")]
+    public bool DisallowNonNatives { get; set; } = false;
+
+    [Category(Generate), Description("Impide intercambiar Pokémon que ya tienen un HOME Tracker."), DisplayName("No permitir Pokémons con Home Tracker")]
+    public bool DisallowTracked { get; set; } = false;
+
     [Browsable(false)]
     [Category(Generate), Description("El orden en el que se intentan los tipos de encuentro Pokémon.")]
     public List<EncounterTypeGroup> PrioritizeEncounters { get; set; } =

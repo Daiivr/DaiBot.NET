@@ -12,6 +12,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static SysBot.Pokemon.TradeSettings.TradeSettingsCategory;
@@ -609,6 +610,60 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         {
             var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
             var pkm = sav.GetLegal(template, out var result);
+            var la = new LegalityAnalysis(pkm);
+            var spec = GameInfo.Strings.Species[template.Species];
+
+            if (pkm is not T pk || !la.Valid)
+            {
+                // Perform auto correct if it's on and send that shit through again
+                if (SysCord<T>.Runner.Config.Trade.AutoCorrectConfig.EnableAutoCorrect)
+                {
+                    var correctedContent = AutoCorrectShowdown<T>.PerformAutoCorrect(content, pkm, la);
+                    set = new ShowdownSet(correctedContent);
+                    template = AutoLegalityWrapper.GetTemplate(set);
+                    pkm = sav.GetLegal(template, out result);
+                    la = new LegalityAnalysis(pkm);
+                }
+
+                if (pkm is not T correctedPk || !la.Valid)
+                {
+                    var reason = result == "Timeout" ? $"Este **{spec}** tomó demasiado tiempo en generarse." :
+                             result == "VersionMismatch" ? "Solicitud denegada: Las versiones de **PKHeX** y **Auto-Legality Mod** no coinciden." :
+                             $"{Context.User.Mention} No se puede crear un **{spec}** con los datos proporcionados.";
+                    var errorMessage = $"<a:no:1206485104424128593> Oops! {reason}";
+                    if (result == "Failed")
+                        errorMessage += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
+
+                    var embed = new EmbedBuilder
+                    {
+                        Description = errorMessage,
+                        Color = Color.Red,
+                        ImageUrl = "https://i.imgur.com/Y64hLzW.gif",
+                        ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+                    };
+
+                    embed.WithAuthor("Error en la Legalidad del Conjunto", "https://img.freepik.com/free-icon/warning_318-478601.jpg")
+                         .WithFooter(footer =>
+                         {
+                             footer.Text = $"{Context.User.Username} • {DateTime.UtcNow.ToString("hh:mm tt")}";
+                             footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
+                         });
+
+                    // Enviar el mensaje y almacenar la referencia
+                    var message = await ReplyAsync(embed: embed.Build()).ConfigureAwait(false);
+                    // Esperar 2 segundos antes de eliminar el mensaje original
+                    await Task.Delay(2000);
+                    await Context.Message.DeleteAsync();
+
+                    // Esperar 20 segundos antes de eliminar el mensaje de error
+                    await Task.Delay(20000);  // Se ajusta el tiempo a 20 segundos 
+                    await message.DeleteAsync();
+
+                    return;
+                }
+
+                pk = correctedPk;
+            }
 
             if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
             {
@@ -654,45 +709,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                     }
                 }
             }
-            var la = new LegalityAnalysis(pkm);
-            var spec = GameInfo.Strings.Species[template.Species];
-            pkm = EntityConverter.ConvertToType(pkm, typeof(T), out _) ?? pkm;
-            if (pkm is not T pk || !la.Valid)
-            {
-                var reason = result == "Timeout" ? $"Este **{spec}** tomó demasiado tiempo en generarse." :
-                             result == "VersionMismatch" ? "Solicitud denegada: Las versiones de **PKHeX** y **Auto-Legality Mod** no coinciden." :
-                             $"{Context.User.Mention} No se puede crear un **{spec}** con los datos proporcionados.";
-                var errorMessage = $"<a:no:1206485104424128593> Oops! {reason}";
-                if (result == "Failed")
-                    errorMessage += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
-
-                var embed = new EmbedBuilder
-                {
-                    Description = errorMessage,
-                    Color = Color.Red,
-                    ImageUrl = "https://i.imgur.com/Y64hLzW.gif",
-                    ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
-                };
-
-                embed.WithAuthor("Error en la Legalidad del Conjunto", "https://img.freepik.com/free-icon/warning_318-478601.jpg")
-                     .WithFooter(footer =>
-                     {
-                         footer.Text = $"{Context.User.Username} • {DateTime.UtcNow.ToString("hh:mm tt")}";
-                         footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
-                     });
-
-                // Enviar el mensaje y almacenar la referencia
-                var message = await ReplyAsync(embed: embed.Build()).ConfigureAwait(false);
-                // Esperar 2 segundos antes de eliminar el mensaje original
-                await Task.Delay(2000);
-                await Context.Message.DeleteAsync();
-
-                // Esperar 20 segundos antes de eliminar el mensaje de error
-                await Task.Delay(20000);  // Se ajusta el tiempo a 20 segundos 
-                await message.DeleteAsync();
-
-                return;
-            }
+            
             pk.ResetPartyStats();
 
             if (pkm is PB7)
@@ -818,15 +835,17 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             var la = new LegalityAnalysis(pkm);
             var spec = GameInfo.Strings.Species[template.Species];
 
-            if (pkm is not T pk || !la.Valid)
+            bool setEdited = false;
+            if (pkm is not T pk || !la.Valid || !string.IsNullOrEmpty(set.Form.ToString()))
             {
-                // Perform spellcheck / other legality corrections if SpellCheck is enabled
-                if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SpellCheck)
+                // Perform auto correct if it's on and send that shit through again
+                if (SysCord<T>.Runner.Config.Trade.AutoCorrectConfig.EnableAutoCorrect)
                 {
-                    var correctedContent = PostCorrectShowdown<T>.PerformSpellCheck(content, la);
+                    var correctedContent = AutoCorrectShowdown<T>.PerformAutoCorrect(content, pkm, la);
                     set = new ShowdownSet(correctedContent);
                     template = AutoLegalityWrapper.GetTemplate(set);
                     pkm = sav.GetLegal(template, out result);
+                    la = new LegalityAnalysis(pkm);
                     la = new LegalityAnalysis(pkm);
                 }
 
@@ -921,7 +940,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             }
 
             var sig = Context.User.GetFavor();
-            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isBatchTrade: false, batchTradeNumber: 1, totalBatchTrades: 1, lgcode: lgcode, ignoreAutoOT: ignoreAutoOT).ConfigureAwait(false);
+            await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isBatchTrade: false, batchTradeNumber: 1, totalBatchTrades: 1, lgcode: lgcode, ignoreAutoOT: ignoreAutoOT, setEdited: setEdited).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -1191,14 +1210,11 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
     private async Task ProcessSingleTradeAsync(string tradeContent, int batchTradeCode, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades)
     {
-        // Strip any code block formatting and parse the Showdown set
         tradeContent = ReusableActions.StripCodeBlock(tradeContent);
         var set = new ShowdownSet(tradeContent);
         var ignoreAutoOT = tradeContent.Contains("OT:") || tradeContent.Contains("TID:") || tradeContent.Contains("SID:");
-        // Get the template for the Pokémon
         var template = AutoLegalityWrapper.GetTemplate(set);
 
-        // Handle invalid lines (if any)
         if (set.InvalidLines.Count != 0)
         {
             var msg = $"No se puede analizar el conjunto showdown:\n{string.Join("\n", set.InvalidLines)}";
@@ -1208,61 +1224,111 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         try
         {
-            // Get the trainer information and generate the Pokémon
             var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
             var pkm = sav.GetLegal(template, out var result);
-            if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
-            {
-                if (pkm is ITechRecord tr)
-                    tr.SetRecordFlagsAll();
-            }
-            // Perform legality analysis
             var la = new LegalityAnalysis(pkm);
             var spec = GameInfo.Strings.Species[template.Species];
-            pkm = EntityConverter.ConvertToType(pkm, typeof(T), out _) ?? pkm;
-
-            if (pkm is not T pk || !la.Valid)
+            bool setEdited = false;
+            if (pkm is not T pk || !la.Valid || !string.IsNullOrEmpty(set.Form.ToString()))
             {
-                var reason = result switch
+                // Perform auto correct if it's on and send that shit through again
+                if (SysCord<T>.Runner.Config.Trade.AutoCorrectConfig.EnableAutoCorrect && !la.Valid)
                 {
-                    "Timeout" => $"El conjunto {spec} tardó demasiado en generarse.",
-                    "VersionMismatch" => "Solicitud rechazada: La versión de **PKHeX** y **Auto-Legality Mod** no coinciden.",
-                    _ => $"No pude crear un {spec} a partir de ese conjunto.."
-                };
+                    var correctedContent = AutoCorrectShowdown<T>.PerformAutoCorrect(tradeContent, pkm, la);
+                    set = new ShowdownSet(correctedContent);
+                    template = AutoLegalityWrapper.GetTemplate(set);
+                    pkm = sav.GetLegal(template, out result);
+                    la = new LegalityAnalysis(pkm);
+                    setEdited = true;
+                }
 
-                var errorMessage = $"<a:no:1206485104424128593> Oops! {reason}";
-                if (result == "Failed")
-                    errorMessage += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
-
-                var errorEmbed = new EmbedBuilder
+                if (pkm is not T correctedPk || !la.Valid)
                 {
-                    Description = errorMessage,
-                    Color = Color.Red,
-                    ImageUrl = "https://i.imgur.com/Y64hLzW.gif",
-                    ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
-                };
+                    var reason = result switch
+                    {
+                        "Timeout" => $"El conjunto {spec} tardó demasiado en generarse.",
+                        "VersionMismatch" => "Solicitud rechazada: La versión de **PKHeX** y **Auto-Legality Mod** no coinciden.",
+                        _ => $"No pude crear un {spec} a partir de ese conjunto.."
+                    };
 
-                errorEmbed.WithAuthor("Error al procesar el trade", "https://i.imgur.com/0R7Yvok.gif")
-                     .WithFooter(footer =>
-                     {
-                         footer.Text = $"{Context.User.Username} • {DateTime.UtcNow.ToString("hh:mm tt")}";
-                         footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
-                     });
+                    var errorMessage = $"<a:no:1206485104424128593> Oops! {reason}";
+                    if (result == "Failed")
+                        errorMessage += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
 
-                await ReplyAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
-                return;
+                    var errorEmbed = new EmbedBuilder
+                    {
+                        Description = errorMessage,
+                        Color = Color.Red,
+                        ImageUrl = "https://i.imgur.com/Y64hLzW.gif",
+                        ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
+                    };
+
+                    errorEmbed.WithAuthor("Error al procesar el trade", "https://i.imgur.com/0R7Yvok.gif")
+                         .WithFooter(footer =>
+                         {
+                             footer.Text = $"{Context.User.Username} • {DateTime.UtcNow.ToString("hh:mm tt")}";
+                             footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
+                         });
+
+                    await ReplyAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                    return;
+                }
+
+                pk = correctedPk;
             }
 
+            if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
+            {
+                if (pkm is PK9 pk9)
+                {
+                    pk9.SetRecordFlagsAll();
+                }
+                else if (pkm is PK8 pk8)
+                {
+                    pk8.SetRecordFlagsAll();
+                }
+                else if (pkm is PB8 pb8)
+                {
+                    pb8.SetRecordFlagsAll();
+                }
+                else if (pkm is PB7 pb7)
+                {
+                    // not applicable for PB7 (LGPE)
+                }
+                else if (pkm is PA8 pa8)
+                {
+                    // not applicable for PA8 (Legends: Arceus)
+                }
+            }
+
+            if (pkm is PA8)
+            {
+                pkm.HeldItem = (int)HeldItem.None; // Set to None for "Legends: Arceus" Pokémon
+            }
+            else if (pkm.HeldItem == 0 && !pkm.IsEgg)
+            {
+                pkm.HeldItem = (int)SysCord<T>.Runner.Config.Trade.TradeConfiguration.DefaultHeldItem;
+            }
+
+            if (pkm is PB7)
+            {
+                if (pkm.Species == (int)Species.Mew)
+                {
+                    if (pkm.IsShiny)
+                    {
+                        await ReplyAsync("Mew can **not** be Shiny in LGPE. PoGo Mew does not transfer and Pokeball Plus Mew is shiny locked.");
+                        return;
+                    }
+                }
+            }
             pk.ResetPartyStats();
 
-            // Use a predefined or random trade code
             var userID = Context.User.Id;
             var code = Info.GetRandomTradeCode(userID);
             var lgcode = Info.GetRandomLGTradeCode();
 
-            // Add the trade to the queue
             var sig = Context.User.GetFavor();
-            await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode, tradeType: PokeTradeType.Batch, ignoreAutoOT: ignoreAutoOT).ConfigureAwait(false);
+            await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode, tradeType: PokeTradeType.Batch, ignoreAutoOT: ignoreAutoOT, setEdited: setEdited).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -1721,7 +1787,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         };
     }
 
-    private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false)
+    private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false, bool setEdited = false)
     {
         lgcode ??= TradeModule<T>.GenerateRandomPictocodes(3);
         if (!pk.CanBeTraded())
@@ -1747,7 +1813,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await reply.DeleteAsync().ConfigureAwait(false);
             return;
         }
-        var homeLegalityCfg = Info.Hub.Config.Trade.HomeLegalitySettings;
         var la = new LegalityAnalysis(pk);
         if (!la.Valid)
         {
@@ -1783,7 +1848,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await reply.DeleteAsync().ConfigureAwait(false); // Borrar el mensaje
             return;
         }
-        if (homeLegalityCfg.DisallowNonNatives && (la.EncounterOriginal.Context != pk.Context || pk.GO))
+        if (Info.Hub.Config.Legality.DisallowNonNatives && (la.EncounterOriginal.Context != pk.Context || pk.GO))
         {
             var customIconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg"; // Custom icon URL for the embed title
             var customImageUrl = "https://usagif.com/wp-content/uploads/gify/37-pikachu-usagif.gif"; // Custom image URL for the embed
@@ -1810,7 +1875,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await reply2.DeleteAsync().ConfigureAwait(false);
             return;
         }
-        if (homeLegalityCfg.DisallowTracked && pk is IHomeTrack { HasTracker: true })
+        if (Info.Hub.Config.Legality.DisallowTracked && pk is IHomeTrack { HasTracker: true })
         {
             var customIconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg"; // Custom icon URL for the embed title
             var customImageUrl = "https://usagif.com/wp-content/uploads/gify/37-pikachu-usagif.gif"; // Custom image URL for the embed
@@ -1854,7 +1919,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             if (la.Valid) pk = clone;
         }
 
-        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryEgg, lgcode, ignoreAutoOT).ConfigureAwait(false);
+        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryEgg, lgcode, ignoreAutoOT, setEdited: setEdited).ConfigureAwait(false);
     }
 
     public static List<Pictocodes> GenerateRandomPictocodes(int count)
