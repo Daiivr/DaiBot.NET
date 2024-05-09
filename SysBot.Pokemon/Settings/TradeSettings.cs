@@ -53,7 +53,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
     [Category(TradeConfig), TypeConverter(typeof(CategoryConverter<TradeSettingsCategory>))]
     public class TradeSettingsCategory
     {
-        public override string ToString() => "Trade Configuration Settings";
+        public override string ToString() => "Ajustes de configuración de trade";
 
         [Category(TradeConfig), Description("Código de enlace mínimo."), DisplayName("Código mínimo de enlace comercial")]
         public int MinTradeCode { get; set; } = 0;

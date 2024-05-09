@@ -12,7 +12,7 @@ public abstract class BaseConfig
     [Browsable(false)]
     private const string Debug = nameof(Debug);
 
-    [Category(FeatureToggle), Description("Cuando está habilitado, el bot presionará el botón B ocasionalmente cuando no esté procesando nada (para evitar suspenderse)."), DisplayName("Anti Modo Suspenso")]
+    [Category(FeatureToggle), Description("Cuando está habilitado, el bot presionará el botón B ocasionalmente cuando no esté procesando nada (para evitar suspenderse)."), DisplayName("Modo Anti Suspenso")]
     public bool AntiIdle { get; set; }
 
     [Category(FeatureToggle), Description("Cuando esté habilitado, el bot ingresará el código comercial del trade a través del teclado (más rápido)."), DisplayName("Usar Teclado?")]

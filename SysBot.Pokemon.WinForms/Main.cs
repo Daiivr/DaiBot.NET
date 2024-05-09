@@ -39,6 +39,10 @@ public sealed partial class Main : Form
             return;
         PokeTradeBotSWSH.SeedChecker = new Z3SeedSearchHandler<PK8>();
 
+        // Update checker
+        UpdateChecker updateChecker = new UpdateChecker();
+        await UpdateChecker.CheckForUpdatesAsync();
+
         if (File.Exists(Program.ConfigPath))
         {
             var lines = File.ReadAllText(Program.ConfigPath);
