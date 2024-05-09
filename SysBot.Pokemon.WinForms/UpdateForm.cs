@@ -46,11 +46,11 @@ namespace SysBot.Pokemon.WinForms
             labelUpdateInfo.Text = $"Una nueva version esta disponible. Por favor descargue la última versión.";
 
             // buttonDownload
-            buttonDownload.Size = new Size(130, 23); // Set the button size if not already set
+            buttonDownload.Size = new Size(165, 23); // Set the button size if not already set
             int buttonX = (ClientSize.Width - buttonDownload.Size.Width) / 2; // Calculate X position
             int buttonY = ClientSize.Height - buttonDownload.Size.Height - 20; // Calculate Y position, 20 pixels from the bottom
             buttonDownload.Location = new Point(buttonX, buttonY);
-            buttonDownload.Text = $"Descarga la actualización";
+            buttonDownload.Text = $"Descargar la Actualización";
             buttonDownload.Click += ButtonDownload_Click;
 
             // labelChangelogTitle
