@@ -616,7 +616,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             if (pkm is not T pk || !la.Valid)
             {
                 // Perform auto correct if it's on and send that shit through again
-                if (SysCord<T>.Runner.Config.Trade.AutoCorrectConfig.EnableAutoCorrect)
+                if (SysCord<T>.Runner.Config.Trade.AutoCorrectConfig.EnableAutoCorrect && !la.Valid)
                 {
                     var correctedContent = AutoCorrectShowdown<T>.PerformAutoCorrect(content, pkm, la);
                     set = new ShowdownSet(correctedContent);
@@ -839,14 +839,14 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             if (pkm is not T pk || !la.Valid || !string.IsNullOrEmpty(set.Form.ToString()))
             {
                 // Perform auto correct if it's on and send that shit through again
-                if (SysCord<T>.Runner.Config.Trade.AutoCorrectConfig.EnableAutoCorrect)
+                if (SysCord<T>.Runner.Config.Trade.AutoCorrectConfig.EnableAutoCorrect && !la.Valid)
                 {
                     var correctedContent = AutoCorrectShowdown<T>.PerformAutoCorrect(content, pkm, la);
                     set = new ShowdownSet(correctedContent);
                     template = AutoLegalityWrapper.GetTemplate(set);
                     pkm = sav.GetLegal(template, out result);
                     la = new LegalityAnalysis(pkm);
-                    la = new LegalityAnalysis(pkm);
+                    setEdited = true;
                 }
 
                 if (pkm is not T correctedPk || !la.Valid)
@@ -1228,7 +1228,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             var pkm = sav.GetLegal(template, out var result);
             var la = new LegalityAnalysis(pkm);
             var spec = GameInfo.Strings.Species[template.Species];
-            bool setEdited = false;
             if (pkm is not T pk || !la.Valid || !string.IsNullOrEmpty(set.Form.ToString()))
             {
                 // Perform auto correct if it's on and send that shit through again
@@ -1239,7 +1238,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                     template = AutoLegalityWrapper.GetTemplate(set);
                     pkm = sav.GetLegal(template, out result);
                     la = new LegalityAnalysis(pkm);
-                    setEdited = true;
                 }
 
                 if (pkm is not T correctedPk || !la.Valid)
@@ -1328,7 +1326,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             var lgcode = Info.GetRandomLGTradeCode();
 
             var sig = Context.User.GetFavor();
-            await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode, tradeType: PokeTradeType.Batch, ignoreAutoOT: ignoreAutoOT, setEdited: setEdited).ConfigureAwait(false);
+            await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode, tradeType: PokeTradeType.Batch, ignoreAutoOT: ignoreAutoOT).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

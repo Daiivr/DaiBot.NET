@@ -7,8 +7,6 @@ using System.Collections.Generic;
 using System.Linq;
 using static MovesTranslationDictionary;
 
-using Discord.Commands;
-
 namespace SysBot.Pokemon.Discord;
 
 public class DetailsExtractor<T> where T : PKM, new()
@@ -42,11 +40,11 @@ public class DetailsExtractor<T> where T : PKM, new()
         // Encounter Type for Met Date
         if (pk.FatefulEncounter)
         {
-            embedData.MetDate = "**Obtenido:** " + pk.MetDate.ToString(); // Formato de fecha puede ajustarse según necesidad
+            embedData.MetDate = "**Obtenido:** " + pk.MetDate.ToString();
         }
         else
         {
-            embedData.MetDate = "**Atrapado:** " + pk.MetDate.ToString(); // Formato de fecha puede ajustarse según necesidad
+            embedData.MetDate = "**Atrapado:** " + pk.MetDate.ToString();
         }
 
         // EVs
@@ -83,12 +81,13 @@ public class DetailsExtractor<T> where T : PKM, new()
         embedData.IVsDisplay = string.Join("/", embedData.IVsDisplay);
         embedData.MovesDisplay = string.Join("\n", embedData.Moves);
         embedData.PokemonDisplayName = pk.IsNicknamed ? pk.Nickname : embedData.SpeciesName;
+        embedData.NickDisplay = pk.IsNicknamed ? pk.Nickname : null;
 
         // Trade title
         embedData.TradeTitle = GetTradeTitle(isMysteryEgg, isCloneRequest, isDumpRequest, isFixOTRequest, isSpecialRequest, isBatchTrade, batchTradeNumber, embedData.PokemonDisplayName, pk.IsShiny);
 
         // Author name
-        embedData.AuthorName = GetAuthorName(user.Username, user.GlobalName, embedData.TradeTitle, isMysteryEgg, isFixOTRequest, isCloneRequest, isDumpRequest, isSpecialRequest, isBatchTrade, embedData.PokemonDisplayName, pk.IsShiny);
+        embedData.AuthorName = GetAuthorName(user.Username, user.GlobalName, embedData.TradeTitle, isMysteryEgg, isFixOTRequest, isCloneRequest, isDumpRequest, isSpecialRequest, isBatchTrade, embedData.NickDisplay, pk.IsShiny);
 
         return embedData;
     }
@@ -259,13 +258,21 @@ public class DetailsExtractor<T> where T : PKM, new()
                "";
     }
 
-    private static string GetAuthorName(string username, string globalname, string tradeTitle, bool isMysteryEgg, bool isFixOTRequest, bool isCloneRequest, bool isDumpRequest, bool isSpecialRequest, bool isBatchTrade, string pokemonDisplayName, bool isShiny)
+    private static string GetAuthorName(string username, string globalname, string tradeTitle, bool isMysteryEgg, bool isFixOTRequest, bool isCloneRequest, bool isDumpRequest, bool isSpecialRequest, bool isBatchTrade, string NickDisplay, bool isShiny)
     {
         string userName = string.IsNullOrEmpty(globalname) ? username : globalname;
         string isPkmShiny = isShiny ? " Shiny" : "";
-        return isMysteryEgg || isFixOTRequest || isCloneRequest || isDumpRequest || isSpecialRequest || isBatchTrade ?
-               $"{tradeTitle} {username}" :
-               $"Pokémon{isPkmShiny} solicitado por {userName} ";
+        if (isMysteryEgg || isFixOTRequest || isCloneRequest || isDumpRequest || isSpecialRequest || isBatchTrade)
+        {
+            return $"{tradeTitle} {username}";
+        }
+        else
+        {
+            // Verifica si el Pokémon tiene un apodo para usarlo, de lo contrario mantiene el formato estándar.
+            return !string.IsNullOrEmpty(NickDisplay) ?
+                   $"{NickDisplay} solicitado por {userName}" :
+                   $"Pokémon{isPkmShiny} solicitado por {userName}";
+        }
     }
 
     public static string GetUserDetails(int totalTradeCount, TradeCodeStorage.TradeCodeDetails? tradeDetails)
@@ -341,7 +348,6 @@ public class DetailsExtractor<T> where T : PKM, new()
 public class EmbedData
 {
     public int[]? IVs { get; set; }
-    public string? EVsDisplay { get; set; }
     public List<string>? Moves { get; set; }
     public int Level { get; set; }
     public string? TeraType { get; set; }
@@ -354,9 +360,11 @@ public class EmbedData
     public string? HeldItem { get; set; }
     public string? Ball { get; set; }
     public string? IVsDisplay { get; set; }
+    public string? EVsDisplay { get; set; }
     public string? MetDate { get; set; }
     public string? MovesDisplay { get; set; }
     public string? PokemonDisplayName { get; set; }
+    public string? NickDisplay { get; set; }
     public string? TradeTitle { get; set; }
     public string? AuthorName { get; set; }
     public string? EmbedImageUrl { get; set; }

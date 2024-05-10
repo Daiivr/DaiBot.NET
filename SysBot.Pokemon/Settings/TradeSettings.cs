@@ -37,7 +37,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
     [Category(VGCPastesConfig), Description("Ajustes relacionados con la Configuración de VGCPastes."),DisplayName("Configuración de VGCPastes"), Browsable(true)]
     public VGCPastesCategory VGCPastesConfiguration { get; set; } = new();
 
-    [Category(AutoCorrectShowdownConfig), Description("Configuraciones relacionadas con conjuntos de showdown de corrección automática."), DisplayName("Configuración de la autocorrección de Showdown"), Browsable(true)]
+    [Category(AutoCorrectShowdownConfig), Description("Configuraciones relacionadas con la corrección automática de conjuntos de showdown."), DisplayName("Configuración de la autocorrección de Showdown"), Browsable(true)]
     public AutoCorrectShowdownCategory AutoCorrectConfig { get; set; } = new();
 
     [Category(EmbedSettings), Description("Ajustes relacionados con el Trade Embed en Discord."), DisplayName("Configuración del Embed Trade"), Browsable(true)]
@@ -130,22 +130,6 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         {
             get => EnableAutoCorrect && _autoCorrectEmbedIndicator;
             set => _autoCorrectEmbedIndicator = value;
-        }
-
-        private bool _autoCorrectNickname = true;
-        [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá los apodos ilegales."), DisplayName("Autocorrección de Apodos?")]
-        public bool AutoCorrectNickname
-        {
-            get => EnableAutoCorrect && _autoCorrectNickname;
-            set => _autoCorrectNickname = value;
-        }
-
-        private string _fixedNickname = string.Empty;
-        [Category(nameof(AutoCorrectShowdownCategory)), Description("Establezca un apodo predeterminado. Si no se proporciona ninguno, simplemente estará en blanco."), DisplayName("Cambiar el nombre de los apodos no válidos a...")]
-        public string FixedNickname
-        {
-            get => EnableAutoCorrect ? _fixedNickname : string.Empty;
-            set => _fixedNickname = value;
         }
 
         private bool _autoCorrectSpeciesAndForm = true;
