@@ -201,20 +201,19 @@ public class DetailsExtractor<T> where T : PKM, new()
 
     private static string GetShinySymbol(T pk)
     {
-        // Accede a la configuración de emojis Shiny desde TradeSettings
         var shinySettings = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShinyEmojis;
 
         if (pk.ShinyXor == 0)
         {
-            // Usa el emoji configurado para Shiny Square
-            return shinySettings.ShinySquareEmoji + " "; // Asegúrate de mantener un espacio al final para la presentación
+            string shinySquareEmoji = string.IsNullOrEmpty(shinySettings.ShinySquareEmoji.EmojiString) ? "◼ " : shinySettings.ShinySquareEmoji.EmojiString + " ";
+            return shinySquareEmoji;
         }
         else if (pk.IsShiny)
         {
-            // Usa el emoji configurado para Shiny normal
-            return shinySettings.ShinyNormalEmoji + " "; // Asegúrate de mantener un espacio al final para la presentación
+            string shinyNormalEmoji = string.IsNullOrEmpty(shinySettings.ShinyNormalEmoji.EmojiString) ? "★ " : shinySettings.ShinyNormalEmoji.EmojiString + " ";
+            return shinyNormalEmoji;
         }
-        return string.Empty; // No shiny
+        return string.Empty;
     }
 
     private static string GetSpecialSymbols(T pk)
