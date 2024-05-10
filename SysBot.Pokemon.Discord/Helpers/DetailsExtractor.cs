@@ -19,12 +19,11 @@ public class DetailsExtractor<T> where T : PKM, new()
     public static EmbedData ExtractPokemonDetails(T pk, SocketUser user, bool isMysteryEgg, bool isCloneRequest, bool isDumpRequest, bool isFixOTRequest, bool isSpecialRequest, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades)
     {
         bool todosMaximos = AreAllIVsMax(pk.IVs);
-        string ivsDisplay = todosMaximos ? "Máximos" : $"{pk.IVs[0]}/{pk.IVs[1]}/{pk.IVs[2]}/{pk.IVs[3]}/{pk.IVs[4]}/{pk.IVs[5]}";
+        string ivsDisplay = todosMaximos ? "Máximos" : $"{pk.IV_HP}/{pk.IV_ATK}/{pk.IV_DEF}/{pk.IV_SPA}/{pk.IV_SPD}/{pk.IV_SPE}";
         var strings = GameInfo.GetStrings(1);
         var embedData = new EmbedData
         {
             // Basic Pokémon details
-            IVs = pk.IVs,
             IVsDisplay = ivsDisplay,
             Moves = GetMoveNames(pk),
             Level = pk.CurrentLevel
@@ -61,8 +60,6 @@ public class DetailsExtractor<T> where T : PKM, new()
             evs.Add($"{pk.EV_SPD} SpD");
         if (pk.EV_SPE != 0)
             evs.Add($"{pk.EV_SPE} Spe");
-
-        // Comprobar si hay EVs para agregarlos al EmbedData
         if (evs.Any())
         {
             embedData.EVsDisplay = "**EVs: **" + string.Join(" / ", evs) + "\n";
