@@ -112,7 +112,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
 
             string footerText = detail.Type == PokeTradeType.Clone || detail.Type == PokeTradeType.Dump || detail.Type == PokeTradeType.Seed || detail.Type == PokeTradeType.FixOT
                 ? "Iniciando el comercio ahora."
-                : $"Iniciando el comercio ahora.\nDisfrute de su {(detail.IsMysteryEgg ? "✨ Mystery Egg" : speciesName)}!";
+                : $"Iniciando el comercio ahora.\nDisfrute de su {(detail.IsMysteryEgg ? "✨ Huevo Misterioso ✨" : speciesName)}!";
 
             var embed = new EmbedBuilder()
                 .WithColor(new DiscordColor(r, g, b))
@@ -128,25 +128,6 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
 
         SysCord<T>.Runner.Hub.Queues.Forwarders.Add(Logger);
         Channels.Add(cid, new TradeStartAction(cid, Logger, c.Name));
-    }
-
-    private static Embed CreateTradeEmbed(PokeRoutineExecutorBase bot, PokeTradeDetail<T> detail)
-    {
-        var builder = new EmbedBuilder
-        {
-            Color = DiscordColor.Green, // Customize the color of the embed
-            Description = $"> <a:yes:1206485105674166292> **{bot.Connection.Label}** ahora está tradeando con **{detail.Trainer.TrainerName}**.",
-            Footer = new EmbedFooterBuilder
-            {
-                Text = $"ID: {detail.ID} | {DateTime.Now:hh:mm:ss}",
-            }
-        };
-
-        // Add an icon for the embed title
-        var iconUrl = "https://styles.redditmedia.com/t5_2rmov/styles/communityIcon_8jj0o28zosp21.png?width=256&s=8a23b0dcec4abbaa98df5c1f9270b08da7f960e3"; // Replace with the URL of the icon you want to use for the embed
-        builder.WithAuthor("Notificacion de Inicio de Tradeo", iconUrl);
-
-        return builder.Build();
     }
 
     [Command("startInfo")]
