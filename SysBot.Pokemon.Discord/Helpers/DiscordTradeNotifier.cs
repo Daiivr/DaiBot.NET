@@ -41,30 +41,29 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
 
     public void TradeInitialize(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
     {
+        int language = 2;
+        var speciesName = SpeciesName.GetSpeciesName(Data.Species, language);
+        var batchInfo = TotalBatchTrades > 1 ? $" (Trade {BatchTradeNumber} de {TotalBatchTrades})" : "";
+        var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
+
         if (Data is PK9)
         {
-            var batchInfo = TotalBatchTrades > 1 ? $" (Trade {BatchTradeNumber} de {TotalBatchTrades})" : "";
-            var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
-            var message = $"Inicializando el comercio**{receive}{batchInfo}**. Por favor prepárate. Tu código es: **{Code:0000 0000}**.";
-            Trader.SendMessageAsync(message).ConfigureAwait(false);
+            var message = $"Inicializando el comercio**{receive}{batchInfo}**. Por favor prepárate.";
 
             if (TotalBatchTrades > 1 && BatchTradeNumber == 1)
             {
                 message += "\n**Permanezca en el intercambio hasta que se completen todos los intercambios por lotes.**";
             }
+            EmbedHelper.SendTradeInitializingEmbedAsync(Trader, speciesName, Code, message).ConfigureAwait(false);
         }
         else if (Data is PB7)
         {
-            var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
             var (thefile, lgcodeembed) = CreateLGLinkCodeSpriteEmbed(LGCode);
             Trader.SendFileAsync(thefile, $"Inicializando el comercio**{receive}**. Por favor prepárate. Tu código es:", embed: lgcodeembed).ConfigureAwait(false);
         }
         else
         {
-            var batchInfo = TotalBatchTrades > 1 ? $" (Trade {BatchTradeNumber} of {TotalBatchTrades})" : "";
-            var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
-            var message = $"Inicializando el comercio**{receive}{batchInfo}**. Por favor prepárate. Tu código es: **{Code:0000 0000}**.";
-            Trader.SendMessageAsync(message).ConfigureAwait(false);
+            EmbedHelper.SendTradeInitializingEmbedAsync(Trader, speciesName, Code).ConfigureAwait(false);
         }
     }
 
@@ -73,48 +72,46 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
         var batchInfo = TotalBatchTrades > 1 ? $" para la operación por lotes (Trade {BatchTradeNumber} de {TotalBatchTrades})" : "";
         var name = Info.TrainerName;
         var trainer = string.IsNullOrEmpty(name) ? string.Empty : $" {name}";
-        string message;
 
         if (Data is PB7 && LGCode != null && LGCode.Count != 0)
         {
-            message = $"Estoy esperando por ti,**{trainer}{batchInfo}**! __Tienes **40 segundos**__. Mi IGN es **{routine.InGameName}**.";
+            var message = $"Estoy esperando por ti,**{trainer}{batchInfo}**! __Tienes **40 segundos**__. Mi IGN es **{routine.InGameName}**.";
+            Trader.SendMessageAsync(message).ConfigureAwait(false);
         }
         else
         {
+            string? additionalMessage = null;
             if (TotalBatchTrades > 1 && BatchTradeNumber > 1)
             {
                 var receive = Data.Species == 0 ? string.Empty : $" ({Data.Nickname})";
-                message = $"Ahora intercambiando{receive} (Intercambio {BatchTradeNumber} de {TotalBatchTrades}). **Selecciona el Pokémon que deseas intercambiar!**";
+                additionalMessage = $"Ahora intercambiando{receive} (Intercambio {BatchTradeNumber} de {TotalBatchTrades}). **Selecciona el Pokémon que deseas intercambiar!**";
             }
-            else
-            {
-                message = $"Estoy esperando por ti,**{trainer}{batchInfo}**! __Tienes **40 segundos**__. Tu codigo es: **{Code:0000 0000}**. Mi IGN es **{routine.InGameName}**.";
-            }
+            EmbedHelper.SendTradeSearchingEmbedAsync(Trader, trainer, routine.InGameName, additionalMessage).ConfigureAwait(false);
         }
-
-        Trader.SendMessageAsync(message).ConfigureAwait(false);
     }
 
     public void TradeCanceled(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeResult msg)
     {
         OnFinish?.Invoke(routine);
-        var description = msg.GetDescription(); // Obtiene la descripción personalizada
-        Trader.SendMessageAsync($"<a:no:1206485104424128593> Trade __cancelado__: {description}").ConfigureAwait(false);
+        var description = msg.GetDescription();
+        EmbedHelper.SendTradeCanceledEmbedAsync(Trader, description.ToString()).ConfigureAwait(false);
     }
 
     public void TradeFinished(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result)
     {
         OnFinish?.Invoke(routine);
+
         var tradedToUser = Data.Species;
         var message = tradedToUser != 0 ? (IsMysteryEgg ? "<a:yes:1206485105674166292> Trade finalizado. ¡Disfruta de tu **Huevo Misterioso**!" : $"<a:yes:1206485105674166292> Trade finalizado. Disfruta de tu **{(Species)tradedToUser}**!") : "<a:yes:1206485105674166292> Trade finalizado!";
-        Trader.SendMessageAsync(message).ConfigureAwait(false);
+
+        EmbedHelper.SendTradeFinishedEmbedAsync(Trader, message).ConfigureAwait(false);
         if (result.Species != 0 && Hub.Config.Discord.ReturnPKMs)
             Trader.SendPKMAsync(result, "▼ Aqui esta lo que me enviaste! ▼").ConfigureAwait(false);
     }
 
     public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, string message)
     {
-        Trader.SendMessageAsync(message).ConfigureAwait(false);
+        EmbedHelper.SendNotificationEmbedAsync(Trader, message).ConfigureAwait(false);
     }
 
     public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeSummary message)
