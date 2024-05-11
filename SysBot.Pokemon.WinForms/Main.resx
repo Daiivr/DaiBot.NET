@@ -152,19 +152,16 @@
   </data>
   <data name="B_RebootStop.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
-        iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAABGdBTUEAALGPC/xhBQAAAqBJREFUOE91
-        lF1Ik1EcxtdFF0E3QVdC1EU3sra2WkioRJqEJGhBRiRubmubc859qJvMmDnIzc98sxl1U5Ak+6rtXe7L
-        bZrgjRBdFAUhQRBUSBQphFBvPi/817vNLh7Yzv85v/Oc/znnFZ23NJXpkLx9j80XqRxknqucTMpm9kYr
-        dvMJVTYwMPXs6ACTnHHP5j/cvL+07fLnN5VDsSrA7GPR00Jdc84doXlFEJM3ftZ5J/fONbvMkRxMblM7
-        HJX3TiZcgJIs44n36qFQXRkIZoI47y5xTmZx28UkXyId0lgnUmP8+I76mCWu81Z8Gi0oAjVbHu83jaYT
-        ZHRMpz+iP+P3wgfICBAAJOtk5st1T7SxCISBnonsFhmG/fELZCABBI/Rm3ij92U5lSfNNfc9fSVre3QY
-        dd6EmD1TeQ7CBCGAhB6ZfawRp9nQHXwtVYX+iNvDXI0haEFdxEbm9xq8ySgP2llR2EChsE148bvFPq8h
-        0Al1cBmtEXV5AvvQH4CMo4sbF21PJKWQUuHY5drYuriD5RR69tPl/kBlIRH23Xoj9UuhDhQa+D8hgUwT
-        XTumTXEndfEN3DO+cHUw5qnuTnIoiJWRB3Ssx1tnDgqPmFSjm6tAIviRCFeHL6AvVZ0L31GQaNNbEmXo
-        CpLJO8J+bL0UhDp8MkOeO2ddWEP/+AK21+JgH6IASXWZb5BMn1kpBeG4MU7eSwPsCMYLBrwx0OVdKxyp
-        2pxdJRD6ItXE6gGheq0lt47rUASCcCdgkJlWeQGE53HKmPHxKYwvflDtjDX7s2uEVdHcAgTHjkQwkJr6
-        E2kkxcoEwEINvdmvuJx0r4pAaJj7dlAhFCBIVGfPv621Lv9udOQ+t7kTQXxCaB6p6M9uQo+wBTxiwIUp
-        /qlJ9BdsYTL9DlHbOwAAAABJRU5ErkJggg==
+        iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAABGdBTUEAALGPC/xhBQAAAe5JREFUOE+t
+        lM0rRFEYxm3unVvGN3PdO4hEUtZW1ogiZSGsbCW2FvYW/gh/gpWSaMj4aJrNNJKUROMjU5qhfB/3d+pw
+        7pgZpTn1NHfe85znPu/HPWX988MlRd6gwkawJbhthTsiZmMv2LbctvXKtkA+rkLe4FZ5s71rOgv7pr1z
+        aIauj8xQBhwYoYuoYa/tWu4UL8t39lcgEnD7okZoL241CJAI1vtA7MhoeEYY97nnfX8Qw0U86Ijjzh5x
+        UlMnzur9IMYeHF5MGXSN7wfSlM48Ymp5Rbycnoi7mUlx5VSLVFONxKVdJVIT43IPDtw9w17V6/otSM1I
+        J9ncLrLRqGC9392IzOy0uG+tkEhPjoq3ywu59xiLiWRrl0x/x3KGfIIUmAYgSEo3IwPSBUuJAiX2en4m
+        OXA5g0ufYMR0u71u3lJ06kRquujnY0aChRhO4ShBr+7xzYBb+yPoNQPrSpB6kWJ2alA6VOvjIS2yM2Ny
+        j9rC5QyNVM0pLugdRkQtXKqa/iEY9qUMWW8Aosopv3S/aMq5TWE09AbglPT1RsEp2BSgjw0jwUIUp6QI
+        9EY9JRKFxwbog321uCRFcZE72Igyp3CKDjbQPz2ckhI11UGMPTiUqeCnp8A1VbLLQUFeXwFnriTXl46S
+        XbD/x3DZF244wcZC3hDZAAAAAElFTkSuQmCC
 </value>
   </data>
   <data name="updater.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
