@@ -165,7 +165,7 @@ namespace SysBot.Pokemon.WinForms
             B_New.Name = "B_New";
             B_New.Size = new Size(72, 37);
             B_New.TabIndex = 0;
-            B_New.Text = "Add";
+            B_New.Text = "Agregar";
             B_New.UseVisualStyleBackColor = true;
             B_New.Click += B_New_Click;
             // 
@@ -191,7 +191,7 @@ namespace SysBot.Pokemon.WinForms
             Tab_Hub.Padding = new Padding(5, 4, 5, 4);
             Tab_Hub.Size = new Size(768, 444);
             Tab_Hub.TabIndex = 2;
-            Tab_Hub.Text = "Hub";
+            Tab_Hub.Text = "Ajustes";
             Tab_Hub.UseVisualStyleBackColor = true;
             // 
             // PG_Hub
@@ -213,7 +213,7 @@ namespace SysBot.Pokemon.WinForms
             Tab_Logs.Name = "Tab_Logs";
             Tab_Logs.Size = new Size(768, 444);
             Tab_Logs.TabIndex = 1;
-            Tab_Logs.Text = "Logs";
+            Tab_Logs.Text = "Registros";
             Tab_Logs.UseVisualStyleBackColor = true;
             // 
             // RTB_Logs
