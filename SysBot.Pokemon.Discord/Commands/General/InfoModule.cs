@@ -1,5 +1,6 @@
 using Discord;
 using Discord.Commands;
+using SysBot.Pokemon.Helpers;
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -48,6 +49,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             $"- {Format.Bold("Tiempo de ejecución")}: {RuntimeInformation.FrameworkDescription} {RuntimeInformation.ProcessArchitecture} " +
             $"({RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture})\n" +
             $"- {Format.Bold("Tiempo de compilación")}: {GetVersionInfo("SysBot.Base", false)}\n" +
+            $"- {Format.Bold("DaiBot Version")}: {TradeBot.Version}\n" +
             $"- {Format.Bold("Versión de PKHeX")}: {GetVersionInfo("PKHeX.Core")}\n" +
             $"- {Format.Bold("Versión de AutoLegality")}: {GetVersionInfo("PKHeX.Core.AutoMod")}\n"
         );

@@ -132,6 +132,22 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             set => _autoCorrectEmbedIndicator = value;
         }
 
+        private bool _autoCorrectNickname = true;
+        [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá los apodos ilegales."), DisplayName("Autocorrección de Apodos?")]
+        public bool AutoCorrectNickname
+        {
+            get => EnableAutoCorrect && _autoCorrectNickname;
+            set => _autoCorrectNickname = value;
+        }
+
+        private string _fixedNickname = string.Empty;
+        [Category(nameof(AutoCorrectShowdownCategory)), Description("Establezca un apodo predeterminado. Si no se proporciona ninguno, simplemente estará en blanco."), DisplayName("Cambiar el nombre de los apodos no válidos a...")]
+        public string FixedNickname
+        {
+            get => EnableAutoCorrect ? _fixedNickname : string.Empty;
+            set => _fixedNickname = value;
+        }
+
         private bool _autoCorrectSpeciesAndForm = true;
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá las especies y formas incorrectas."), DisplayName("Autocorrección de Especies y Formas")]
         public bool AutoCorrectSpeciesAndForm

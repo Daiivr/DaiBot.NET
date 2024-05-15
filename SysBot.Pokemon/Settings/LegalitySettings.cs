@@ -62,10 +62,26 @@ public class LegalitySettings
     public bool EnableHOMETrackerCheck { get; set; } = false;
 
     [Category(Generate), Description("Evita el intercambio de Pokémon que requieren un HOME Tracker, incluso si el archivo ya tiene uno."), DisplayName("No permitir Pokémon no nativos")]
-    public bool DisallowNonNatives { get; set; } = false;
+    public bool DisallowNonNatives
+    {
+        get => EnableHOMETrackerCheck;
+        set
+        {
+            if (!EnableHOMETrackerCheck)
+                _ = EnableHOMETrackerCheck;
+        }
+    }
 
     [Category(Generate), Description("Impide intercambiar Pokémon que ya tienen un HOME Tracker."), DisplayName("No permitir Pokémons con Home Tracker")]
-    public bool DisallowTracked { get; set; } = false;
+    public bool DisallowTracked
+    {
+        get => EnableHOMETrackerCheck;
+        set
+        {
+            if (!EnableHOMETrackerCheck)
+                _ = EnableHOMETrackerCheck;
+        }
+    }
 
     [Browsable(false)]
     [Category(Generate), Description("El orden en el que se intentan los tipos de encuentro Pokémon.")]
