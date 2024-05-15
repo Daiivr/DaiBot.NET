@@ -16,7 +16,7 @@ namespace SysBot.Pokemon.Discord;
 // Copyright 2017, Christopher F. <foxbot@protonmail.com>
 public class InfoModule : ModuleBase<SocketCommandContext>
 {
-    private const string detail = "Soy un bot de Discord de código abierto impulsado por PKHe X.Core y otro software de código abierto.";
+    private const string detail = "Soy un bot de Discord impulsado por PKHeX.Core y otro software de código abierto.";
     private const string repo = "https://github.com/kwsch/SysBot.NET";
     private const string gengar = "https://github.com/bdawg1989/MergeBot";
     private const string daifork = "https://github.com/Daiivr/SysBot.NET";
@@ -49,7 +49,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             $"- {Format.Bold("Tiempo de ejecución")}: {RuntimeInformation.FrameworkDescription} {RuntimeInformation.ProcessArchitecture} " +
             $"({RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture})\n" +
             $"- {Format.Bold("Tiempo de compilación")}: {GetVersionInfo("SysBot.Base", false)}\n" +
-            $"- {Format.Bold("DaiBot Version")}: {TradeBot.Version}\n" +
+            $"- {Format.Bold("Versión del Bot")}: {TradeBot.Version}\n" +
             $"- {Format.Bold("Versión de PKHeX")}: {GetVersionInfo("PKHeX.Core")}\n" +
             $"- {Format.Bold("Versión de AutoLegality")}: {GetVersionInfo("PKHeX.Core.AutoMod")}\n"
         );
@@ -58,8 +58,8 @@ public class InfoModule : ModuleBase<SocketCommandContext>
             $"- {Format.Bold("Tamaño")}: {GetHeapSize()}MiB\n" +
             $"- {Format.Bold("Servers")}: {Context.Client.Guilds.Count}\n" +
             $"- {Format.Bold("Canales")}: {Context.Client.Guilds.Sum(g => g.Channels.Count)}\n" +
-            $"- {Format.Bold("Usuarios")}: {Context.Client.Guilds.Sum(g => g.MemberCount)}\n" +
-            $"- {Format.Bold("\nGracias, [Project Pokémon](https://projectpokemon.org), por hacer públicos los sprites e imágenes de Pokémon utilizados en este bot!")}\n"
+            $"- {Format.Bold("Usuarios")}: {Context.Client.Guilds.Sum(g => g.MemberCount)}\n\n" +
+            $"{Format.Bold("Gracias, [Project Pokémon](https://projectpokemon.org), por hacer públicos los sprites e imágenes de Pokémon utilizados en este bot!")}\n"
         );
         builder.WithThumbnailUrl("https://i.imgur.com/rzwDEDO.png");
         await ReplyAsync("He aquí un poco de informacion sobre mí!", embed: builder.Build()).ConfigureAwait(false);
