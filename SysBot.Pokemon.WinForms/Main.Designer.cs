@@ -32,7 +32,6 @@ namespace SysBot.Pokemon.WinForms
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             TC_Main = new TabControl();
             Tab_Bots = new TabPage();
             comboBox2 = new ComboBox();
@@ -233,15 +232,15 @@ namespace SysBot.Pokemon.WinForms
             // 
             B_Stop.BackColor = Color.Maroon;
             B_Stop.BackgroundImageLayout = ImageLayout.None;
-            B_Stop.FlatStyle = FlatStyle.Flat;
+            B_Stop.FlatStyle = FlatStyle.Popup;
             B_Stop.Font = new Font("Calibri", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            B_Stop.ForeColor = SystemColors.ControlLightLight;
-            B_Stop.Image = (Image)resources.GetObject("B_Stop.Image");
+            B_Stop.ForeColor = Color.WhiteSmoke;
+            B_Stop.Image = Resources.stopall;
             B_Stop.ImageAlign = ContentAlignment.MiddleLeft;
-            B_Stop.Location = new Point(133, 2);
-            B_Stop.Margin = new Padding(3, 4, 3, 4);
+            B_Stop.Location = new Point(129, 3);
+            B_Stop.Margin = new Padding(0);
             B_Stop.Name = "B_Stop";
-            B_Stop.Size = new Size(122, 35);
+            B_Stop.Size = new Size(126, 30);
             B_Stop.TabIndex = 1;
             B_Stop.Text = "Detener Bots";
             B_Stop.TextAlign = ContentAlignment.MiddleRight;
@@ -251,15 +250,15 @@ namespace SysBot.Pokemon.WinForms
             // B_Start
             // 
             B_Start.BackColor = Color.FromArgb(192, 255, 192);
-            B_Start.FlatStyle = FlatStyle.Flat;
+            B_Start.FlatStyle = FlatStyle.Popup;
             B_Start.Font = new Font("Calibri", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
             B_Start.ForeColor = Color.ForestGreen;
-            B_Start.Image = (Image)resources.GetObject("B_Start.Image");
+            B_Start.Image = Resources.startall;
             B_Start.ImageAlign = ContentAlignment.MiddleLeft;
-            B_Start.Location = new Point(22, 2);
-            B_Start.Margin = new Padding(3, 4, 3, 4);
+            B_Start.Location = new Point(10, 3);
+            B_Start.Margin = new Padding(0);
             B_Start.Name = "B_Start";
-            B_Start.Size = new Size(110, 35);
+            B_Start.Size = new Size(115, 30);
             B_Start.TabIndex = 0;
             B_Start.Text = "Iniciar Bots";
             B_Start.TextAlign = ContentAlignment.MiddleRight;
@@ -269,15 +268,15 @@ namespace SysBot.Pokemon.WinForms
             // B_RebootStop
             // 
             B_RebootStop.BackColor = Color.PowderBlue;
-            B_RebootStop.FlatStyle = FlatStyle.Flat;
+            B_RebootStop.FlatStyle = FlatStyle.Popup;
             B_RebootStop.Font = new Font("Calibri", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
             B_RebootStop.ForeColor = Color.SteelBlue;
-            B_RebootStop.Image = (Image)resources.GetObject("B_RebootStop.Image");
+            B_RebootStop.Image = Resources.refresh;
             B_RebootStop.ImageAlign = ContentAlignment.MiddleLeft;
-            B_RebootStop.Location = new Point(256, 2);
-            B_RebootStop.Margin = new Padding(3, 4, 3, 4);
+            B_RebootStop.Location = new Point(259, 3);
+            B_RebootStop.Margin = new Padding(0);
             B_RebootStop.Name = "B_RebootStop";
-            B_RebootStop.Size = new Size(95, 35);
+            B_RebootStop.Size = new Size(98, 30);
             B_RebootStop.TabIndex = 2;
             B_RebootStop.Text = "Reiniciar";
             B_RebootStop.TextAlign = ContentAlignment.MiddleRight;
@@ -291,24 +290,24 @@ namespace SysBot.Pokemon.WinForms
             ButtonPanel.Controls.Add(B_RebootStop);
             ButtonPanel.Controls.Add(B_Stop);
             ButtonPanel.Controls.Add(B_Start);
-            ButtonPanel.Location = new Point(304, 0);
+            ButtonPanel.Location = new Point(293, 0);
             ButtonPanel.Margin = new Padding(3, 4, 3, 4);
             ButtonPanel.Name = "ButtonPanel";
-            ButtonPanel.Size = new Size(467, 38);
+            ButtonPanel.Size = new Size(478, 38);
             ButtonPanel.TabIndex = 0;
             // 
             // updater
             // 
             updater.BackColor = Color.Gray;
-            updater.FlatStyle = FlatStyle.Flat;
+            updater.FlatStyle = FlatStyle.Popup;
             updater.Font = new Font("Calibri", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             updater.ForeColor = Color.Gainsboro;
-            updater.Image = (Image)resources.GetObject("updater.Image");
+            updater.Image = Resources.update;
             updater.ImageAlign = ContentAlignment.MiddleLeft;
-            updater.Location = new Point(352, 2);
+            updater.Location = new Point(361, 3);
             updater.Margin = new Padding(3, 4, 3, 4);
             updater.Name = "updater";
-            updater.Size = new Size(107, 35);
+            updater.Size = new Size(110, 30);
             updater.TabIndex = 3;
             updater.Text = "Actualizar";
             updater.TextAlign = ContentAlignment.MiddleRight;
@@ -319,7 +318,6 @@ namespace SysBot.Pokemon.WinForms
             // 
             AutoScaleDimensions = new SizeF(8F, 18F);
             AutoScaleMode = AutoScaleMode.Font;
-            AutoSizeMode = AutoSizeMode.GrowAndShrink;
             BackColor = SystemColors.Desktop;
             CancelButton = B_Stop;
             ClientSize = new Size(776, 483);
@@ -329,6 +327,7 @@ namespace SysBot.Pokemon.WinForms
             Icon = Resources.icon;
             Margin = new Padding(5, 4, 5, 4);
             Name = "Main";
+            SizeGripStyle = SizeGripStyle.Show;
             StartPosition = FormStartPosition.CenterScreen;
             Text = "DaiBot.Net";
             FormClosing += Main_FormClosing;

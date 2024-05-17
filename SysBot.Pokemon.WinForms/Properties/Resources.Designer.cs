@@ -70,6 +70,18 @@ namespace SysBot.Pokemon.WinForms.Properties
         }
 
         /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap bdsp_mode_image
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("bdsp_mode_image", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
         internal static System.Drawing.Icon icon
@@ -78,6 +90,66 @@ namespace SysBot.Pokemon.WinForms.Properties
             {
                 object obj = ResourceManager.GetObject("icon", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap lgpe_mode_image
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("lgpe_mode_image", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap pla_mode_image
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("pla_mode_image", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap refresh
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("refresh", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap startall
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("startall", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap stopall
+        {
+            get
+            {
+                object obj = ResourceManager.GetObject("stopall", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
 
@@ -106,40 +178,15 @@ namespace SysBot.Pokemon.WinForms.Properties
         }
 
         /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap for BDSP mode.
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap bdsp_mode_image
+        internal static System.Drawing.Bitmap update
         {
             get
             {
-                object obj = ResourceManager.GetObject("bdsp_mode_image", resourceCulture);
+                object obj = ResourceManager.GetObject("update", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
-
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap for PLA mode.
-        /// </summary>
-        internal static System.Drawing.Bitmap pla_mode_image
-        {
-            get
-            {
-                object obj = ResourceManager.GetObject("pla_mode_image", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap for LGPE mode.
-        /// </summary>
-        internal static System.Drawing.Bitmap lgpe_mode_image
-        {
-            get
-            {
-                object obj = ResourceManager.GetObject("lgpe_mode_image", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-
     }
 }
