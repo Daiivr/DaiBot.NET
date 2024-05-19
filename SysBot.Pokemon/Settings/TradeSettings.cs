@@ -133,7 +133,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
 
         private bool _autoCorrectNickname = true;
-        [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá los apodos ilegales."), DisplayName("Autocorrección de Apodos?")]
+        [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá los apodos ilegales."), DisplayName("Autocorrección de Apodos")]
         public bool AutoCorrectNickname
         {
             get => EnableAutoCorrect && _autoCorrectNickname;
@@ -226,6 +226,14 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         {
             get => EnableAutoCorrect && _autoCorrectIVs;
             set => _autoCorrectIVs = value;
+        }
+
+        private bool _autoCorrectMarks = true;
+        [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá las marcas/cintas incorrectas."), DisplayName("Autocorrección de Marcas/Cintas")]
+        public bool AutoCorrectMarks
+        {
+            get => EnableAutoCorrect && _autoCorrectMarks;
+            set => _autoCorrectMarks = value;
         }
     }
 
