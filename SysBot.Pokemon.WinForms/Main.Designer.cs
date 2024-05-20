@@ -11,6 +11,9 @@ namespace SysBot.Pokemon.WinForms
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
+        // Add the label declaration here
+        private System.Windows.Forms.Label lblVersion;
+
         /// <summary>
         ///  Clean up any resources being used.
         /// </summary>
@@ -51,6 +54,7 @@ namespace SysBot.Pokemon.WinForms
             B_RebootStop = new Button();
             ButtonPanel = new Panel();
             updater = new Button();
+            lblVersion = new Label();
             TC_Main.SuspendLayout();
             Tab_Bots.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)NUD_Port).BeginInit();
@@ -255,10 +259,10 @@ namespace SysBot.Pokemon.WinForms
             B_Start.ForeColor = Color.ForestGreen;
             B_Start.Image = Resources.startall;
             B_Start.ImageAlign = ContentAlignment.MiddleLeft;
-            B_Start.Location = new Point(10, 3);
+            B_Start.Location = new Point(12, 3);
             B_Start.Margin = new Padding(0);
             B_Start.Name = "B_Start";
-            B_Start.Size = new Size(115, 30);
+            B_Start.Size = new Size(113, 30);
             B_Start.TabIndex = 0;
             B_Start.Text = "Iniciar Bots";
             B_Start.TextAlign = ContentAlignment.MiddleRight;
@@ -314,6 +318,15 @@ namespace SysBot.Pokemon.WinForms
             updater.UseVisualStyleBackColor = false;
             updater.Click += Updater_Click;
             // 
+            // lblVersion
+            // 
+            lblVersion.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            lblVersion.AutoSize = true;
+            lblVersion.Location = new Point(722, 451);
+            lblVersion.Name = "lblVersion";
+            lblVersion.Size = new Size(37, 18);
+            lblVersion.TabIndex = 4;
+            // 
             // Main
             // 
             AutoScaleDimensions = new SizeF(8F, 18F);
@@ -321,6 +334,7 @@ namespace SysBot.Pokemon.WinForms
             BackColor = SystemColors.Desktop;
             CancelButton = B_Stop;
             ClientSize = new Size(776, 483);
+            Controls.Add(lblVersion);
             Controls.Add(ButtonPanel);
             Controls.Add(TC_Main);
             Font = new Font("Calibri", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
@@ -339,6 +353,7 @@ namespace SysBot.Pokemon.WinForms
             Tab_Logs.ResumeLayout(false);
             ButtonPanel.ResumeLayout(false);
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
