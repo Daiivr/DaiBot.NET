@@ -32,6 +32,33 @@ public sealed partial class Main : Form
         Load += async (sender, e) => await InitializeAsync();
     }
 
+    private async Task CheckForUpdatesPeriodically()
+    {
+        while (true)
+        {
+            var (updateAvailable, updateRequired, newVersion) = await UpdateChecker.CheckForUpdatesAsync();
+
+            if (updateAvailable)
+            {
+                lblUpdateStatus.Invoke((Action)(() =>
+                {
+                    lblUpdateStatus.Text = "¡Actualización disponible!";
+                    lblUpdateStatus.ForeColor = Color.Red;
+                    lblUpdateStatus.Visible = true;
+                }));
+            }
+            else
+            {
+                lblUpdateStatus.Invoke((Action)(() =>
+                {
+                    lblUpdateStatus.Visible = false;
+                }));
+            }
+
+            await Task.Delay(TimeSpan.FromHours(5));
+        }
+    }
+
     private async Task InitializeAsync()
     {
         if (IsUpdating)
@@ -40,7 +67,19 @@ public sealed partial class Main : Form
 
         // Update checker
         UpdateChecker updateChecker = new UpdateChecker();
-        await UpdateChecker.CheckForUpdatesAsync();
+        var (updateAvailable, updateRequired, newVersion) = await UpdateChecker.CheckForUpdatesAsync(true);
+
+        // Check for updates and set the label text
+        if (updateAvailable)
+        {
+            lblUpdateStatus.Text = "¡Actualización disponible!";
+            lblUpdateStatus.ForeColor = Color.Red;
+            lblUpdateStatus.Visible = true;
+        }
+        else
+        {
+            lblUpdateStatus.Visible = false;
+        }
 
         if (File.Exists(Program.ConfigPath))
         {
@@ -74,6 +113,9 @@ public sealed partial class Main : Form
         InitUtil.InitializeStubs(Config.Mode);
         _isFormLoading = false;
         UpdateBackgroundImage(Config.Mode);
+
+        // Start the periodic update check
+        Task.Run(CheckForUpdatesPeriodically);
     }
 
     private static IPokeBotRunner GetRunner(ProgramConfig cfg) => cfg.Mode switch

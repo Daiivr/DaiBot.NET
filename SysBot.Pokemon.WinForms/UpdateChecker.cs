@@ -13,7 +13,7 @@ namespace SysBot.Pokemon.WinForms
         private const string RepositoryOwner = "Daiivr";
         private const string RepositoryName = "DaiBot.NET";
 
-        public static async Task<(bool UpdateAvailable, bool UpdateRequired, string NewVersion)> CheckForUpdatesAsync()
+        public static async Task<(bool UpdateAvailable, bool UpdateRequired, string NewVersion)> CheckForUpdatesAsync(bool showUpdateForm = false)
         {
             ReleaseInfo latestRelease = await FetchLatestReleaseAsync();
 
@@ -21,7 +21,7 @@ namespace SysBot.Pokemon.WinForms
             bool updateRequired = latestRelease?.Prerelease == false && IsUpdateRequired(latestRelease.Body);
             string? newVersion = latestRelease?.TagName;
 
-            if (updateAvailable)
+            if (updateAvailable && showUpdateForm)
             {
                 UpdateForm updateForm = new(updateRequired, newVersion);
                 updateForm.ShowDialog();
@@ -29,6 +29,7 @@ namespace SysBot.Pokemon.WinForms
 
             return (updateAvailable, updateRequired, newVersion);
         }
+
 
         public static async Task<string> FetchChangelogAsync()
         {

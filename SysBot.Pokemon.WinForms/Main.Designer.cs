@@ -13,6 +13,7 @@ namespace SysBot.Pokemon.WinForms
 
         // Add the label declaration here
         private System.Windows.Forms.Label lblVersion;
+        private System.Windows.Forms.Label lblUpdateStatus;
 
         /// <summary>
         ///  Clean up any resources being used.
@@ -55,6 +56,7 @@ namespace SysBot.Pokemon.WinForms
             ButtonPanel = new Panel();
             updater = new Button();
             lblVersion = new Label();
+            lblUpdateStatus = new Label();
             TC_Main.SuspendLayout();
             Tab_Bots.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)NUD_Port).BeginInit();
@@ -322,10 +324,21 @@ namespace SysBot.Pokemon.WinForms
             // 
             lblVersion.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             lblVersion.AutoSize = true;
-            lblVersion.Location = new Point(722, 451);
+            lblVersion.Location = new Point(720, 431);
             lblVersion.Name = "lblVersion";
-            lblVersion.Size = new Size(37, 18);
+            lblVersion.Size = new Size(44, 18);
             lblVersion.TabIndex = 4;
+            // 
+            // lblUpdateStatus
+            // 
+            lblUpdateStatus.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            lblUpdateStatus.AutoSize = true;
+            lblUpdateStatus.Location = new Point(595, 453);
+            lblUpdateStatus.Name = "lblUpdateStatus";
+            lblUpdateStatus.Size = new Size(169, 18);
+            lblUpdateStatus.TabIndex = 5;
+            lblUpdateStatus.Text = "";
+            lblUpdateStatus.Visible = false;
             // 
             // Main
             // 
@@ -334,6 +347,7 @@ namespace SysBot.Pokemon.WinForms
             BackColor = SystemColors.Desktop;
             CancelButton = B_Stop;
             ClientSize = new Size(776, 483);
+            Controls.Add(lblUpdateStatus);
             Controls.Add(lblVersion);
             Controls.Add(ButtonPanel);
             Controls.Add(TC_Main);
