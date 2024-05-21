@@ -9,4 +9,5 @@ public enum PokeTradeType
     Clone,
     FixOT,
     Dump,
+    Item,
 }

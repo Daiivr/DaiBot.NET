@@ -1,4 +1,5 @@
 using SysBot.Pokemon.WinForms.Properties;
+using System.Data;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -324,18 +325,20 @@ namespace SysBot.Pokemon.WinForms
             // 
             lblVersion.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             lblVersion.AutoSize = true;
-            lblVersion.Location = new Point(720, 431);
+            lblVersion.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblVersion.Location = new Point(670, 431);
             lblVersion.Name = "lblVersion";
-            lblVersion.Size = new Size(44, 18);
+            lblVersion.Size = new Size(41, 15);
             lblVersion.TabIndex = 4;
             // 
             // lblUpdateStatus
             // 
             lblUpdateStatus.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             lblUpdateStatus.AutoSize = true;
-            lblUpdateStatus.Location = new Point(595, 453);
+            lblUpdateStatus.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblUpdateStatus.Location = new Point(615, 453);
             lblUpdateStatus.Name = "lblUpdateStatus";
-            lblUpdateStatus.Size = new Size(169, 18);
+            lblUpdateStatus.Size = new Size(147, 15);
             lblUpdateStatus.TabIndex = 5;
             lblUpdateStatus.Text = "";
             lblUpdateStatus.Visible = false;

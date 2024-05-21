@@ -99,7 +99,8 @@ public static class QueueHelper<T> where T : PKM, new()
 
         var embedData = DetailsExtractor<T>.ExtractPokemonDetails(
             pk, trader, isMysteryEgg, type == PokeRoutineType.Clone, type == PokeRoutineType.Dump,
-            type == PokeRoutineType.FixOT, type == PokeRoutineType.SeedCheck, isBatchTrade, batchTradeNumber, totalBatchTrades
+            type == PokeRoutineType.FixOT, type == PokeRoutineType.SeedCheck,
+            isBatchTrade, batchTradeNumber, totalBatchTrades, t
         );
 
         try
@@ -117,7 +118,15 @@ public static class QueueHelper<T> where T : PKM, new()
             if (!string.IsNullOrWhiteSpace(embedData.HeldItem))
             {
                 string heldItemName = embedData.HeldItem.ToLower().Replace(" ", "");
-                embedData.HeldItemUrl = $"https://serebii.net/itemdex/sprites/{heldItemName}.png";
+                // Verificar el tipo de intercambio para decidir la URL
+                if (t == PokeTradeType.Item)
+                {
+                    embedData.HeldItemUrl = $"https://serebii.net/itemdex/sprites/sv/{heldItemName}.png";
+                }
+                else
+                {
+                    embedData.HeldItemUrl = $"https://serebii.net/itemdex/sprites/{heldItemName}.png";
+                }
             }
 
             embedData.IsLocalFile = File.Exists(embedData.EmbedImageUrl);
@@ -137,12 +146,28 @@ public static class QueueHelper<T> where T : PKM, new()
 
             var embedBuilder = new EmbedBuilder()
                 .WithColor(embedColor)
-                .WithImageUrl(embedData.IsLocalFile ? $"attachment://{Path.GetFileName(embedData.EmbedImageUrl)}" : embedData.EmbedImageUrl)
                 .WithFooter(footerText)
                 .WithAuthor(new EmbedAuthorBuilder()
                 .WithName(embedData.AuthorName)
                     .WithIconUrl(trader.GetAvatarUrl() ?? trader.GetDefaultAvatarUrl())
                     .WithUrl(tradingUrl));
+
+            // Decidir la imagen principal y el thumbnail basado en el tipo de intercambio
+            if (t == PokeTradeType.Item && !string.IsNullOrEmpty(embedData.HeldItemUrl))
+            {
+                embedBuilder.WithImageUrl(embedData.HeldItemUrl);
+            }
+            else
+            {
+                if (embedData.IsLocalFile)
+                {
+                    embedBuilder.WithImageUrl($"attachment://{Path.GetFileName(embedData.EmbedImageUrl)}");
+                }
+                else
+                {
+                    embedBuilder.WithImageUrl(embedData.EmbedImageUrl);
+                }
+            }
 
             DetailsExtractor<T>.AddAdditionalText(embedBuilder);
 
@@ -161,7 +186,7 @@ public static class QueueHelper<T> where T : PKM, new()
                 embedBuilder.AddField("__Tu conjunto de showdown no era válido__", "Auto corregido para hacerlo legal.");
             }
 
-            DetailsExtractor<T>.AddThumbnails(embedBuilder, type == PokeRoutineType.Clone, type == PokeRoutineType.SeedCheck, type == PokeRoutineType.Dump, type == PokeRoutineType.FixOT, embedData.HeldItemUrl);
+            DetailsExtractor<T>.AddThumbnails(embedBuilder, type == PokeRoutineType.Clone, type == PokeRoutineType.SeedCheck, type == PokeRoutineType.Dump, type == PokeRoutineType.FixOT, embedData.HeldItemUrl, pk, t);
 
             if (!isHiddenTrade && SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.UseEmbeds)
             {
@@ -173,8 +198,9 @@ public static class QueueHelper<T> where T : PKM, new()
                     return new TradeQueueResult(false);
                 }
 
-                if (embedData.IsLocalFile)
+                if (t != PokeTradeType.Item && embedData.IsLocalFile)
                 {
+                    // Envía el archivo local solo si no es un intercambio de tipo Item
                     await context.Channel.SendFileAsync(embedData.EmbedImageUrl, embed: embed);
                     if (isBatchTrade)
                     {

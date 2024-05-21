@@ -16,7 +16,7 @@ public class DetailsExtractor<T> where T : PKM, new()
         return ivs.All(iv => iv == 31);
     }
 
-    public static EmbedData ExtractPokemonDetails(T pk, SocketUser user, bool isMysteryEgg, bool isCloneRequest, bool isDumpRequest, bool isFixOTRequest, bool isSpecialRequest, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades)
+    public static EmbedData ExtractPokemonDetails(T pk, SocketUser user, bool isMysteryEgg, bool isCloneRequest, bool isDumpRequest, bool isFixOTRequest, bool isSpecialRequest, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, PokeTradeType type)
     {
         bool todosMaximos = AreAllIVsMax(pk.IVs);
         string ivsDisplay = todosMaximos ? "Máximos" : $"{pk.IV_HP}/{pk.IV_ATK}/{pk.IV_DEF}/{pk.IV_SPA}/{pk.IV_SPD}/{pk.IV_SPE}";
@@ -84,7 +84,7 @@ public class DetailsExtractor<T> where T : PKM, new()
         embedData.TradeTitle = GetTradeTitle(isMysteryEgg, isCloneRequest, isDumpRequest, isFixOTRequest, isSpecialRequest, isBatchTrade, batchTradeNumber, embedData.PokemonDisplayName, pk.IsShiny);
 
         // Author name
-        embedData.AuthorName = GetAuthorName(user.Username, user.GlobalName, embedData.TradeTitle, isMysteryEgg, isFixOTRequest, isCloneRequest, isDumpRequest, isSpecialRequest, isBatchTrade, embedData.NickDisplay, pk.IsShiny);
+        embedData.AuthorName = GetAuthorName(user.Username, user.GlobalName, embedData.TradeTitle, isMysteryEgg, isFixOTRequest, isCloneRequest, isDumpRequest, isSpecialRequest, isBatchTrade, embedData.NickDisplay, pk.IsShiny, type);
 
         return embedData;
     }
@@ -254,10 +254,17 @@ public class DetailsExtractor<T> where T : PKM, new()
                "";
     }
 
-    private static string GetAuthorName(string username, string globalname, string tradeTitle, bool isMysteryEgg, bool isFixOTRequest, bool isCloneRequest, bool isDumpRequest, bool isSpecialRequest, bool isBatchTrade, string NickDisplay, bool isShiny)
+    private static string GetAuthorName(string username, string globalname, string tradeTitle, bool isMysteryEgg, bool isFixOTRequest, bool isCloneRequest, bool isDumpRequest, bool isSpecialRequest, bool isBatchTrade, string NickDisplay, bool isShiny, PokeTradeType tradeType)
     {
         string userName = string.IsNullOrEmpty(globalname) ? username : globalname;
         string isPkmShiny = isShiny ? " Shiny" : "";
+
+        // Agregar manejo para el caso de PokeTradeType es Item
+        if (tradeType == PokeTradeType.Item)
+        {
+            return $"Item solicitado por {userName}";
+        }
+
         if (isMysteryEgg || isFixOTRequest || isCloneRequest || isDumpRequest || isSpecialRequest || isBatchTrade)
         {
             return $"{tradeTitle} {username}";
@@ -317,7 +324,6 @@ public class DetailsExtractor<T> where T : PKM, new()
         leftSideContent = leftSideContent.TrimEnd('\n');
         string shinySymbol = GetShinySymbol(pk);
         embedBuilder.AddField($"**{shinySymbol}{embedData.SpeciesName}{(string.IsNullOrEmpty(embedData.FormName) ? "" : $"-{embedData.FormName}")} {embedData.SpecialSymbols}**", leftSideContent, inline: true);
-        embedBuilder.AddField("\u200B", "\u200B", inline: true); // Spacer
         embedBuilder.AddField("**Movimientos:**", embedData.MovesDisplay, inline: true);
     }
 
@@ -328,11 +334,17 @@ public class DetailsExtractor<T> where T : PKM, new()
         embedBuilder.AddField("\u200B", specialDescription, inline: false);
     }
 
-    public static void AddThumbnails(EmbedBuilder embedBuilder, bool isCloneRequest, bool isSpecialRequest, bool isDumpRequest, bool isFixOTRequest, string heldItemUrl)
+    public static void AddThumbnails(EmbedBuilder embedBuilder, bool isCloneRequest, bool isSpecialRequest, bool isDumpRequest, bool isFixOTRequest, string heldItemUrl, T pk, PokeTradeType tradeType)
     {
         if (isCloneRequest || isSpecialRequest || isDumpRequest || isFixOTRequest)
         {
             embedBuilder.WithThumbnailUrl("https://raw.githubusercontent.com/bdawg1989/sprites/main/profoak.png");
+        }
+        else if (tradeType == PokeTradeType.Item)
+        {
+            // Usa la imagen del Pokémon como thumbnail cuando el tipo de intercambio es 'Item'
+            var speciesImageUrl = AbstractTrade<T>.PokeImg(pk, false, true, null); // Asume que tienes acceso a 'pk' aquí
+            embedBuilder.WithThumbnailUrl(speciesImageUrl);
         }
         else if (!string.IsNullOrEmpty(heldItemUrl))
         {
