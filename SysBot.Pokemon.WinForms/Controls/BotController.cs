@@ -173,8 +173,6 @@ public partial class BotController : UserControl
                 WinFormsUtil.Alert($"{cmd} no es un comando que pueda enviarse al Bot.");
                 return;
         }
-        if (echo)
-            EchoUtil.Echo($"{bot.Bot.Connection.Name} ({bot.Bot.Config.InitialRoutine}) se le ha dado una orden para {cmd}.");
     }
 
     private BotSource<PokeBotState> GetBot()

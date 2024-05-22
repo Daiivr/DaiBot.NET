@@ -32,8 +32,26 @@ public class DiscordSettings
     [Category(Startup), Description("Prefijo de comando del bot.")]
     public string CommandPrefix { get; set; } = "$";
 
-    [Category(Startup), Description("Will send a status Embed for Online/Offline to all Whitelisted Channels.")]
+    [Category(Startup), Description("Enviará un estado embed para cuando el bot este online/offline a todos los canales incluidos en la lista blanca.")]
     public bool BotEmbedStatus { get; set; } = true;
+
+    [Category(Startup), Description("Configuraciones relacionadas con el estado del canal.")]
+    [TypeConverter(typeof(ExpandableObjectConverter))]
+    public ChannelStatusSettings ChannelStatusConfig { get; set; } = new ChannelStatusSettings();
+
+    public class ChannelStatusSettings
+    {
+        public override string ToString() => "Configuraciones relacionadas con el estado del canal.";
+
+        [Description("Añadirá emoji online/offline al nombre del canal en función de su estado actual. Solo canales en lista blanca."), DisplayName("Activar el estado del canal")]
+        public bool EnableChannelStatus { get; set; } = false;
+
+        [Description("Emoji personalizado para usar cuando el bot está online.")]
+        public string OnlineEmoji { get; set; } = "✅";
+
+        [Description("Emoji personalizado para usar cuando el bot está offline.")]
+        public string OfflineEmoji { get; set; } = "❌";
+    }
 
     [Category(Startup), Description("Lista de módulos que no se cargarán cuando se inicie el bot (separados por comas).")]
     public string ModuleBlacklist { get; set; } = string.Empty;

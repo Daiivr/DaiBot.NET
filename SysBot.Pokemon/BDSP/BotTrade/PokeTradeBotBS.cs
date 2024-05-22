@@ -4,7 +4,6 @@ using SysBot.Base;
 using SysBot.Pokemon.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
@@ -16,10 +15,21 @@ using static SysBot.Pokemon.BasePokeDataOffsetsBS;
 namespace SysBot.Pokemon;
 
 // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
-public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRoutineExecutor8BS(Config), ICountBot
+public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRoutineExecutor8BS(Config), ICountBot, ITradeBot
 {
     private readonly TradeSettings TradeSettings = Hub.Config.Trade;
     private readonly TradeAbuseSettings AbuseSettings = Hub.Config.TradeAbuse;
+    public event EventHandler<Exception>? ConnectionError;
+    public event EventHandler? ConnectionSuccess;
+
+    private void OnConnectionError(Exception ex)
+    {
+        ConnectionError?.Invoke(this, ex);
+    }
+    private void OnConnectionSuccess()
+    {
+        ConnectionSuccess?.Invoke(this, EventArgs.Empty);
+    }
 
     public ICountSettings Counts => TradeSettings;
 
@@ -61,13 +71,14 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
 
             await RestartGameIfCantLeaveUnionRoom(token).ConfigureAwait(false);
             await InitializeSessionOffsets(token).ConfigureAwait(false);
-
+            OnConnectionSuccess();
             Log($"Starting main {nameof(PokeTradeBotBS)} loop.");
             await InnerLoop(sav, token).ConfigureAwait(false);
         }
         catch (Exception e)
         {
-            Log(e.Message);
+            OnConnectionError(e);
+            throw;
         }
 
         Log($"Ending {nameof(PokeTradeBotBS)} loop.");

@@ -11,7 +11,7 @@ public class TradeCodeStorage
 
     public class TradeCodeDetails
     {
-        public int Code { get; set; }
+        public string Code { get; set; }
         public string OT { get; set; }
         public int TID { get; set; }
         public int TradeCount { get; set; }
@@ -34,43 +34,46 @@ public class TradeCodeStorage
 
         if (_tradeCodeDetails.TryGetValue(trainerID, out var details))
         {
+            int code = int.Parse(details.Code); // Convierte de string a int
             details.TradeCount++;
             SaveToFile();
-            return details.Code;
+            return code;
         }
-
-        var code = GenerateRandomTradeCode();
-        _tradeCodeDetails[trainerID] = new TradeCodeDetails { Code = code, TradeCount = 1 };
-        SaveToFile();
-        return code;
+        else
+        {
+            var code = GenerateRandomTradeCode();
+            _tradeCodeDetails[trainerID] = new TradeCodeDetails { Code = code.ToString("D8"), TradeCount = 1 };
+            SaveToFile();
+            return code;
+        }
     }
 
     public bool SetTradeCode(ulong trainerID, int tradeCode)
     {
-        // Check if the user already has a trade code
+        // Convierte el entero a string aquí
+        string tradeCodeStr = tradeCode.ToString("D8"); // Formatea como un número de 8 dígitos
+
         if (_tradeCodeDetails.ContainsKey(trainerID))
         {
-            // Do not overwrite existing trade code
             return false;
         }
 
-        // Add the new trade code for the user
-        _tradeCodeDetails[trainerID] = new TradeCodeDetails { Code = tradeCode, TradeCount = 1 };
+        _tradeCodeDetails[trainerID] = new TradeCodeDetails { Code = tradeCodeStr, TradeCount = 1 };
         SaveToFile();
         return true;
     }
 
     public bool UpdateTradeCode(ulong trainerID, int newTradeCode)
     {
-        // Check if the user has a trade code to update
         if (!_tradeCodeDetails.ContainsKey(trainerID))
         {
-            // No existing trade code to update
             return false;
         }
 
-        // Update the existing trade code
-        _tradeCodeDetails[trainerID].Code = newTradeCode;
+        // Convierte el entero a string aquí también
+        string newTradeCodeStr = newTradeCode.ToString("D8"); // Asegura que tenga 8 dígitos
+
+        _tradeCodeDetails[trainerID].Code = newTradeCodeStr;
         SaveToFile();
         return true;
     }

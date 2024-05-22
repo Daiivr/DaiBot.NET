@@ -1,6 +1,5 @@
 using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 using PKHeX.Core;
 using SysBot.Base;
 using System;
@@ -135,45 +134,57 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("addTradeCode")]
     [Alias("atc")]
     [Summary("Almacena un código comercial para el usuario.")]
-    public async Task AddTradeCodeAsync([Summary("The trade code to store.")] int tradeCode)
+    public async Task AddTradeCodeAsync([Summary("El código de comercio para almacenar.")] int tradeCode)
     {
-        var user = Context.User; // Obtiene el objeto IUser que representa al usuario.
+        var user = Context.User as IUser;
         var userID = user.Id;
 
-        // Validate the trade code range before adding
         if (tradeCode < 0 || tradeCode > 99999999)
         {
             await ReplyAsync($"<a:warning:1206483664939126795> {user.Mention}, lo siento, el código de comercio debe estar entre **00000000** y **99999999**.").ConfigureAwait(false);
         }
         else
         {
-            string msg = QueueModule<T>.AddTradeCode(userID, tradeCode, user.Mention);
-
-            // Sends the message to the user's DM.
-            await user.SendMessageAsync(msg).ConfigureAwait(false);
+            var formattedCode = FormatTradeCode(tradeCode); // Formatea el código con espacio.
+            await AddTradeCode(userID, tradeCode, user, formattedCode); // Asegúrate de actualizar este método para usar el código formateado.
         }
 
-        // Attempt to delete the command message if possible.
         if (Context.Message is IUserMessage userMessage)
         {
             await userMessage.DeleteAsync().ConfigureAwait(false);
         }
     }
 
-    private static string AddTradeCode(ulong userID, int tradeCode, string userMention)
+    // Este método debe ser actualizado para aceptar y manejar 'formattedCode'
+    private static async Task AddTradeCode(ulong userID, int tradeCode, IUser user, string formattedCode)
     {
         var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
         var tradeCodeStorage = new TradeCodeStorage();
         bool success = tradeCodeStorage.SetTradeCode(userID, tradeCode);
 
+        var embedBuilder = new EmbedBuilder();
+
         if (success)
-            return $"<a:yes:1206485105674166292> {userMention}, tu código de comercio **{tradeCode}** ha sido almacenado correctamente.";
+        {
+            embedBuilder.WithColor(Color.Green)
+                        .WithTitle("Código de Comercio Almacenado")
+                        .WithDescription($"<a:yes:1206485105674166292> {user.Mention}, tu código de comercio ha sido almacenado correctamente.\n\n__**Código:**__\n# {formattedCode}")
+                        .WithThumbnailUrl("https://i.imgur.com/Zs9hmNq.gif");
+        }
         else
         {
-            // Obtén el código de comercio existente.
             int existingTradeCode = tradeCodeStorage.GetTradeCode(userID);
-            return $"<a:warning:1206483664939126795> {userMention}, ya tienes un codigo de tradeo establecido y es **{existingTradeCode}**,\nSi deseas cambiarlo usa `{botPrefix}utc` seguido del nuevo código.";
+            string formattedExistingCode = FormatTradeCode(existingTradeCode);
+            embedBuilder.WithColor(Color.Red)
+                        .WithTitle("Código de Comercio Existente")
+                        .WithDescription($"<a:Error:1223766391958671454> {user.Mention}, ya tienes un código de comercio establecido.")
+                        .AddField("__**Código Existente**__", $"Tu código actual es:\n __**{formattedExistingCode}**__", true)
+                        .AddField("\u200B", "\u200B", true)
+                        .AddField("__**Solución**__", $"Si deseas cambiarlo, usa `{botPrefix}utc` seguido del nuevo código.", true)
+                        .WithThumbnailUrl("https://i.imgur.com/haOeRR9.gif");
         }
+
+        await user.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
     }
 
     [Command("updateTradeCode")]
@@ -181,7 +192,7 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Summary("Actualiza el código comercial almacenado para el usuario.")]
     public async Task UpdateTradeCodeAsync([Summary("The new trade code to update.")] int newTradeCode)
     {
-        var user = Context.User; // Obtiene el objeto IUser que representa al usuario.
+        var user = Context.User;
         var userID = user.Id;
         // Validate the trade code range before updating
         if (newTradeCode < 0 || newTradeCode > 99999999)
@@ -190,10 +201,8 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
         else
         {
-            string msg = QueueModule<T>.UpdateTradeCode(userID, newTradeCode, user.Mention);
-
-            // Sends the message to the user's DM.
-            await user.SendMessageAsync(msg).ConfigureAwait(false);
+            var formattedCode = FormatTradeCode(newTradeCode); // Formatea el nuevo código con espacio.
+            await UpdateTradeCode(userID, newTradeCode, user, formattedCode); // Pasa el código formateado a la función de actualización.
         }
 
         // Attempt to delete the command message if possible.
@@ -203,15 +212,33 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
     }
 
-    private static string UpdateTradeCode(ulong userID, int newTradeCode, string userMention)
+    private static async Task UpdateTradeCode(ulong userID, int newTradeCode, IUser user, string formattedCode)
     {
+        var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
         var tradeCodeStorage = new TradeCodeStorage();
         bool success = tradeCodeStorage.UpdateTradeCode(userID, newTradeCode);
 
+        var embedBuilder = new EmbedBuilder();
+
         if (success)
-            return $"<a:yes:1206485105674166292> {userMention}, tu código de tradeo se ha actualizado correctamente a **{newTradeCode}**.";
+        {
+            embedBuilder.WithColor(Color.Green)
+                        .WithTitle("Código de Comercio Actualizado")
+                        .WithDescription($"<a:yes:1206485105674166292> {user.Mention}, tu código de comercio se ha actualizado correctamente.\n\n__**Nuevo Código:**__\n# **{formattedCode}**")
+                        .WithThumbnailUrl("https://i.imgur.com/Zs9hmNq.gif");
+        }
         else
-            return $"<a:warning:1206483664939126795> {userMention}, hubo un problema al actualizar tu código de comercio. Por favor, intenta de nuevo.";
+        {
+            embedBuilder.WithColor(Color.Red)
+                        .WithTitle("Error al Actualizar Código de Comercio")
+                        .WithDescription($"<a:Error:1223766391958671454> {user.Mention}, hubo un problema al actualizar tu código de comercio.")
+                        .AddField("__**Razón**__", $"Al parecer, aún no has establecido un **código** de tradeo permanente.", true)
+                        .AddField("\u200B", "\u200B", true)
+                        .AddField("__**Solución**__", $"Si deseas establecer un **código**, usa `{botPrefix}atc` seguido del código.", true)
+                        .WithThumbnailUrl("https://i.imgur.com/haOeRR9.gif");
+        }
+
+        await user.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
     }
 
     [Command("deleteTradeCode")]
@@ -219,21 +246,50 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Summary("Elimina el código comercial almacenado para el usuario.")]
     public async Task DeleteTradeCodeAsync()
     {
-        var usermention = Context.User.Mention;
-        var userID = Context.User.Id;
-        string msg = QueueModule<T>.DeleteTradeCode(userID, usermention);
-        await ReplyAsync(msg).ConfigureAwait(false);
+        var user = Context.User; // Obtiene el objeto IUser que representa al usuario.
+        var userID = user.Id;
+        await DeleteTradeCode(userID, user); // Invoca directamente el método que maneja la eliminación del código.
+
+        // Intenta eliminar el mensaje del comando si es posible.
+        if (Context.Message is IUserMessage userMessage)
+        {
+            await userMessage.DeleteAsync().ConfigureAwait(false);
+        }
     }
 
-    private static string DeleteTradeCode(ulong userID, string userMention)
+    private static async Task DeleteTradeCode(ulong userID, IUser user)
     {
+        var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
         var tradeCodeStorage = new TradeCodeStorage();
         bool success = tradeCodeStorage.DeleteTradeCode(userID);
 
+        var embedBuilder = new EmbedBuilder();
+
         if (success)
-            return $"<a:yes:1206485105674166292> {userMention}, Su código de tradeo se ha eliminado correctamente.";
+        {
+            embedBuilder.WithColor(Color.Green)
+                        .WithTitle("Código de Comercio Eliminado")
+                        .WithDescription($"<a:yes:1206485105674166292> {user.Mention}, tu código de comercio se ha eliminado correctamente.")
+                        .WithThumbnailUrl("https://i.imgur.com/Zs9hmNq.gif");
+        }
         else
-            return $"<a:warning:1206483664939126795> {userMention} No se encontró ningún código de tradeo para su ID de usuario.";
+        {
+            embedBuilder.WithColor(Color.Red)
+                        .WithTitle("Error al Eliminar Código de Comercio")
+                        .WithDescription($"<a:Error:1223766391958671454> {user.Mention}, no se pudo eliminar tu código de comercio.")
+                        .AddField("__**Razón**__", $"Es posible que no tengas un **código** de comercio establecido.", true)
+                        .AddField("\u200B", "\u200B", true)
+                        .AddField("__**Solución**__", $"Para establecer un **código**, usa `{botPrefix}atc` seguido del código que deseas.", true)
+                        .WithThumbnailUrl("https://i.imgur.com/haOeRR9.gif");
+        }
+
+        await user.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
+    }
+
+    public static string FormatTradeCode(int code)
+    {
+        string codeStr = code.ToString("D8"); // Asegura que el código siempre tenga 8 dígitos.
+        return codeStr.Substring(0, 4) + " " + codeStr.Substring(4, 4); // Inserta un espacio después de los primeros 4 dígitos.
     }
 
     private static string ClearTrade(ulong userID)
