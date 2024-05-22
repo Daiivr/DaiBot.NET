@@ -30,6 +30,24 @@ public sealed partial class Main : Form
         InitializeComponent();
         comboBox1.SelectedIndexChanged += new EventHandler(ComboBox1_SelectedIndexChanged);
         Load += async (sender, e) => await InitializeAsync();
+        TC_Main.SelectedIndexChanged += TC_Main_SelectedIndexChanged;
+    }
+
+    private void TC_Main_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        // Verifica si la pestaña seleccionada es "Tab_Bots" o "Tab_Logs"
+        if (TC_Main.SelectedTab == Tab_Bots || TC_Main.SelectedTab == Tab_Logs)
+        {
+            // Muestra los labels solo si la pestaña activa es "Bots" o "Registros"
+            lblVersion.Visible = true;
+            lblUpdateStatus.Visible = true;
+        }
+        else
+        {
+            // Oculta los labels si la pestaña activa no es "Bots" o "Registros"
+            lblVersion.Visible = false;
+            lblUpdateStatus.Visible = false;
+        }
     }
 
     private async Task CheckForUpdatesPeriodically()
