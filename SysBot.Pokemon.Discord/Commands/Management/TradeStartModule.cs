@@ -90,23 +90,39 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                 ballName = ballName == "pokéball" ? "pokeball" : (ballName.Contains("(la)") ? "la" + ballName : ballName);
                 ballImgUrl = $"https://raw.githubusercontent.com/bdawg1989/sprites/main/AltBallImg/28x28/{ballName}.png";
             }
-            string tradeTitle = detail.IsMysteryEgg ? "✨ Huevo misterioso Shiny ✨" : detail.Type switch
-            {
-                PokeTradeType.Clone => "Solicitud de Clonació",
-                PokeTradeType.Dump => "Solicitud de Dump",
-                PokeTradeType.FixOT => "Solicitud de FixOT",
-                PokeTradeType.Seed => "Solicitud Especial",
-                _ => speciesName
-            };
+            var embedData = DetailsExtractor<T>.ExtractPokemonDetails(detail.TradeData, user, detail.IsMysteryEgg, false, false, false, false, false, 0, 0, detail.Type);
 
-            string embedImageUrl = detail.IsMysteryEgg ? "https://i.imgur.com/RAj0syZ.png" : detail.Type switch
+            // Configura el título y la imagen de acuerdo al tipo de comercio
+            string tradeTitle;
+            string embedImageUrl;
+
+            if (detail.Type == PokeTradeType.Item)
             {
-                PokeTradeType.Clone => "https://i.imgur.com/aSTCjUn.png",
-                PokeTradeType.Dump => "https://i.imgur.com/9wfEHwZ.png",
-                PokeTradeType.FixOT => "https://i.imgur.com/gRZGFIi.png",
-                PokeTradeType.Seed => "https://i.imgur.com/EI1BHr5.png",
-                _ => detail.TradeData != null ? AbstractTrade<T>.PokeImg(detail.TradeData, false, true) : ""
-            };
+                tradeTitle = embedData.HeldItem; // Nombre del item como título
+                string heldItemName = embedData.HeldItem.ToLower().Replace(" ", "");
+                embedImageUrl = $"https://serebii.net/itemdex/sprites/sv/{heldItemName}.png";
+                ballImgUrl = AbstractTrade<T>.PokeImg(detail.TradeData, false, true);
+            }
+            else
+            {
+                // Comportamiento existente para otros tipos de comercio
+                tradeTitle = detail.IsMysteryEgg ? "✨ Huevo misterioso Shiny ✨" : detail.Type switch
+                {
+                    PokeTradeType.Clone => "Solicitud de Clonación",
+                    PokeTradeType.Dump => "Solicitud de Dump",
+                    PokeTradeType.FixOT => "Solicitud de FixOT",
+                    PokeTradeType.Seed => "Solicitud Especial",
+                    _ => GameInfo.Strings.Species[detail.TradeData.Species]
+                };
+                embedImageUrl = detail.IsMysteryEgg ? "https://i.imgur.com/RAj0syZ.png" : detail.Type switch
+                {
+                    PokeTradeType.Clone => "https://i.imgur.com/aSTCjUn.png",
+                    PokeTradeType.Dump => "https://i.imgur.com/9wfEHwZ.png",
+                    PokeTradeType.FixOT => "https://i.imgur.com/gRZGFIi.png",
+                    PokeTradeType.Seed => "https://i.imgur.com/EI1BHr5.png",
+                    _ => detail.TradeData != null ? AbstractTrade<T>.PokeImg(detail.TradeData, false, true) : ""
+                };
+            }
 
             var (r, g, b) = await GetDominantColorAsync(embedImageUrl);
 

@@ -60,7 +60,7 @@ public static class EmbedHelper
     public static async Task SendNotificationEmbedAsync(IUser user, string message)
     {
         var embed = new EmbedBuilder()
-            .WithTitle("Información de Entrenador")
+            .WithTitle("Aviso")
             .WithDescription(message)
             .WithTimestamp(DateTimeOffset.Now)
             .WithThumbnailUrl("https://raw.githubusercontent.com/bdawg1989/sprites/main/exclamation.gif")
