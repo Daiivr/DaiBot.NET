@@ -631,7 +631,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     public Task HideTradeAsyncAttach([Summary("Trade Code")] int code, [Summary("Ignore AutoOT")] bool ignoreAutoOT = false)
     {
         var sig = Context.User.GetFavor();
-        return HideTradeAsyncAttach(code, sig, Context.User, ignoreAutoOT);
+        return HideTradeAsyncAttach(code, sig, Context.User, ignoreAutoOT: ignoreAutoOT);
     }
 
     [Command("hidetrade")]
@@ -643,7 +643,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         var code = Info.GetRandomTradeCode(userID);
         var sig = Context.User.GetFavor();
-        await HideTradeAsyncAttach(code, sig, Context.User, ignoreAutoOT).ConfigureAwait(false);
+        await HideTradeAsyncAttach(code, sig, Context.User, ignoreAutoOT: ignoreAutoOT).ConfigureAwait(false);
     }
 
     [Command("trade")]
@@ -840,7 +840,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     public Task TradeAsyncAttach([Summary("Trade Code")] int code, [Summary("Ignore AutoOT")] bool ignoreAutoOT = false)
     {
         var sig = Context.User.GetFavor();
-        return TradeAsyncAttach(code, sig, Context.User, ignoreAutoOT);
+        return TradeAsyncAttach(code, sig, Context.User, ignoreAutoOT: ignoreAutoOT);
     }
 
     [Command("trade")]
@@ -852,7 +852,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         var code = Info.GetRandomTradeCode(userID);
         var sig = Context.User.GetFavor();
-        await TradeAsyncAttach(code, sig, Context.User, ignoreAutoOT);
+        await TradeAsyncAttach(code, sig, Context.User, ignoreAutoOT: ignoreAutoOT);
     }
 
     private static int ExtractFormArgument(string content)
@@ -1797,7 +1797,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             if (la.Valid) pk = clone;
         }
 
-        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryEgg, lgcode, ignoreAutoOT, setEdited: setEdited).ConfigureAwait(false);
+        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryEgg, lgcode, ignoreAutoOT: ignoreAutoOT, setEdited: setEdited).ConfigureAwait(false);
     }
 
     public static List<Pictocodes> GenerateRandomPictocodes(int count)
