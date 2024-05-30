@@ -17,7 +17,7 @@ public sealed class RequireSudoAttribute : PreconditionAttribute
 
         // Check if this user is a Guild User, which is the only context where roles exist
         if (context.User is not SocketGuildUser gUser)
-            return Task.FromResult(PreconditionResult.FromError($"<a:warning:1206483664939126795> {context.User.Mention} este comando solo puede ser usado dentro de un servidor y no en mensajes directos."));
+            return Task.FromResult(PreconditionResult.FromError($"<a:warning:1206483664939126795> Lo siento {context.User.Mention}, este comando solo puede ser usado dentro de un servidor y no en mensajes directos."));
 
         if (mgr.CanUseSudo(gUser.Roles.Select(z => z.Name)))
             return Task.FromResult(PreconditionResult.FromSuccess());

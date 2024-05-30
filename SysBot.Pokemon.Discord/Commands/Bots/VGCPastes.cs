@@ -104,6 +104,7 @@ namespace SysBot.Pokemon.Discord
         [Command("randomteam")]
         [Alias("rt", "RandomTeam", "Rt")]
         [Summary("Genera un equipo VGC aleatorio a partir de la hoja de cálculo de Google especificada y lo envía como archivos a través de DM.")]
+        [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
         public async Task GenerateSpreadsheetTeamAsync(string pokemonName = null)
         {
             if (!SysCord<T>.Runner.Config.Trade.VGCPastesConfiguration.AllowRequests)

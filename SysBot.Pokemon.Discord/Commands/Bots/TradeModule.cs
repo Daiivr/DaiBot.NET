@@ -136,7 +136,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("dittoTrade")]
     [Alias("dt", "ditto")]
     [Summary("Hace que el bot te intercambie un Ditto con un idioma y una extensión de estadísticas solicitados.")]
-    [RequireGuildContext]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task DittoTrade([Summary("Una combinación de \"ATK/SPA/SPE\" o \"6IV\"")] string keyword, [Summary("Language")] string language, [Summary("Nature")] string nature)
     {
         // Check if the user is already in the queue
@@ -176,7 +176,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("dittoTrade")]
     [Alias("dt", "ditto")]
     [Summary("Hace que el bot te intercambie un Ditto con un idioma y una extensión de estadísticas solicitados.")]
-    [RequireGuildContext]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task DittoTrade([Summary("Trade Code")] int code, [Summary("Una combinación de \"ATK/SPA/SPE\" or \"6IV\"")] string keyword, [Summary("Language")] string language, [Summary("Nature")] string nature)
     {
         // Check if the user is already in the queue
@@ -246,7 +246,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("itemTrade")]
     [Alias("it", "item")]
     [Summary("Hace que el bot te intercambie un Pokémon que tenga el objeto solicitado, o un ditto si se proporciona la palabra clave de distribución de estadísticas.")]
-    [RequireGuildContext]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task ItemTrade([Remainder] string item)
     {
         // Check if the user is already in the queue
@@ -286,7 +286,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("itemTrade")]
     [Alias("it", "item")]
     [Summary("Hace que el robot te intercambie un Pokémon que tenga el objeto solicitado.")]
-    [RequireGuildContext]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task ItemTrade([Summary("Trade Code")] int code, [Remainder] string item)
     {
         // Check if the user is already in the queue
@@ -367,7 +367,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("egg")]
     [Alias("Egg")]
     [Summary("Intercambia un huevo generado a partir del nombre de Pokémon proporcionado.")]
-    [RequireGuildContext]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task TradeEgg([Remainder] string egg)
     {
         var userID = Context.User.Id;
@@ -379,7 +379,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Alias("Egg")]
     [Summary("Intercambia un huevo generado a partir del nombre de Pokémon proporcionado.")]
     [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-    [RequireGuildContext]
     public async Task TradeEggAsync([Summary("Trade Code")] int code, [Summary("Showdown Set")][Remainder] string content)
     {
         // Check if the user is already in the queue
@@ -1223,7 +1222,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("listevents")]
     [Alias("le")]
     [Summary("Enumera los archivos de eventos disponibles, filtrados por una letra o subcadena específica, y envía la lista a través de DM.")]
-    [RequireGuildContext]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task ListEventsAsync([Remainder] string args = "")
     {
         const int itemsPerPage = 20; // Number of items per page
@@ -1406,7 +1405,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     [Command("battlereadylist")]
     [Alias("brl")]
     [Summary("Enumera los archivos disponibles listos para la batalla, filtrados por una letra o subcadena específica, y envía la lista a través de DM.")]
-    [RequireGuildContext]
+    [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
     public async Task BattleReadyListAsync([Remainder] string args = "")
     {
         const int itemsPerPage = 20; // Number of items per page
