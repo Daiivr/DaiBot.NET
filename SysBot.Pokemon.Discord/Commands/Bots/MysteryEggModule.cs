@@ -18,6 +18,7 @@ namespace SysBot.Pokemon.Discord
         [Command("mysteryegg")]
         [Alias("me")]
         [Summary("Trades a random mystery egg with perfect stats and shiny appearance.")]
+        [RequireGuildContext]
         public async Task TradeMysteryEggAsync()
         {
             var userID = Context.User.Id;
@@ -60,6 +61,7 @@ namespace SysBot.Pokemon.Discord
         [Alias("me")]
         [Summary("Trades a random mystery egg with perfect stats and shiny appearance.")]
         [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+        [RequireGuildContext]
         public async Task TradeMysteryEggAsync([Summary("Trade Code")] int code)
         {
             var userID = Context.User.Id;

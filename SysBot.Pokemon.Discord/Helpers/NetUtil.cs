@@ -1,4 +1,5 @@
 using Discord;
+using Discord.Commands;
 using PKHeX.Core;
 using System;
 using System.Net.Http;
@@ -67,4 +68,17 @@ public sealed class Download<T> where T : class
     public T? Data;
     public string? SanitizedFileName;
     public string? ErrorMessage;
+}
+
+public class RequireGuildContextAttribute : PreconditionAttribute
+{
+    public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
+    {
+        // Comprobar si el comando se está ejecutando en un servidor
+        if (context.Channel is IGuildChannel)
+            return Task.FromResult(PreconditionResult.FromSuccess());
+
+        // Si el comando se usa en un contexto que no es de servidor, envía un mensaje de error
+        return Task.FromResult(PreconditionResult.FromError($"<a:warning:1206483664939126795> {context.User.Mention} este comando solo puede ser usado dentro de un servidor y no en mensajes directos."));
+    }
 }
