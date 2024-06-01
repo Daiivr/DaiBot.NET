@@ -324,6 +324,7 @@ public class DetailsExtractor<T> where T : PKM, new()
         leftSideContent = leftSideContent.TrimEnd('\n');
         string shinySymbol = GetShinySymbol(pk);
         embedBuilder.AddField($"**{shinySymbol}{embedData.SpeciesName}{(string.IsNullOrEmpty(embedData.FormName) ? "" : $"-{embedData.FormName}")} {embedData.SpecialSymbols}**", leftSideContent, inline: true);
+        embedBuilder.AddField("\u200B", "\u200B", inline: true); // Spacer
         embedBuilder.AddField("**Movimientos:**", embedData.MovesDisplay, inline: true);
     }
 
