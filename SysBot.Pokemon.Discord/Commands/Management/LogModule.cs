@@ -40,7 +40,7 @@ public class LogModule : ModuleBase<SocketCommandContext>
         AddLogChannel(c, cid);
 
         // Add to discord global loggers (saves on program close)
-        SysCordSettings.Settings.LoggingChannels.AddIfNew(new[] { GetReference(Context.Channel) });
+        SysCordSettings.Settings.LoggingChannels.AddIfNew([GetReference(Context.Channel)]);
         await ReplyAsync("<a:yes:1206485105674166292> ¡Añadida salida de registro a este canal!").ConfigureAwait(false);
     }
 
