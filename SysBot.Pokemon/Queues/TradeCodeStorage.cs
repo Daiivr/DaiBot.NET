@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using System.IO;
+using PKHeX.Core;
 
 namespace SysBot.Pokemon;
 
@@ -12,8 +13,9 @@ public class TradeCodeStorage
     public class TradeCodeDetails
     {
         public string Code { get; set; }
-        public string OT { get; set; }
+        public string? OT { get; set; }
         public int TID { get; set; }
+        public int SID { get; set; }
         public int TradeCount { get; set; }
     }
 
@@ -137,7 +139,7 @@ public class TradeCodeStorage
         return null;
     }
 
-    public void UpdateTradeDetails(ulong trainerID, string ot, int tid)
+    public void UpdateTradeDetails(ulong trainerID, string ot, int tid, int sid)
     {
         LoadFromFile();
 
@@ -145,6 +147,7 @@ public class TradeCodeStorage
         {
             details.OT = ot;
             details.TID = tid;
+            details.SID = sid;
             SaveToFile();
         }
     }

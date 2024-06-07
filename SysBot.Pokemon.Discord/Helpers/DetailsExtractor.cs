@@ -293,6 +293,10 @@ public class DetailsExtractor<T> where T : PKM, new()
             }
             if (tradeDetails?.TID != null)
             {
+                userDetailsText += $" | SID: {tradeDetails?.SID}";
+            }
+            if (tradeDetails?.TID != null)
+            {
                 userDetailsText += $" | TID: {tradeDetails?.TID}";
             }
         }

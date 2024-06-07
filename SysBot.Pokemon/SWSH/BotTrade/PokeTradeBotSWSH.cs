@@ -333,6 +333,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
 
         var trainerName = await GetTradePartnerName(TradeMethod.LinkTrade, token).ConfigureAwait(false);
         var trainerTID = await GetTradePartnerTID7(TradeMethod.LinkTrade, token).ConfigureAwait(false);
+        var trainerSID = await GetTradePartnerSID7(TradeMethod.LinkTrade, token).ConfigureAwait(false);
         var trainerNID = await GetTradePartnerNID(token).ConfigureAwait(false);
         RecordUtil<PokeTradeBotSWSH>.Record($"Initiating\t{trainerNID:X16}\t{trainerName}\t{poke.Trainer.TrainerName}\t{poke.Trainer.ID}\t{poke.ID}\t{toSend.EncryptionConstant:X8}");
         Log($"Found Link Trade partner: {trainerName}-{trainerTID} (ID: {trainerNID})");
@@ -342,10 +343,11 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
 
         bool shouldUpdateOT = existingTradeDetails?.OT != trainerName;
         bool shouldUpdateTID = existingTradeDetails?.TID != int.Parse(trainerTID);
+        bool shouldUpdateSID = existingTradeDetails?.SID != int.Parse(trainerSID);
 
         if (shouldUpdateOT || shouldUpdateTID)
         {
-            tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, shouldUpdateOT ? trainerName : existingTradeDetails.OT, shouldUpdateTID ? int.Parse(trainerTID) : existingTradeDetails.TID);
+            tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, shouldUpdateOT ? trainerName : existingTradeDetails.OT, shouldUpdateTID ? int.Parse(trainerTID) : existingTradeDetails.TID, shouldUpdateSID ? int.Parse(trainerSID) : existingTradeDetails.SID);
         }
 
         var partnerCheck = CheckPartnerReputation(this, poke, trainerNID, trainerName, AbuseSettings, token);
@@ -373,7 +375,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
                 await Click(A, 0_500, token).ConfigureAwait(false);
         }
 
-        poke.SendNotification(this, $"Entrenador encontrado: **{trainerName}**.\n\n▼\n Aqui esta tu Informacion\n **TID**: __{trainerTID}__\n **ID**: __{trainerNID}__\n▲\n\n Esperando por un __Pokémon__...");
+        poke.SendNotification(this, $"Entrenador encontrado: **{trainerName}**.\n\n▼\n Aqui esta tu Informacion\n **TID**: __{trainerTID}__\n **SID**: __{trainerSID}__\n▲\n\n Esperando por un __Pokémon__...");
 
         if (poke.Type == PokeTradeType.Dump)
             return await ProcessDumpTradeAsync(poke, token).ConfigureAwait(false);
@@ -1005,6 +1007,16 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState Config) : Poke
         var tidsid = BitConverter.ToUInt32(data, 0);
         var tid7 = $"{tidsid % 1_000_000:000000}";
         return tid7;
+    }
+
+    private async Task<string> GetTradePartnerSID7(TradeMethod tradeMethod, CancellationToken token)
+    {
+        var ofs = GetTrainerTIDSIDOffset(tradeMethod);
+        var data = await Connection.ReadBytesAsync(ofs, 8, token).ConfigureAwait(false);
+
+        var tidsid = BitConverter.ToUInt32(data, 0);
+        var sid7 = $"{tidsid / 1_000_000:0000}";
+        return sid7;
     }
 
     public async Task<ulong> GetTradePartnerNID(CancellationToken token)
