@@ -92,35 +92,40 @@ namespace SysBot.Pokemon.Discord
                 await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
                 return;
             }
-
             try
             {
                 var gameVersion = GetGameVersion();
                 var speciesList = GetBreedableSpecies(gameVersion, "en");
-
-                var randomIndex = new Random().Next(speciesList.Count);
-                ushort speciesId = speciesList[randomIndex];
-                var speciesName = GameInfo.GetStrings("en").specieslist[speciesId];
-
-                var showdownSet = new ShowdownSet(speciesName);
-                var template = AutoLegalityWrapper.GetTemplate(showdownSet);
-
-                var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
-                var pkm = sav.GetLegal(template, out var result);
-
-                SetPerfectIVsAndShiny(pkm);
-
-                pkm = EntityConverter.ConvertToType(pkm, typeof(T), out _) ?? pkm;
-
-                if (pkm is not T pk)
+                int attempts = 0;
+                while (attempts < 5)
                 {
-                    await ReplyAsync($"<a:warning:1206483664939126795> Oops! {Context.User.Mention}, no pude crear el huevo misterioso, inténtelo de nuevo.").ConfigureAwait(false);
-                    return;
-                }
-                AbstractTrade<T>.EggTrade(pk, template);
+                    var randomIndex = new Random().Next(speciesList.Count);
+                    ushort speciesId = speciesList[randomIndex];
+                    var speciesName = GameInfo.GetStrings("en").specieslist[speciesId];
+                    var showdownSet = new ShowdownSet(speciesName);
+                    var template = AutoLegalityWrapper.GetTemplate(showdownSet);
+                    var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
+                    var pk = sav.GetLegal(template, out var result);
+                    if (pk != null)
+                    {
+                        pk = EntityConverter.ConvertToType(pk, typeof(T), out _) ?? pk;
+                        if (pk is T validPk)
+                        {
+                            var la = new LegalityAnalysis(validPk);
+                            if (la.Valid)
+                            {
+                                AbstractTrade<T>.EggTrade(validPk, template);
+                                SetHaX(validPk);
+                                var sig = Context.User.GetFavor();
+                                await AddTradeToQueueAsync(code, Context.User.Username, validPk, sig, Context.User, isMysteryEgg: true).ConfigureAwait(false);
 
-                var sig = Context.User.GetFavor();
-                await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isMysteryEgg: true).ConfigureAwait(false);
+                                return;
+                            }
+                        }
+                    }
+                    attempts++;
+                }
+                await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, no se pudo generar un huevo misterioso legal después de 5 intentos. Por favor, inténtelo de nuevo más tarde.").ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -135,11 +140,13 @@ namespace SysBot.Pokemon.Discord
             await message.DeleteAsync().ConfigureAwait(false);
         }
 
-        private static void SetPerfectIVsAndShiny(PKM pk)
+        private static void SetHaX(PKM pk)
         {
             pk.IVs = [31, 31, 31, 31, 31, 31];
             pk.SetShiny();
             pk.RefreshAbility(2);
+            pk.MaximizeFriendship();
+            pk.RefreshChecksum();
         }
 
         private static GameVersion GetGameVersion()
