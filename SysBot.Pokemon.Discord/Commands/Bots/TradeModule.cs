@@ -411,7 +411,14 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
             return;
         }
+        bool ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
+        bool useTradePartnerInfo = SysCord<T>.Runner.Config.Legality.UseTradePartnerInfo;
+        bool storeTradeCodes = SysCord<T>.Runner.Config.Trade.TradeConfiguration.StoreTradeCodes;
 
+        if (useTradePartnerInfo && storeTradeCodes)
+        {
+            content = TrainerInfoHelper.AddTrainerDetails(content, userID, ignoreAutoOT);
+        }
         content = ReusableActions.StripCodeBlock(content);
         var set = new ShowdownSet(content);
         var template = AutoLegalityWrapper.GetTemplate(set);
@@ -491,9 +498,15 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
             return;
         }
+        bool ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
+        bool useTradePartnerInfo = SysCord<T>.Runner.Config.Legality.UseTradePartnerInfo;
+        bool storeTradeCodes = SysCord<T>.Runner.Config.Trade.TradeConfiguration.StoreTradeCodes;
 
+        if (useTradePartnerInfo && storeTradeCodes)
+        {
+            content = TrainerInfoHelper.AddTrainerDetails(content, userID, ignoreAutoOT);
+        }
         content = ReusableActions.StripCodeBlock(content);
-        var ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
         var set = new ShowdownSet(content);
         var template = AutoLegalityWrapper.GetTemplate(set);
         int formArgument = ExtractFormArgument(content);
@@ -669,7 +682,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     public async Task TradeAsync([Summary("Trade Code")] int code, [Summary("Showdown Set")][Remainder] string content)
     {
         List<Pictocodes>? lgcode = null;
-
         // Check if the user is already in the queue
         var userID = Context.User.Id;
         if (Info.IsUserInQueue(userID))
@@ -700,8 +712,15 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
             return;
         }
+        bool ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
+        bool useTradePartnerInfo = SysCord<T>.Runner.Config.Legality.UseTradePartnerInfo;
+        bool storeTradeCodes = SysCord<T>.Runner.Config.Trade.TradeConfiguration.StoreTradeCodes;
 
-        var ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
+        if (useTradePartnerInfo && storeTradeCodes)
+        {
+            content = TrainerInfoHelper.AddTrainerDetails(content, userID, ignoreAutoOT);
+        }
+        content = ReusableActions.StripCodeBlock(content);
         var set = new ShowdownSet(content);
         var template = AutoLegalityWrapper.GetTemplate(set);
         int formArgument = ExtractFormArgument(content);
@@ -728,7 +747,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await Context.Message.DeleteAsync();
             return;
         }
-
         try
         {
             var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
@@ -912,7 +930,15 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
             return;
         }
+        bool ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
+        bool useTradePartnerInfo = SysCord<T>.Runner.Config.Legality.UseTradePartnerInfo;
+        bool storeTradeCodes = SysCord<T>.Runner.Config.Trade.TradeConfiguration.StoreTradeCodes;
 
+        if (useTradePartnerInfo && storeTradeCodes)
+        {
+            content = TrainerInfoHelper.AddTrainerDetails(content, userID, ignoreAutoOT);
+        }
+        content = ReusableActions.StripCodeBlock(content);
         var trades = TradeModule<T>.ParseBatchTradeContent(content);
         var maxTradesAllowed = SysCord<T>.Runner.Config.Trade.TradeConfiguration.MaxPkmsPerTrade;
 

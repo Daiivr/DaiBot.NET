@@ -61,8 +61,8 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         [Category(TradeConfig), Description("Código de enlace máximo."), DisplayName("Código de enlace comercial máximo")]
         public int MaxTradeCode { get; set; } = 9999_9999;
 
-        [Category(TradeConfig), Description("Si se establece en True, el código de trade de los usuarios de Discord se almacenará y se utilizará repetidamente sin cambiar."), DisplayName("Almacenar y reutilizar códigos de Trade")]
-        public bool StoreTradeCodes { get; set; } = false;
+        [Category(TradeConfig), Description("Si se establece en True, el código de trade de los usuarios de Discord se almacenará y se utilizará repetidamente sin cambiar."), DisplayName("Almacenar y reutilizar códigos de Tradeo")]
+        public bool StoreTradeCodes { get; set; } = true;
 
         [Category(TradeConfig), Description("Tiempo a esperar por un usuario en segundos."), DisplayName("Tiempo a esperar por un usuario (segundos)")]
         public int TradeWaitTime { get; set; } = 30;
