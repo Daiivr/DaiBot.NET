@@ -11,7 +11,8 @@ using System.Linq;
 using System.Text;
 using static SysBot.Base.SwitchButton;
 using static SysBot.Pokemon.PokeDataOffsetsLGPE;
-using SysBot.Pokemon.Helpers;
+using System.Buffers.Binary;
+
 namespace SysBot.Pokemon;
 
 public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : PokeRoutineExecutor7LGPE(Config), ICountBot, ITradeBot
@@ -58,6 +59,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
             Log("Identifying trainer data of the host console.");
             var sav = await IdentifyTrainer(token).ConfigureAwait(false);
             RecentTrainerCache.SetRecentTrainer(sav);
+
             OnConnectionSuccess();
             Log($"Starting main {nameof(PokeTradeBotLGPE)} loop.");
             await InnerLoop(sav, token).ConfigureAwait(false);
@@ -232,7 +234,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
             var tradeDetails = tradeCodeStorage1.GetTradeDetails(trainerID);
             if (tradeDetails != null && tradeDetails.TID != 0 && tradeDetails.SID != 0)
             {
-                Log($"Applaying AutoOT to the Pokémon using Trainer OT: {tradeDetails.OT}, TID: {tradeDetails.TID}, SID: {tradeDetails.SID}");
+                Log($"Applying AutoOT to the Pokémon using Trainer OT: {tradeDetails.OT}, TID: {tradeDetails.TID}, SID: {tradeDetails.SID}");
                 var updatedToSend = await ApplyAutoOT(toSend, trainerID);
                 if (updatedToSend != null)
                 {
@@ -327,17 +329,24 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
 
         if (tradepartnersav.OT != sav.OT)
         {
-            Log($"Found Link Trade Partner: {tradepartnersav.OT}, TID: {tradepartnersav.TID16}, SID: {tradepartnersav.SID16}, Game: {tradepartnersav.Version}");
-            // Save the OT, TID, and SID information in the TradeCodeStorage for tradepartnersav
-            tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, tradepartnersav.OT, tradepartnersav.TID16, tradepartnersav.SID16);
-
+            uint displaySID = BinaryPrimitives.ReadUInt32LittleEndian(tradepartnersav.Blocks.Status.Data[0..4]) / 1_000_000;
+            uint displayTID = BinaryPrimitives.ReadUInt32LittleEndian(tradepartnersav.Blocks.Status.Data[0..4]) % 1_000_000;
+            string tid7 = displayTID.ToString("D6");
+            string sid7 = displaySID.ToString("D4");
+            Log($"Found Link Trade Partner: {tradepartnersav.OT}, TID7: {tid7}, SID7: {sid7}, Game: {tradepartnersav.Version}");
+            // Save the OT, TID7, and SID7 information in the TradeCodeStorage for tradepartnersav
+            tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, tradepartnersav.OT, int.Parse(tid7), int.Parse(sid7));
         }
 
         if (tradepartnersav2.OT != sav.OT)
         {
-            Log($"Found Link Trade Partner: {tradepartnersav2.OT}, TID: {tradepartnersav2.TID16}, SID: {tradepartnersav2.SID16}");
-            // Save the OT, TID, and SID information in the TradeCodeStorage for tradepartnersav2
-            tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, tradepartnersav2.OT, tradepartnersav2.TID16, tradepartnersav2.SID16);
+            uint displaySID = BinaryPrimitives.ReadUInt32LittleEndian(tradepartnersav2.Blocks.Status.Data[0..4]) / 1_000_000;
+            uint displayTID = BinaryPrimitives.ReadUInt32LittleEndian(tradepartnersav2.Blocks.Status.Data[0..4]) % 1_000_000;
+            string tid7 = displayTID.ToString("D6");
+            string sid7 = displaySID.ToString("D4");
+            Log($"Found Link Trade Partner: {tradepartnersav2.OT}, TID7: {tid7}, SID7: {sid7}");
+            // Save the OT, TID7, and SID7 information in the TradeCodeStorage for tradepartnersav2
+            tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, tradepartnersav2.OT, int.Parse(tid7), int.Parse(sid7));
         }
 
         if (poke.Type == PokeTradeType.Dump)
