@@ -227,6 +227,22 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
         poke.TradeInitialize(this);
         Hub.Config.Stream.EndEnterCode(this);
         var toSend = poke.TradeData;
+        if (Hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT)
+        {
+            var trainerID = poke.Trainer.ID;
+            var tradeCodeStorage1 = new TradeCodeStorage();
+            var tradeDetails = tradeCodeStorage1.GetTradeDetails(trainerID);
+            if (tradeDetails != null && tradeDetails.TID != 0 && tradeDetails.SID != 0)
+            {
+                Log($"Applying AutoOT to the Pokémon using Trainer OT: {tradeDetails.OT}, TID: {tradeDetails.TID}, SID: {tradeDetails.SID}");
+                var updatedToSend = await ApplyAutoOT(toSend, trainerID);
+                if (updatedToSend != null)
+                {
+                    toSend = updatedToSend;
+                    poke.TradeData = updatedToSend;
+                }
+            }
+        }
         if (toSend.Species != 0)
             await WriteBoxPokemon(toSend, 0, 0, token);
         if (!await IsOnOverworldStandard(token))
@@ -350,7 +366,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
         poke.SendNotification(this, "Tienes **15 segundos** para seleccionar tu Pokémon comercial");
         Log("Waiting on Trade Screen...");
 
-        await Task.Delay(15_000, token).ConfigureAwait(false);
+        await Task.Delay(15_000).ConfigureAwait(false);
         var tradeResult = await ConfirmAndStartTrading(poke, 0, token);
         if (tradeResult != PokeTradeResult.Success)
         {
@@ -715,6 +731,69 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
                 return;
 
             ctr -= 3_000;
+        }
+    }
+
+    private Task<PB7?> ApplyAutoOT(PB7 toSend, ulong trainerID)
+    {
+        var tradeCodeStorage = new TradeCodeStorage();
+        var tradeDetails = tradeCodeStorage.GetTradeDetails(trainerID);
+        if (tradeDetails != null)
+        {
+            var cln = toSend.Clone();
+#pragma warning disable CS8601 // Possible null reference assignment.
+            cln.OriginalTrainerName = tradeDetails.OT;
+#pragma warning restore CS8601 // Possible null reference assignment.
+            ClearOTTrash(cln, tradeDetails);
+            cln.SetDisplayTID((uint)tradeDetails.TID);
+            cln.SetDisplaySID((uint)tradeDetails.SID);
+            cln.Language = (int)LanguageID.English; // Set the appropriate language ID
+            if (!toSend.IsNicknamed)
+                cln.ClearNickname();
+            cln.RefreshChecksum();
+            var tradelgpe = new LegalityAnalysis(cln);
+            if (tradelgpe.Valid)
+            {
+                Log("Pokemon is valid, applying AutoOT.");
+                return Task.FromResult<PB7?>(cln);
+            }
+            else
+            {
+                Log("Pokemon not valid, not applying AutoOT.");
+                Log(tradelgpe.Report());
+                return Task.FromResult<PB7?>(null);
+            }
+        }
+        else
+        {
+            Log("Trade details not found for the given trainer OT.");
+            return Task.FromResult<PB7?>(null);
+        }
+    }
+
+    private static void ClearOTTrash(PB7 pokemon, TradeCodeStorage.TradeCodeDetails? tradeDetails)
+    {
+        if (tradeDetails?.OT == null)
+        {
+            LogUtil.LogInfo("AutoOT", "Trade details or OT is null. Skipping ClearOTTrash.");
+            return;
+        }
+
+        Span<byte> trash = pokemon.OriginalTrainerTrash;
+        trash.Clear();
+        string name = tradeDetails.OT;
+        int maxLength = trash.Length / 2;
+        int actualLength = Math.Min(name.Length, maxLength);
+        for (int i = 0; i < actualLength; i++)
+        {
+            char value = name[i];
+            trash[i * 2] = (byte)value;
+            trash[i * 2 + 1] = (byte)(value >> 8);
+        }
+        if (actualLength < maxLength)
+        {
+            trash[actualLength * 2] = 0x00;
+            trash[actualLength * 2 + 1] = 0x00;
         }
     }
 }

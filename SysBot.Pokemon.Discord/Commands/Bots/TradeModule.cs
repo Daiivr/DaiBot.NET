@@ -411,14 +411,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
             return;
         }
-        bool ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
-        bool useTradePartnerInfo = SysCord<T>.Runner.Config.Legality.UseTradePartnerInfo;
-        bool storeTradeCodes = SysCord<T>.Runner.Config.Trade.TradeConfiguration.StoreTradeCodes;
-
-        if (useTradePartnerInfo && storeTradeCodes)
-        {
-            content = TrainerInfoHelper.AddTrainerDetails(content, userID, ignoreAutoOT);
-        }
         content = ReusableActions.StripCodeBlock(content);
         var set = new ShowdownSet(content);
         var template = AutoLegalityWrapper.GetTemplate(set);
@@ -498,14 +490,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
             return;
         }
-        bool ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
-        bool useTradePartnerInfo = SysCord<T>.Runner.Config.Legality.UseTradePartnerInfo;
-        bool storeTradeCodes = SysCord<T>.Runner.Config.Trade.TradeConfiguration.StoreTradeCodes;
-
-        if (useTradePartnerInfo && storeTradeCodes)
-        {
-            content = TrainerInfoHelper.AddTrainerDetails(content, userID, ignoreAutoOT);
-        }
+        var ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
         content = ReusableActions.StripCodeBlock(content);
         var set = new ShowdownSet(content);
         var template = AutoLegalityWrapper.GetTemplate(set);
@@ -712,14 +697,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
             return;
         }
-        bool ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
-        bool useTradePartnerInfo = SysCord<T>.Runner.Config.Legality.UseTradePartnerInfo;
-        bool storeTradeCodes = SysCord<T>.Runner.Config.Trade.TradeConfiguration.StoreTradeCodes;
-
-        if (useTradePartnerInfo && storeTradeCodes)
-        {
-            content = TrainerInfoHelper.AddTrainerDetails(content, userID, ignoreAutoOT);
-        }
+        var ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
         content = ReusableActions.StripCodeBlock(content);
         var set = new ShowdownSet(content);
         var template = AutoLegalityWrapper.GetTemplate(set);
@@ -929,14 +907,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
             return;
-        }
-        bool ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
-        bool useTradePartnerInfo = SysCord<T>.Runner.Config.Legality.UseTradePartnerInfo;
-        bool storeTradeCodes = SysCord<T>.Runner.Config.Trade.TradeConfiguration.StoreTradeCodes;
-
-        if (useTradePartnerInfo && storeTradeCodes)
-        {
-            content = TrainerInfoHelper.AddTrainerDetails(content, userID, ignoreAutoOT);
         }
         content = ReusableActions.StripCodeBlock(content);
         var trades = TradeModule<T>.ParseBatchTradeContent(content);
@@ -1661,7 +1631,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await ReplyAsync("<a:warning:1206483664939126795> ¡El archivo adjunto proporcionado no es compatible con este módulo!").ConfigureAwait(false);
             return;
         }
-
         await AddTradeToQueueAsync(code, usr.Username, pk, sig, usr, ignoreAutoOT: ignoreAutoOT).ConfigureAwait(false);
     }
 
@@ -1682,7 +1651,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await ReplyAsync("<a:warning:1206483664939126795> ¡El archivo adjunto proporcionado no es compatible con este módulo!").ConfigureAwait(false);
             return;
         }
-
         await AddTradeToQueueAsync(code, usr.Username, pk, sig, usr, isHiddenTrade: true, ignoreAutoOT: ignoreAutoOT).ConfigureAwait(false);
     }
 
