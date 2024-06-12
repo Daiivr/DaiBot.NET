@@ -352,13 +352,10 @@ public sealed class SysCord<T> where T : PKM, new()
         var AbuseSettings = Hub.Config.TradeAbuse;
 
         // Check if the user is in the bannedIDs list
-        if (msg.Author is SocketGuildUser user)
+        if (msg.Author is SocketGuildUser user && AbuseSettings.BannedIDs.List.Any(z => z.ID == user.Id))
         {
-            if (AbuseSettings.BannedIDs.List.Any(z => z.ID == user.Id))
-            {
-                await msg.Channel.SendMessageAsync($"<a:no:1206485104424128593> {user.Mention} Tienes prohibido usar este bot.").ConfigureAwait(false);
-                return true;
-            }
+            await msg.Channel.SendMessageAsync($"<a:no:1206485104424128593> {user.Mention} Tienes prohibido usar este bot.").ConfigureAwait(false);
+            return true;
         }
 
         var mgr = Manager;
