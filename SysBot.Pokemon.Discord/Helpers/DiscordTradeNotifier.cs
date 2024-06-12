@@ -53,7 +53,7 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
             {
                 message += "\n**Permanezca en el intercambio hasta que se completen todos los intercambios por lotes.**";
             }
-            EmbedHelper.SendTradeInitializingEmbedAsync(Trader, speciesName, Code, message).ConfigureAwait(false);
+            EmbedHelper.SendTradeInitializingEmbedAsync(Trader, speciesName, Code, IsMysteryEgg, message).ConfigureAwait(false);
         }
         else if (Data is PB7)
         {
@@ -62,7 +62,7 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
         }
         else
         {
-            EmbedHelper.SendTradeInitializingEmbedAsync(Trader, speciesName, Code).ConfigureAwait(false);
+            EmbedHelper.SendTradeInitializingEmbedAsync(Trader, speciesName, Code, IsMysteryEgg).ConfigureAwait(false);
         }
     }
 
