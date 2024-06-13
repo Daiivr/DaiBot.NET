@@ -6,98 +6,99 @@ namespace SysBot.Pokemon;
 
 public class TwitchSettings
 {
-    private const string Startup = nameof(Startup);
-    private const string Operation = nameof(Operation);
     private const string Messages = nameof(Messages);
-    public override string ToString() => "Twitch Integration Settings";
 
-    // Startup
+    private const string Operation = nameof(Operation);
 
-    [Category(Startup), Description("Bot Login Token")]
-    public string Token { get; set; } = string.Empty;
+    private const string Startup = nameof(Startup);
 
-    [Category(Startup), Description("Bot Username")]
-    public string Username { get; set; } = string.Empty;
-
-    [Category(Startup), Description("Channel to Send Messages To")]
-    public string Channel { get; set; } = string.Empty;
-
-    [Category(Startup), Description("Bot Command Prefix")]
-    public char CommandPrefix { get; set; } = '$';
-
-    [Category(Operation), Description("Message sent when the Barrier is released.")]
-    public string MessageStart { get; set; } = string.Empty;
-
-        [Category(Operation), Description("Discord Server Link.")]
-        public string DiscordLink { get; set; } = string.Empty;
-
-        [Category(Operation), Description("Donation Link.")]
-        public string DonationLink { get; set; } = string.Empty;
-
-        [Category(Operation), Description("Bot usage tutorial text.")]
-        public string TutorialText { get; set; } = string.Empty;
-
-        [Category(Operation), Description("Bot usage tutorial Link.")]
-        public string TutorialLink { get; set; } = string.Empty;
-
-    // Messaging
-
-    [Category(Operation), Description("Throttle the bot from sending messages if X messages have been sent in the past Y seconds.")]
-    public int ThrottleMessages { get; set; } = 100;
-
-    [Category(Operation), Description("Throttle the bot from sending messages if X messages have been sent in the past Y seconds.")]
-    public double ThrottleSeconds { get; set; } = 30;
-
-    [Category(Operation), Description("Throttle the bot from sending whispers if X messages have been sent in the past Y seconds.")]
-    public int ThrottleWhispers { get; set; } = 100;
-
-    [Category(Operation), Description("Throttle the bot from sending whispers if X messages have been sent in the past Y seconds.")]
-    public double ThrottleWhispersSeconds { get; set; } = 60;
-
-    // Operation
-
-    [Category(Operation), Description("Sudo Usernames")]
-    public string SudoList { get; set; } = string.Empty;
-
-    [Category(Operation), Description("Users with these usernames cannot use the bot.")]
-    public string UserBlacklist { get; set; } = string.Empty;
-
-    [Category(Operation), Description("When enabled, the bot will process commands sent to the channel.")]
+    [Category(Operation), Description("Cuando esté habilitado, el bot procesará los comandos enviados al canal.")]
     public bool AllowCommandsViaChannel { get; set; } = true;
 
-    [Category(Operation), Description("When enabled, the bot will allow users to send command via whisper (bypasses slow mode)")]
+    [Category(Operation), Description("Cuando esté habilitado, el bot permitirá a los usuarios enviar comandos mediante susurros (evite el modo lento)")]
     public bool AllowCommandsViaWhisper { get; set; }
 
-    // Message Destinations
+    [Category(Startup), Description("Canal al que enviar mensajes")]
+    public string Channel { get; set; } = string.Empty;
 
-    [Category(Messages), Description("Determines where generic notifications are sent.")]
+    [Category(Startup), Description("Prefijo de comando de bot")]
+    public char CommandPrefix { get; set; } = '$';
+
+    [Category(Operation), Description("Enlace del servidor de discord.")]
+    public string DiscordLink { get; set; } = string.Empty;
+
+    [Category(Messages), Description("Alterna si las operaciones de distribución cuentan hacia atrás antes de comenzar.")]
+    public bool DistributionCountDown { get; set; } = true;
+
+    [Category(Operation), Description("Enlace de donación.")]
+    public string DonationLink { get; set; } = string.Empty;
+
+    [Category(Operation), Description("Mensaje enviado cuando se libera la Barrera.")]
+    public string MessageStart { get; set; } = string.Empty;
+
+    [Category(Messages), Description("Determina dónde se envían las notificaciones genéricas.")]
     public TwitchMessageDestination NotifyDestination { get; set; }
 
-    [Category(Messages), Description("Determines where TradeStart notifications are sent.")]
-    public TwitchMessageDestination TradeStartDestination { get; set; } = TwitchMessageDestination.Channel;
+    [Category(Operation), Description("Nombres de usuario de Sudo")]
+    public string SudoList { get; set; } = string.Empty;
 
-    [Category(Messages), Description("Determines where TradeSearch notifications are sent.")]
-    public TwitchMessageDestination TradeSearchDestination { get; set; }
+    [Category(Operation), Description("Evitar que el bot envíe mensajes si se han enviado X mensajes en los últimos Y segundos.")]
+    public int ThrottleMessages { get; set; } = 100;
 
-    [Category(Messages), Description("Determines where TradeFinish notifications are sent.")]
-    public TwitchMessageDestination TradeFinishDestination { get; set; }
+    // Messaging
+    [Category(Operation), Description("Limite el envío de mensajes del bot si se han enviado X mensajes en los últimos Y segundos.")]
+    public double ThrottleSeconds { get; set; } = 30;
 
-    [Category(Messages), Description("Determines where TradeCanceled notifications are sent.")]
+    [Category(Operation), Description("Limite el envío de susurros al bot si se han enviado X mensajes en los últimos Y segundos.")]
+    public int ThrottleWhispers { get; set; } = 100;
+
+    [Category(Operation), Description("Limite el envío de susurros al bot si se han enviado X mensajes en los últimos Y segundos.")]
+    public double ThrottleWhispersSeconds { get; set; } = 60;
+
+    [Category(Startup), Description("Token de inicio de sesión de bot")]
+    public string Token { get; set; } = string.Empty;
+
+    [Category(Messages), Description("Determina dónde se envían las notificaciones de transacciones canceladas.")]
     public TwitchMessageDestination TradeCanceledDestination { get; set; } = TwitchMessageDestination.Channel;
 
-    [Category(Messages), Description("Toggles whether Distribution trades count down before starting.")]
-    public bool DistributionCountDown { get; set; } = true;
+    [Category(Messages), Description("Determina dónde se envían las notificaciones de Trade Finish.")]
+    public TwitchMessageDestination TradeFinishDestination { get; set; }
+
+    [Category(Messages), Description("Determina dónde se envían las notificaciones de búsqueda comercial.")]
+    public TwitchMessageDestination TradeSearchDestination { get; set; }
+
+    // Message Destinations
+    [Category(Messages), Description("Determina dónde se envían las notificaciones de Trade Start.")]
+    public TwitchMessageDestination TradeStartDestination { get; set; } = TwitchMessageDestination.Channel;
+
+    [Category(Operation), Description("Enlace al tutorial de uso del bot.")]
+    public string TutorialLink { get; set; } = string.Empty;
+
+    [Category(Operation), Description("Texto del tutorial sobre el uso de bots.")]
+    public string TutorialText { get; set; } = string.Empty;
+
+    // Operation
+    [Category(Operation), Description("Los usuarios con estos nombres de usuario no pueden utilizar el bot.")]
+    public string UserBlacklist { get; set; } = string.Empty;
+
+    // Startup
+    [Category(Startup), Description("Nombre de usuario del robot")]
+    public string Username { get; set; } = string.Empty;
 
     public bool IsSudo(string username)
     {
         var sudos = SudoList.Split([",", ", ", " "], StringSplitOptions.RemoveEmptyEntries);
         return sudos.Contains(username);
     }
+
+    public override string ToString() => "Configuración de integración de Twitch";
 }
 
 public enum TwitchMessageDestination
 {
     Disabled,
+
     Channel,
+
     Whisper,
 }

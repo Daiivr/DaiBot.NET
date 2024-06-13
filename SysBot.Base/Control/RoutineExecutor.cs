@@ -9,8 +9,9 @@ namespace SysBot.Base
     /// </summary>
     public abstract class RoutineExecutor<T> : IRoutineExecutor where T : class, IConsoleBotConfig
     {
-        public readonly IConsoleConnectionAsync Connection;
         public readonly T Config;
+
+        public readonly IConsoleConnectionAsync Connection;
 
         protected RoutineExecutor(IConsoleBotManaged<IConsoleConnection, IConsoleConnectionAsync> cfg)
         {
@@ -19,11 +20,14 @@ namespace SysBot.Base
         }
 
         public string LastLogged { get; private set; } = "No empezado";
+
         public DateTime LastTime { get; private set; } = DateTime.Now;
 
-        public void ReportStatus() => LastTime = DateTime.Now;
-
         public abstract string GetSummary();
+
+        public abstract Task HardStop();
+
+        public abstract Task InitialStartup(CancellationToken token);
 
         public void Log(string message)
         {
@@ -32,19 +36,9 @@ namespace SysBot.Base
             LastTime = DateTime.Now;
         }
 
-        /// <summary>
-        /// Connects to the console, then runs the bot.
-        /// </summary>
-        /// <param name="token">Cancel this token to have the bot stop looping.</param>
-        public async Task RunAsync(CancellationToken token)
-        {
-            Connection.Connect();
-            Log("Initializing connection with console...");
-            await InitialStartup(token).ConfigureAwait(false);
-            await SetController(ControllerType.ProController, token);
-            await MainLoop(token).ConfigureAwait(false);
-            Connection.Disconnect();
-        }
+        public abstract Task MainLoop(CancellationToken token);
+
+        public abstract Task RebootAndStop(CancellationToken token);
 
         public async Task RebootAndStopAsync(CancellationToken token)
         {
@@ -54,12 +48,24 @@ namespace SysBot.Base
             Connection.Disconnect();
         }
 
-        public abstract Task MainLoop(CancellationToken token);
-        public abstract Task InitialStartup(CancellationToken token);
-        public abstract void SoftStop();
-        public abstract Task HardStop();
-        public abstract Task SetController(ControllerType Controller, CancellationToken token);
-        public abstract Task RebootAndStop(CancellationToken token);
+        public void ReportStatus() => LastTime = DateTime.Now;
 
+        /// <summary>
+        /// Connects to the console, then runs the bot.
+        /// </summary>
+        /// <param name="token">Cancel this token to have the bot stop looping.</param>
+        public async Task RunAsync(CancellationToken token)
+        {
+            Connection.Connect();
+            Log("Inicializando conexión con la consola...");
+            await InitialStartup(token).ConfigureAwait(false);
+            await SetController(ControllerType.ProController, token);
+            await MainLoop(token).ConfigureAwait(false);
+            Connection.Disconnect();
+        }
+
+        public abstract Task SetController(ControllerType Controller, CancellationToken token);
+
+        public abstract void SoftStop();
     }
 }

@@ -12,8 +12,7 @@ public class EchoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
     [RequireSudo]
     public async Task TossAsync(string name = "")
     {
-        var bots = SysCord<T>.Runner.Bots.Select(z => z.Bot);
-        foreach (var b in bots)
+        foreach (var b in SysCord<T>.Runner.Bots.Select(z => z.Bot))
         {
             if (b is not IEncounterBot x)
                 continue;
@@ -22,6 +21,6 @@ public class EchoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
             x.Acknowledge();
         }
 
-        await ReplyAsync("Done.").ConfigureAwait(false);
+        await ReplyAsync("<a:yes:1206485105674166292> Listo.").ConfigureAwait(false);
     }
 }

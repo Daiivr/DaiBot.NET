@@ -31,12 +31,13 @@ public sealed record QueueCheckResult<T> where T : PKM, new()
     {
         if (!InQueue || Detail is null)
             return "Actualmente no te encuentras en alguna cola de espera.";
+
         var position = $"{Position + BatchNumber - 1}/{QueueCount}";
         var msg = $"Estás en la cola: **{Detail.Type}**! Posición: **{position} (ID {Detail.Trade.ID})**";
 
         var pk = Detail.Trade.TradeData;
         if (pk.Species != 0)
-            msg += $", Recibiendo: **{GameInfo.GetStrings(1).Species[pk.Species]}**";
+            msg += $", Recibiendo: {GameInfo.GetStrings(1).Species[pk.Species]}";
 
         if (TotalBatchTrades > 1)
             msg += $" (Batch trade {BatchNumber}/{TotalBatchTrades})";

@@ -25,12 +25,18 @@ public sealed partial class Main : Form
     public static bool IsUpdating { get; set; } = false;
 
     private bool _isFormLoading = true;
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     public Main()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
         InitializeComponent();
+#pragma warning disable CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
         comboBox1.SelectedIndexChanged += new EventHandler(ComboBox1_SelectedIndexChanged);
+#pragma warning restore CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
         Load += async (sender, e) => await InitializeAsync();
+#pragma warning disable CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
         TC_Main.SelectedIndexChanged += TC_Main_SelectedIndexChanged;
+#pragma warning restore CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
     }
 
     private void TC_Main_SelectedIndexChanged(object sender, EventArgs e)
@@ -127,13 +133,17 @@ public sealed partial class Main : Form
         // Add this line to update the label text dynamically
         lblVersion.Text = $"{TradeBot.Version}";
 
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         Task.Run(BotMonitor);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         InitUtil.InitializeStubs(Config.Mode);
         _isFormLoading = false;
         UpdateBackgroundImage(Config.Mode);
 
         // Start the periodic update check
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         Task.Run(CheckForUpdatesPeriodically);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
     }
 
     private static IPokeBotRunner GetRunner(ProgramConfig cfg) => cfg.Mode switch
@@ -143,7 +153,7 @@ public sealed partial class Main : Form
         ProgramMode.LA => new PokeBotRunnerImpl<PA8>(cfg.Hub, new BotFactory8LA()),
         ProgramMode.SV => new PokeBotRunnerImpl<PK9>(cfg.Hub, new BotFactory9SV()),
         ProgramMode.LGPE => new PokeBotRunnerImpl<PB7>(cfg.Hub, new BotFactory7LGPE()),
-        _ => throw new IndexOutOfRangeException("Unsupported mode."),
+        _ => throw new IndexOutOfRangeException("Modo no compatible."),
     };
 
     private async Task BotMonitor()
@@ -304,7 +314,7 @@ public sealed partial class Main : Form
     {
         SaveCurrentConfig();
 
-        LogUtil.LogInfo("Starting all bots...", "Form");
+        LogUtil.LogInfo("Iniciando todos los bots...", "Form");
         RunningEnvironment.InitializeStart();
         SendAll(BotControlCommand.Start);
         Tab_Logs.Select();
@@ -320,7 +330,7 @@ public sealed partial class Main : Form
         {
             await Task.Delay(3_500).ConfigureAwait(false);
             SaveCurrentConfig();
-            LogUtil.LogInfo("Restarting all the consoles...", "Form");
+            LogUtil.LogInfo("Reiniciando todas las consolas...", "Form");
             RunningEnvironment.InitializeStart();
             SendAll(BotControlCommand.RebootAndStop);
             await Task.Delay(5_000).ConfigureAwait(false); // Add a delay before restarting the bot
@@ -492,8 +502,14 @@ public sealed partial class Main : Form
     {
         if (sender is ComboBox comboBox)
         {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             string selectedTheme = comboBox.SelectedItem.ToString();
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+#pragma warning disable CS8601 // Possible null reference assignment.
             Config.Hub.ThemeOption = selectedTheme;  // Save the selected theme to the config
+#pragma warning restore CS8601 // Possible null reference assignment.
             SaveCurrentConfig();  // Save the config to file
 
             switch (selectedTheme)

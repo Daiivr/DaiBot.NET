@@ -4,7 +4,6 @@ using PKHeX.Core;
 using SysBot.Base;
 using SysBot.Pokemon.Helpers;
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.Discord;
@@ -55,7 +54,6 @@ public static class AutoLegalityExtensionsDiscord
 
                 return;
             }
-
 
             var speciesName = GameInfo.Strings.Species[template.Species];
             var successMsg = $" Aqui esta tu **{speciesName}** legalizado.";

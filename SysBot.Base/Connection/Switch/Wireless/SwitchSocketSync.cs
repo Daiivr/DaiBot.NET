@@ -15,72 +15,32 @@ public sealed class SwitchSocketSync(IWirelessConnectionConfig cfg) : SwitchSock
 {
     public override void Connect()
     {
-        Log("Connecting to device...");
+        Log("Conectándose al dispositivo...");
         IAsyncResult result = Connection.BeginConnect(Info.IP, Info.Port, null, null);
         bool success = result.AsyncWaitHandle.WaitOne(5000, true);
         if (!success || !Connection.Connected)
         {
             InitializeSocket();
-            throw new Exception("Failed to connect to device.");
+            throw new Exception("No se pudo conectar al dispositivo.");
         }
         Connection.EndConnect(result);
-        Log("Connected!");
+        Log("Conectado!");
         Label = Name;
-    }
-
-    public override void Reset()
-    {
-        if (Connected)
-            Disconnect();
-        else
-            InitializeSocket();
-        Connect();
     }
 
     public override void Disconnect()
     {
-        Log("Disconnecting from device...");
+        Log("Desconectándose del dispositivo...");
         IAsyncResult result = Connection.BeginDisconnect(false, null, null);
         bool success = result.AsyncWaitHandle.WaitOne(5000, true);
         if (!success || Connection.Connected)
         {
             InitializeSocket();
-            throw new Exception("Failed to disconnect from device.");
+            throw new Exception("No se pudo desconectar del dispositivo.");
         }
         Connection.EndDisconnect(result);
-        Log("Disconnected!");
+        Log("Desconectado!");
         InitializeSocket();
-    }
-
-    private int Read(byte[] buffer, int size) => Connection.Receive(buffer, size, 0);
-    public int Send(byte[] buffer) => Connection.Send(buffer);
-
-    private byte[] ReadResponse(int length)
-    {
-        // give it time to push data back
-        Thread.Sleep((MaximumTransferSize / DelayFactor) + BaseDelay);
-        var size = (length * 2) + 1;
-        var buffer = ArrayPool<byte>.Shared.Rent(size);
-        var _ = Read(buffer, size);
-        var mem = buffer.AsMemory(0, size);
-        var result = DecodeResult(mem, length);
-        ArrayPool<byte>.Shared.Return(buffer, true);
-        return result;
-    }
-    private static byte[] DecodeResult(ReadOnlyMemory<byte> buffer, int length)
-    {
-        var result = new byte[length];
-        var span = buffer.Span[..^1]; // Last byte is always a terminator
-        Decoder.LoadHexBytesTo(span, result, 2);
-        return result;
-    }
-
-    public ulong GetMainNsoBase()
-    {
-        Send(SwitchCommand.GetMainNsoBase());
-        byte[] baseBytes = ReadResponse(8);
-        Array.Reverse(baseBytes, 0, 8);
-        return BitConverter.ToUInt64(baseBytes, 0);
     }
 
     public ulong GetHeapBase()
@@ -91,13 +51,46 @@ public sealed class SwitchSocketSync(IWirelessConnectionConfig cfg) : SwitchSock
         return BitConverter.ToUInt64(baseBytes, 0);
     }
 
+    public ulong GetMainNsoBase()
+    {
+        Send(SwitchCommand.GetMainNsoBase());
+        byte[] baseBytes = ReadResponse(8);
+        Array.Reverse(baseBytes, 0, 8);
+        return BitConverter.ToUInt64(baseBytes, 0);
+    }
+
     public byte[] ReadBytes(uint offset, int length) => Read(Heap, offset, length);
-    public byte[] ReadBytesMain(ulong offset, int length) => Read(Main, offset, length);
+
     public byte[] ReadBytesAbsolute(ulong offset, int length) => Read(Absolute, offset, length);
 
+    public byte[] ReadBytesMain(ulong offset, int length) => Read(Main, offset, length);
+
+    public override void Reset()
+    {
+        if (Connected)
+            Disconnect();
+        else
+            InitializeSocket();
+        Connect();
+    }
+
+    public int Send(byte[] buffer) => Connection.Send(buffer);
+
     public void WriteBytes(ReadOnlySpan<byte> data, uint offset) => Write(Heap, data, offset);
-    public void WriteBytesMain(ReadOnlySpan<byte> data, ulong offset) => Write(Main, data, offset);
+
     public void WriteBytesAbsolute(ReadOnlySpan<byte> data, ulong offset) => Write(Absolute, data, offset);
+
+    public void WriteBytesMain(ReadOnlySpan<byte> data, ulong offset) => Write(Main, data, offset);
+
+    private static byte[] DecodeResult(ReadOnlyMemory<byte> buffer, int length)
+    {
+        var result = new byte[length];
+        var span = buffer.Span[..^1]; // Last byte is always a terminator
+        Decoder.LoadHexBytesTo(span, result, 2);
+        return result;
+    }
+
+    private int Read(byte[] buffer, int size) => Connection.Receive(buffer, size, 0);
 
     private byte[] Read(ICommandBuilder b, ulong offset, int length)
     {
@@ -121,6 +114,19 @@ public sealed class SwitchSocketSync(IWirelessConnectionConfig cfg) : SwitchSock
             var bytes = ReadResponse(len);
             bytes.CopyTo(result, i);
         }
+        return result;
+    }
+
+    private byte[] ReadResponse(int length)
+    {
+        // give it time to push data back
+        Thread.Sleep((MaximumTransferSize / DelayFactor) + BaseDelay);
+        var size = (length * 2) + 1;
+        var buffer = ArrayPool<byte>.Shared.Rent(size);
+        var _ = Read(buffer, size);
+        var mem = buffer.AsMemory(0, size);
+        var result = DecodeResult(mem, length);
+        ArrayPool<byte>.Shared.Return(buffer, true);
         return result;
     }
 

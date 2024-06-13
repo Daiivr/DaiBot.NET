@@ -14,7 +14,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     {
         [Command("ayuda")]
         [Summary("Muestra como usar algunos comandos como el clone, fix, egg y demas.")]
-        public async Task HelpAsync(string command = null)
+        public async Task HelpAsync(string? command = null)
         {
             var icon = "https://i.imgur.com/axXN5Sd.gif";
             var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;

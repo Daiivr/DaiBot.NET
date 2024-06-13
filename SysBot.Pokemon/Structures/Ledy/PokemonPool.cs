@@ -3,26 +3,33 @@ using SysBot.Base;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace SysBot.Pokemon;
 
 public class PokemonPool<T>(BaseConfig Settings) : List<T>
     where T : PKM, new()
 {
-    private readonly int ExpectedSize = new T().Data.Length;
-    private bool Randomized => Settings.Shuffled;
-
     public readonly Dictionary<string, LedyRequest<T>> Files = [];
+
+    private readonly int ExpectedSize = new T().Data.Length;
+
     private int Counter;
 
-    public T GetRandomPoke()
+    private bool Randomized => Settings.Shuffled;
+
+    public static bool DisallowRandomRecipientTrade(T pk)
     {
-        var choice = this[Counter];
-        Counter = (Counter + 1) % Count;
-        if (Counter == 0 && Randomized)
-            Shuffle(this, 0, Count, Util.Rand);
-        return choice;
+        // Surprise Trade currently bans Mythicals and Legendaries, not Sub-Legendaries.
+        if (SpeciesCategory.IsLegendary(pk.Species))
+            return true;
+        if (SpeciesCategory.IsMythical(pk.Species))
+            return true;
+
+        // Can't surprise trade fused stuff.
+        if (FormInfo.IsFusedForm(pk.Species, pk.Form, pk.Format))
+            return true;
+
+        return false;
     }
 
     public static void Shuffle(IList<T> items, int start, int end, Random rnd)
@@ -32,6 +39,15 @@ public class PokemonPool<T>(BaseConfig Settings) : List<T>
             int index = i + rnd.Next(end - i);
             (items[index], items[i]) = (items[i], items[index]);
         }
+    }
+
+    public T GetRandomPoke()
+    {
+        var choice = this[Counter];
+        Counter = (Counter + 1) % Count;
+        if (Counter == 0 && Randomized)
+            Shuffle(this, 0, Count, Util.Rand);
+        return choice;
     }
 
     public T GetRandomSurprise()
@@ -45,15 +61,6 @@ public class PokemonPool<T>(BaseConfig Settings) : List<T>
         }
     }
 
-    public bool Reload(string path, SearchOption opt = SearchOption.AllDirectories)
-    {
-        if (!Directory.Exists(path))
-            return false;
-        Clear();
-        Files.Clear();
-        return LoadFolder(path, opt);
-    }
-
     public bool LoadFolder(string path, SearchOption opt = SearchOption.AllDirectories)
     {
         if (!Directory.Exists(path))
@@ -63,7 +70,7 @@ public class PokemonPool<T>(BaseConfig Settings) : List<T>
         var files = Directory.EnumerateFiles(path, "*", opt);
         var matchFiles = LoadUtil.GetFilesOfSize(files, ExpectedSize);
 
-        int surpriseBlocked = 0;
+        const int surpriseBlocked = 0;
         foreach (var file in matchFiles)
         {
             var data = File.ReadAllBytes(file);
@@ -78,13 +85,13 @@ public class PokemonPool<T>(BaseConfig Settings) : List<T>
 
             if (dest.Species == 0)
             {
-                LogUtil.LogInfo("SKIPPED: Provided file is not valid: " + dest.FileName, nameof(PokemonPool<T>));
+                LogUtil.LogInfo("SKIPPED: El archivo proporcionado no es válido: " + dest.FileName, nameof(PokemonPool<T>));
                 continue;
             }
 
             if (!dest.CanBeTraded())
             {
-                LogUtil.LogInfo("SKIPPED: Provided file cannot be traded: " + dest.FileName, nameof(PokemonPool<T>));
+                LogUtil.LogInfo("SKIPPED: El archivo proporcionado no se puede comercializar: " + dest.FileName, nameof(PokemonPool<T>));
                 continue;
             }
 
@@ -92,7 +99,7 @@ public class PokemonPool<T>(BaseConfig Settings) : List<T>
             if (!la.Valid)
             {
                 var reason = la.Report();
-                LogUtil.LogInfo($"SKIPPED: Provided file is not legal: {dest.FileName} -- {reason}", nameof(PokemonPool<T>));
+                LogUtil.LogInfo($"SALTADO: El archivo proporcionado no es legal: {dest.FileName} -- {reason}", nameof(PokemonPool<T>));
                 continue;
             }
 
@@ -110,29 +117,22 @@ public class PokemonPool<T>(BaseConfig Settings) : List<T>
             }
             else
             {
-                LogUtil.LogInfo("Provided file was not added due to duplicate name: " + dest.FileName, nameof(PokemonPool<T>));
+                LogUtil.LogInfo("El archivo proporcionado no se agregó debido a que el nombre está duplicado: " + dest.FileName, nameof(PokemonPool<T>));
             }
             loadedAny = true;
         }
-
         if (surpriseBlocked == Count)
-            LogUtil.LogInfo("Surprise trading will fail; failed to load any compatible files.", nameof(PokemonPool<T>));
+            LogUtil.LogInfo("El comercio sorpresa fracasará; No se pudo cargar ningún archivo compatible.", nameof(PokemonPool<T>));
 
         return loadedAny;
     }
 
-    public static bool DisallowRandomRecipientTrade(T pk)
+    public bool Reload(string path, SearchOption opt = SearchOption.AllDirectories)
     {
-        // Surprise Trade currently bans Mythicals and Legendaries, not Sub-Legendaries.
-        if (SpeciesCategory.IsLegendary(pk.Species))
-            return true;
-        if (SpeciesCategory.IsMythical(pk.Species))
-            return true;
-
-        // Can't surprise trade fused stuff.
-        if (FormInfo.IsFusedForm(pk.Species, pk.Form, pk.Format))
-            return true;
-
-        return false;
+        if (!Directory.Exists(path))
+            return false;
+        Clear();
+        Files.Clear();
+        return LoadFolder(path, opt);
     }
 }

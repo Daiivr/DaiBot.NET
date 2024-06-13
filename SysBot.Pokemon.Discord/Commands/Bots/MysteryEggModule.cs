@@ -119,6 +119,11 @@ namespace SysBot.Pokemon.Discord
                                 var sig = Context.User.GetFavor();
                                 await AddTradeToQueueAsync(code, Context.User.Username, validPk, sig, Context.User, isMysteryEgg: true).ConfigureAwait(false);
 
+                                if (Context.Message is IUserMessage userMessage)
+                                {
+                                    await DeleteMessageAfterDelay(userMessage, 2000).ConfigureAwait(false);
+                                }
+
                                 return;
                             }
                         }
@@ -200,7 +205,7 @@ namespace SysBot.Pokemon.Discord
                 PersonalTable8SWSH pt => pt.GetFormEntry(species, form),
                 PersonalTable8LA pt => pt.GetFormEntry(species, form),
                 PersonalTable8BDSP pt => pt.GetFormEntry(species, form),
-                _ => throw new ArgumentException("Tipo de tabla personal no admitido."),
+                _ => throw new ArgumentException("Tipo de tabla personal no compatible."),
             };
         }
 
@@ -216,40 +221,19 @@ namespace SysBot.Pokemon.Discord
             };
         }
 
-        private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false)
+        private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false)
         {
             lgcode ??= GenerateRandomPictocodes(3);
+#pragma warning disable CS8604 // Possible null reference argument.
             var la = new LegalityAnalysis(pk);
+#pragma warning restore CS8604 // Possible null reference argument.
             if (!la.Valid)
             {
-                // Obtener el nombre de la especie basado en el idioma y el índice de especie
+                string responseMessage;
                 string speciesName = GameInfo.GetStrings("en").specieslist[pk.Species];
-                var customIconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg"; // Custom icon URL for the embed title
-                var ImgURL = "https://usagif.com/wp-content/uploads/gify/37-pikachu-usagif.gif";
-                var ThumbnailURL = "https://i.imgur.com/DWLEXyu.png";
+                responseMessage = $"<a:warning:1206483664939126795> Conjunto de enfrentamiento no válido para un huevo de {speciesName}. Por favor revisa tu información y vuelve a intentarlo..";
 
-                // Crear el mensaje de respuesta
-                string responseMessage = $"<a:no:1206485104424128593> {usr.Mention} No fue posible crear un huevo de **{speciesName}**.";
-
-                // Crear un embed builder
-                var builder = new EmbedBuilder()
-                    .WithAuthor("Error!", customIconUrl)
-                    .WithDescription(responseMessage)
-                    .WithImageUrl(ImgURL)
-                    .WithThumbnailUrl(ThumbnailURL)
-                    .WithColor(Color.Red) // Puedes cambiar el color del embed
-                    .AddField("__**Error**__", $"Puede que el conjunto showdown que el bot intento utilizar para crear el huevo de __**{speciesName}**__ no fuera valido.", inline: false)
-                    .AddField("__**Solución**__", $"Espera unos segunos e intentelo nuevamente.", inline: false)
-                    .WithFooter(footer => {
-                        footer.WithIconUrl(Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl());
-                        footer.WithText($"{Context.User.Username} | {DateTimeOffset.Now.ToString("hh:mm tt")}");
-                    });
-
-
-                // Enviar el embed al canal
-                var reply = await ReplyAsync(embed: builder.Build()).ConfigureAwait(false);
-
-                // Esperar 6 segundos antes de borrar el mensaje
+                var reply = await ReplyAsync(responseMessage).ConfigureAwait(false);
                 await Task.Delay(6000);
                 await reply.DeleteAsync().ConfigureAwait(false);
                 return;
@@ -282,7 +266,9 @@ namespace SysBot.Pokemon.Discord
 
             for (int i = 0; i < count; i++)
             {
+#pragma warning disable CS8605 // Unboxing a possibly null value.
                 Pictocodes randomPictocode = (Pictocodes)pictocodeValues.GetValue(rnd.Next(pictocodeValues.Length));
+#pragma warning restore CS8605 // Unboxing a possibly null value.
                 randomPictocodes.Add(randomPictocode);
             }
 

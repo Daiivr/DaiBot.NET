@@ -1,5 +1,4 @@
 using Discord;
-using Discord.Commands;
 using PKHeX.Core;
 using System;
 using System.Net.Http;
@@ -24,7 +23,7 @@ public static class NetUtil
 
         if (!EntityDetection.IsSizePlausible(att.Size) && !isMyg)
         {
-            result.ErrorMessage = $"{result.SanitizedFileName}: Invalid size.";
+            result.ErrorMessage = $"{result.SanitizedFileName}: Tamaño no válido.";
             return result;
         }
 
@@ -52,7 +51,7 @@ public static class NetUtil
 
         if (pkm is null)
         {
-            result.ErrorMessage = $"{result.SanitizedFileName}: Invalid pkm attachment.";
+            result.ErrorMessage = $"{result.SanitizedFileName}: Archivo adjunto de pkm no válido.";
             return result;
         }
 
@@ -64,8 +63,11 @@ public static class NetUtil
 
 public sealed class Download<T> where T : class
 {
-    public bool Success;
     public T? Data;
-    public string? SanitizedFileName;
+
     public string? ErrorMessage;
+
+    public string? SanitizedFileName;
+
+    public bool Success;
 }

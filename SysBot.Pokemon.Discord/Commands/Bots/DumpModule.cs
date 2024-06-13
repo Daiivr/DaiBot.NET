@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.Discord;
 
-[Summary("Queues new Dump trades")]
+[Summary("Pone en cola nuevas operaciones de dump")]
 public class DumpModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new()
 {
     private static TradeQueueInfo<T> Info => SysCord<T>.Runner.Hub.Queues.Info;
@@ -63,6 +63,10 @@ public class DumpModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
             totalBatchTrades: 1,
             isMysteryEgg: false,
             lgcode: lgcode);
+
+        // Delete the command message after 2 seconds
+        await Task.Delay(2000);
+        await Context.Message.DeleteAsync();
     }
 
     [Command("dump")]
@@ -156,7 +160,7 @@ public class DumpModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
         var embed = new EmbedBuilder();
         embed.AddField(x =>
         {
-            x.Name = "Pending Trades";
+            x.Name = "Tradeos pendientes";
             x.Value = msg;
             x.IsInline = false;
         });

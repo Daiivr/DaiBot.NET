@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using SysBot.Pokemon.Discord;
 using System;
 
+namespace SysBot.Pokemon.Discord;
+
 public class HelloModule : ModuleBase<SocketCommandContext>
 {
     [Command("hello")]

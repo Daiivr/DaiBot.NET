@@ -20,9 +20,9 @@ namespace SysBot.Pokemon.Discord
             if (userMessage.Attachments.Count == 0)
             {
                 var reply = await ReplyAsync("<a:warning:1206483664939126795> Adjunte una imagen GIF para establecerla como avatar.."); // standard (boring) images can be set via dashboard
-                await Task.Delay(60000); 
-                await userMessage.DeleteAsync(); 
-                await reply.DeleteAsync(); 
+                await Task.Delay(60000);
+                await userMessage.DeleteAsync();
+                await reply.DeleteAsync();
                 return;
             }
             var attachment = userMessage.Attachments.First();
@@ -38,7 +38,7 @@ namespace SysBot.Pokemon.Discord
             using var httpClient = new HttpClient();
             var imageBytes = await httpClient.GetByteArrayAsync(attachment.Url);
 
-            using var ms = new MemoryStream(imageBytes);
+            await using var ms = new MemoryStream(imageBytes);
             var image = new Image(ms);
             await Context.Client.CurrentUser.ModifyAsync(user => user.Avatar = image);
 

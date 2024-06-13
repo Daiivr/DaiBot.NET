@@ -17,7 +17,7 @@ public static class EchoUtil
             }
             catch (Exception ex)
             {
-                LogUtil.LogInfo($"Exception: {ex} occurred while trying to echo: {message} to the forwarder: {fwd}", "Echo");
+                LogUtil.LogInfo($"Excepción: {ex} ocurrió al intentar hacer eco: {message} al reenviador: {fwd}", "Echo");
                 LogUtil.LogSafe(ex, "Echo");
             }
         }

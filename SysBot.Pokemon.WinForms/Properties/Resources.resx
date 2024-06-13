@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -142,7 +142,7 @@
   <data name="sv_mode_image" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\sv_mode_image.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-    <data name="stopall" type="System.Resources.ResXFileRef, System.Windows.Forms">
+  <data name="stopall" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\stopall.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="update" type="System.Resources.ResXFileRef, System.Windows.Forms">

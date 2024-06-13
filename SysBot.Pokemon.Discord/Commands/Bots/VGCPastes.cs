@@ -19,26 +19,24 @@ namespace SysBot.Pokemon.Discord
     {
         // Uses VGCPastes Repository Spreadsheet in which they keep track of all current teams
         // https://twitter.com/VGCPastes
-        private async Task<string> DownloadSpreadsheetAsCsv()
+        private static async Task<string> DownloadSpreadsheetAsCsv()
         {
             var GID = SysCord<T>.Runner.Config.Trade.VGCPastesConfiguration.GID;
             var csvUrl = $"https://docs.google.com/spreadsheets/d/1axlwmzPA49rYkqXh7zHvAtSP-TKbM0ijGYBPRflLSWw/export?format=csv&gid={GID}";
             using var httpClient = new HttpClient();
             var response = await httpClient.GetAsync(csvUrl);
             response.EnsureSuccessStatusCode();
-            var csvData = await response.Content.ReadAsStringAsync();
-            return csvData;
+            return await response.Content.ReadAsStringAsync();
         }
 
         private async Task<List<List<string>>> FetchSpreadsheetData()
         {
-            var csvData = await DownloadSpreadsheetAsCsv();
+            var csvData = await VGCPastes<T>.DownloadSpreadsheetAsCsv();
             var rows = csvData.Split('\n');
-            var data = rows.Select(row => row.Split(',').Select(cell => cell.Trim('"')).ToList()).ToList();
-            return data;
+            return rows.Select(row => row.Split(',').Select(cell => cell.Trim('"')).ToList()).ToList();
         }
 
-        private static List<(string TrainerName, string PokePasteUrl, string TeamDescription, string DateShared, string RentalCode)> ParsePokePasteData(List<List<string>> data, string pokemonName = null)
+        private static List<(string TrainerName, string PokePasteUrl, string TeamDescription, string DateShared, string RentalCode)> ParsePokePasteData(List<List<string>> data, string? pokemonName = null)
         {
             var pokePasteData = new List<(string TrainerName, string PokePasteUrl, string TeamDescription, string DateShared, string RentalCode)>();
             for (int i = 3; i < data.Count; i++)
@@ -77,7 +75,7 @@ namespace SysBot.Pokemon.Discord
             return pokePasteData;
         }
 
-        private (string PokePasteUrl, List<string> RowData) SelectRandomPokePasteUrl(List<List<string>> data, string pokemonName = null)
+        private static (string PokePasteUrl, List<string> RowData) SelectRandomPokePasteUrl(List<List<string>> data, string? pokemonName = null)
         {
             var filteredData = data.Where(row => row.Count > 40 && Uri.IsWellFormedUriString(row[24]?.Trim('"'), UriKind.Absolute));
 
@@ -90,14 +88,18 @@ namespace SysBot.Pokemon.Discord
 
             var validPokePastes = filteredData.ToList();
 
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
             if (validPokePastes.Count == 0) return (null, null);
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
 
             var random = new Random();
             var randomIndex = random.Next(validPokePastes.Count);
             var selectedRow = validPokePastes[randomIndex];
             var pokePasteUrl = selectedRow[24]?.Trim('"');
 
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
             return (pokePasteUrl, selectedRow);
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
         }
 
         // Adjusted command method to use the new selection logic with Pokémon name filtering
@@ -105,7 +107,7 @@ namespace SysBot.Pokemon.Discord
         [Alias("rt", "RandomTeam", "Rt")]
         [Summary("Genera un equipo VGC aleatorio a partir de la hoja de cálculo de Google especificada y lo envía como archivos a través de DM.")]
         [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-        public async Task GenerateSpreadsheetTeamAsync(string pokemonName = null)
+        public async Task GenerateSpreadsheetTeamAsync(string? pokemonName = null)
         {
             if (!SysCord<T>.Runner.Config.Trade.VGCPastesConfiguration.AllowRequests)
             {
@@ -119,10 +121,10 @@ namespace SysBot.Pokemon.Discord
                 var spreadsheetData = await FetchSpreadsheetData();
 
                 // Use the adjusted method to select a random PokePaste URL (and row data) based on the Pokémon name
-                var (PokePasteUrl, selectedRow) = SelectRandomPokePasteUrl(spreadsheetData, pokemonName);
+                var (PokePasteUrl, selectedRow) = VGCPastes<T>.SelectRandomPokePasteUrl(spreadsheetData, pokemonName);
                 if (PokePasteUrl == null)
                 {
-                    await ReplyAsync("Failed to find a valid PokePaste URL with the specified Pokémon.");
+                    await ReplyAsync("<a:warning:1206483664939126795> No se pudo encontrar una URL de Poke Paste válida con el Pokémon especificado.");
                     return;
                 }
 
@@ -145,10 +147,14 @@ namespace SysBot.Pokemon.Discord
                 }
 
                 var namer = new GengarNamer();
+#pragma warning disable CA1416 // Validate platform compatibility
                 var pokemonImages = new List<System.Drawing.Image>();
+#pragma warning restore CA1416 // Validate platform compatibility
 
+#pragma warning disable CS8604 // Possible null reference argument.
                 var sanitizedTeamDescription = SanitizeFileName(teamDescription);
-                using var memoryStream = new MemoryStream();
+#pragma warning restore CS8604 // Possible null reference argument.
+                await using var memoryStream = new MemoryStream();
                 using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
                 {
                     foreach (var set in showdownSets)
@@ -172,12 +178,16 @@ namespace SysBot.Pokemon.Discord
                             var speciesName = GameInfo.GetStrings("en").Species[set.Species];
                             var fileName = namer.GetName(pk);
                             var entry = archive.CreateEntry($"{fileName}.{pk.Extension}");
-                            using var entryStream = entry.Open();
+                            await using var entryStream = entry.Open();
                             await entryStream.WriteAsync(pk.Data.AsMemory(0, pk.Data.Length));
 
                             string speciesImageUrl = AbstractTrade<PK9>.PokeImg(pk, false, false);
+#pragma warning disable CA1416 // Validate platform compatibility
                             var speciesImage = System.Drawing.Image.FromStream(await new HttpClient().GetStreamAsync(speciesImageUrl));
+#pragma warning restore CA1416 // Validate platform compatibility
+#pragma warning disable CA1416 // Validate platform compatibility
                             pokemonImages.Add(speciesImage);
+#pragma warning restore CA1416 // Validate platform compatibility
                         }
                         catch (Exception ex)
                         {
@@ -193,13 +203,17 @@ namespace SysBot.Pokemon.Discord
 
                 // Send the ZIP file to the user's DM
                 var zipFileName = $"{sanitizedTeamDescription}.zip";
-                await Context.User.SendFileAsync(memoryStream, zipFileName, text: "Aquí está tu equipo!");
+                await Context.User.SendFileAsync(memoryStream, zipFileName);
 
                 // Save the combined image as a file
+#pragma warning disable CA1416 // Validate platform compatibility
                 combinedImage.Save("spreadsheetteam.png");
-                using (var imageStream = new MemoryStream())
+#pragma warning restore CA1416 // Validate platform compatibility
+                await using (var imageStream = new MemoryStream())
                 {
+#pragma warning disable CA1416 // Validate platform compatibility
                     combinedImage.Save(imageStream, System.Drawing.Imaging.ImageFormat.Png);
+#pragma warning restore CA1416 // Validate platform compatibility
                     imageStream.Position = 0;
 
                     var embedBuilder = new EmbedBuilder()
@@ -215,7 +229,7 @@ namespace SysBot.Pokemon.Discord
                         .AddField("__**Nombre del entrenador**__:", trainerName, true)
                         .AddField("__**Fecha compartida**__:", dateShared, true)
                         .WithDescription(
-                                $"{(rentalCode != "Ninguno" ? $"**Código de alquiler:** `{rentalCode}`" : "")}" 
+                                $"{(rentalCode != "Ninguno" ? $"**Código de alquiler:** `{rentalCode}`" : "")}"
                             )
                         .WithImageUrl($"attachment://spreadsheetteam.png")
                         .WithFooter($"Equipo Legalizado Enviado al MD de {Context.User.Username}")
@@ -245,8 +259,7 @@ namespace SysBot.Pokemon.Discord
         {
             var httpClient = new HttpClient();
             var pokePasteHtml = await httpClient.GetStringAsync(pokePasteUrl);
-            var showdownSets = ParseShowdownSets(pokePasteHtml);
-            return showdownSets;
+            return ParseShowdownSets(pokePasteHtml);
         }
 
         private static List<ShowdownSet> ParseShowdownSets(string pokePasteHtml)
@@ -258,6 +271,7 @@ namespace SysBot.Pokemon.Discord
             {
                 var showdownText = match.Groups[1].Value;
                 showdownText = System.Net.WebUtility.HtmlDecode(Regex.Replace(showdownText, "<.*?>", string.Empty));
+
                 // Update the level to 100 in the showdown set since some level's don't meet minimum requirements
                 showdownText = Regex.Replace(showdownText, @"(?i)(?<=\bLevel: )\d+", "100");
                 var set = new ShowdownSet(showdownText);
@@ -269,19 +283,31 @@ namespace SysBot.Pokemon.Discord
 
         private static System.Drawing.Image CombineImages(List<System.Drawing.Image> images)
         {
+#pragma warning disable CA1416 // Validate platform compatibility
             int width = images.Sum(img => img.Width);
+#pragma warning restore CA1416 // Validate platform compatibility
+#pragma warning disable CA1416 // Validate platform compatibility
             int height = images.Max(img => img.Height);
+#pragma warning restore CA1416 // Validate platform compatibility
 
+#pragma warning disable CA1416 // Validate platform compatibility
             Bitmap combinedImage = new Bitmap(width, height);
+#pragma warning restore CA1416 // Validate platform compatibility
+#pragma warning disable CA1416 // Validate platform compatibility
             using (Graphics g = Graphics.FromImage(combinedImage))
             {
                 int offset = 0;
                 foreach (System.Drawing.Image img in images)
                 {
+#pragma warning disable CA1416 // Validate platform compatibility
                     g.DrawImage(img, offset, 0);
+#pragma warning restore CA1416 // Validate platform compatibility
+#pragma warning disable CA1416 // Validate platform compatibility
                     offset += img.Width;
+#pragma warning restore CA1416 // Validate platform compatibility
                 }
             }
+#pragma warning restore CA1416 // Validate platform compatibility
 
             return combinedImage;
         }
@@ -289,8 +315,7 @@ namespace SysBot.Pokemon.Discord
         private static string SanitizeFileName(string fileName)
         {
             var invalidChars = Path.GetInvalidFileNameChars();
-            var validName = string.Join("_", fileName.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
-            return validName;
+            return string.Join("_", fileName.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
         }
 
         private static DiscordColor GetTypeColor()

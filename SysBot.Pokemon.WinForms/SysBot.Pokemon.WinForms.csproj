@@ -3,10 +3,10 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
-	<RuntimeIdentifier>win-x86</RuntimeIdentifier>
+    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
     <UseWindowsForms>true</UseWindowsForms>
-	<AssemblyName>DaiBot</AssemblyName>
-	<SelfContained>false</SelfContained>
+    <AssemblyName>MergeBot</AssemblyName>
+    <SelfContained>false</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
@@ -24,9 +24,9 @@
     <EmbedAllSources>true</EmbedAllSources>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     <PublishTrimmed>false</PublishTrimmed>
-	<Authors>Kaphotics, Gengar</Authors>
+    <Authors>Kaphotics, Gengar</Authors>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="PKHeX.Core" Version="24.6.3" />
     <PackageReference Include="System.Resources.Extensions" Version="8.0.0" />

@@ -2,12 +2,11 @@ using Discord;
 using Discord.Commands;
 using PKHeX.Core;
 using System;
-using System.Reflection.Emit;
 using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.Discord;
 
-[Summary("Queues new Clone trades")]
+[Summary("Pone en cola nuevos intercambios de clonacion")]
 public class CloneModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new()
 {
     private static TradeQueueInfo<T> Info => SysCord<T>.Runner.Hub.Queues.Info;
@@ -53,7 +52,12 @@ public class CloneModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         await QueueHelper<T>.AddToQueueAsync(Context, code, Context.User.Username, sig, new T(), PokeRoutineType.Clone, PokeTradeType.Clone, Context.User, false, 1, 1, false, false, lgcode);
 
-        var confirmationMessage = await ReplyAsync("⏳ Procesando su solicitud de clonación...").ConfigureAwait(false);
+        var confirmationMessage = await ReplyAsync("<a:loading:1210133423050719283> Procesando su solicitud de clonación...").ConfigureAwait(false);
+
+        await Task.Delay(2000).ConfigureAwait(false);
+
+        if (Context.Message is IUserMessage userMessage)
+            await userMessage.DeleteAsync().ConfigureAwait(false);
 
         if (confirmationMessage != null)
             await confirmationMessage.DeleteAsync().ConfigureAwait(false);
@@ -101,7 +105,12 @@ public class CloneModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         await QueueHelper<T>.AddToQueueAsync(Context, tradeCode == 0 ? Info.GetRandomTradeCode(userID) : tradeCode, Context.User.Username, sig, new T(), PokeRoutineType.Clone, PokeTradeType.Clone, Context.User, false, 1, 1, false, false, lgcode);
 
-        var confirmationMessage = await ReplyAsync("⏳ Procesando su solicitud de clonación...").ConfigureAwait(false);
+        var confirmationMessage = await ReplyAsync("<a:loading:1210133423050719283> Procesando su solicitud de clonación...").ConfigureAwait(false);
+
+        await Task.Delay(2000).ConfigureAwait(false);
+
+        if (Context.Message is IUserMessage userMessage)
+            await userMessage.DeleteAsync().ConfigureAwait(false);
 
         if (confirmationMessage != null)
             await confirmationMessage.DeleteAsync().ConfigureAwait(false);
@@ -116,7 +125,6 @@ public class CloneModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var userID = Context.User.Id;
         var code = Info.GetRandomTradeCode(userID);
         return CloneAsync(code);
-
     }
 
     [Command("cloneList")]

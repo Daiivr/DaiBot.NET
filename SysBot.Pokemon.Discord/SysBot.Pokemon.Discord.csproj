@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>none</DebugType>
   </PropertyGroup>
 
@@ -20,7 +20,7 @@
     <ProjectReference Include="..\SysBot.Pokemon\SysBot.Pokemon.csproj" />
   </ItemGroup>
 
-<ItemGroup>
+  <ItemGroup>
     <Reference Include="PKHeX.Core.AutoMod">
       <HintPath>..\SysBot.Pokemon\deps\PKHeX.Core.AutoMod.dll</HintPath>
     </Reference>

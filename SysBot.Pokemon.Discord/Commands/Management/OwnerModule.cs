@@ -1,3 +1,4 @@
+using AnimatedGif;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
@@ -6,14 +7,12 @@ using PKHeX.Core;
 using SysBot.Pokemon.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using AnimatedGif;
-using System.Drawing;
 using Color = System.Drawing.Color;
 using DiscordColor = Discord.Color;
 
@@ -83,7 +82,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
         settings.ServerBlacklist.AddIfNew([newServerAccess]);
 
         await server.LeaveAsync();
-        await ReplyAsync($"<a:yes:1206485105674166292> Deje el servidor '{server.Name}' y lo agregue a la lista negra.");
+        await ReplyAsync($"<a:yes:1206485105674166292> He dejado el servidor '{server.Name}' y lo agregue a la lista negra.");
     }
 
     [Command("unblacklistserver")]
@@ -115,7 +114,6 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     [Command("addSudo")]
     [Summary("Agrega el usuario mencionado al sudo global")]
     [RequireOwner]
-    // ReSharper disable once UnusedParameter.Global
     public async Task SudoUsers([Remainder] string _)
     {
         var users = Context.Message.MentionedUsers;
@@ -127,7 +125,6 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     [Command("removeSudo")]
     [Summary("Elimina el usuario mencionado del sudo global")]
     [RequireOwner]
-    // ReSharper disable once UnusedParameter.Global
     public async Task RemoveSudoUsers([Remainder] string _)
     {
         var users = Context.Message.MentionedUsers;
@@ -139,7 +136,6 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     [Command("addChannel")]
     [Summary("Agrega un canal a la lista de canales que aceptan comandos.")]
     [RequireOwner]
-    // ReSharper disable once UnusedParameter.Global
     public async Task AddChannel()
     {
         var obj = GetReference(Context.Message.Channel);
@@ -180,7 +176,6 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     [Command("removeChannel")]
     [Summary("Elimina un canal de la lista de canales que aceptan comandos.")]
     [RequireOwner]
-    // ReSharper disable once UnusedParameter.Global
     public async Task RemoveChannel()
     {
         var obj = GetReference(Context.Message.Channel);
@@ -192,7 +187,6 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     [Alias("bye")]
     [Summary("Abandona el servidor actual.")]
     [RequireOwner]
-    // ReSharper disable once UnusedParameter.Global
     public async Task Leave()
     {
         await ReplyAsync("Goodbye.").ConfigureAwait(false);
@@ -203,7 +197,6 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     [Alias("lg")]
     [Summary("Abandona el servidor según la identificación proporcionada.")]
     [RequireOwner]
-    // ReSharper disable once UnusedParameter.Global
     public async Task LeaveGuild(string userInput)
     {
         if (!ulong.TryParse(userInput, out ulong id))
@@ -226,7 +219,6 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     [Command("leaveall")]
     [Summary("Deja todos los servidores en los que se encuentra actualmente el bot.")]
     [RequireOwner]
-    // ReSharper disable once UnusedParameter.Global
     public async Task LeaveAll()
     {
         await ReplyAsync("<a:yes:1206485105674166292> Abandonando todos los servidores.").ConfigureAwait(false);
@@ -271,7 +263,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
         }
 
         using MemoryStream ms = new(bytes);
-        var img = "cap.jpg";
+        const string img = "cap.jpg";
         var embed = new EmbedBuilder { ImageUrl = $"attachment://{img}", Color = (DiscordColor?)Color.Purple }
             .WithFooter(new EmbedFooterBuilder { Text = $"Aquí está tu captura de pantalla." });
 
@@ -300,7 +292,7 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
                     await ReplyAsync($"<a:warning:1206483664939126795> No se encontró ningún bot con la dirección IP: ({ip}).").ConfigureAwait(false);
                     return;
                 }
-                var screenshotCount = 10;
+                const int screenshotCount = 10;
                 var screenshotInterval = TimeSpan.FromSeconds(0.1 / 10);
 #pragma warning disable CA1416 // Validate platform compatibility
                 var gifFrames = new List<System.Drawing.Image>();
@@ -324,9 +316,15 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
                     }
                     using (var ms = new MemoryStream(bytes))
                     {
+#pragma warning disable CA1416 // Validate platform compatibility
                         using var bitmap = new Bitmap(ms);
+#pragma warning restore CA1416 // Validate platform compatibility
+#pragma warning disable CA1416 // Validate platform compatibility
                         var frame = bitmap.Clone(new Rectangle(0, 0, bitmap.Width, bitmap.Height), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+#pragma warning restore CA1416 // Validate platform compatibility
+#pragma warning disable CA1416 // Validate platform compatibility
                         gifFrames.Add(frame);
+#pragma warning restore CA1416 // Validate platform compatibility
                     }
                     await Task.Delay(screenshotInterval).ConfigureAwait(false);
                 }
@@ -337,20 +335,26 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
                         foreach (var frame in gifFrames)
                         {
                             gif.AddFrame(frame);
+#pragma warning disable CA1416 // Validate platform compatibility
                             frame.Dispose();
+#pragma warning restore CA1416 // Validate platform compatibility
                         }
                     }
                     ms.Position = 0;
-                    var gifFileName = "screenshot.gif";
+                    const string gifFileName = "screenshot.gif";
                     var embed = new EmbedBuilder { ImageUrl = $"attachment://{gifFileName}", Color = (DiscordColor?)Color.Red }
                         .WithFooter(new EmbedFooterBuilder { Text = "Here's your GIF." });
                     await Context.Channel.SendFileAsync(ms, gifFileName, embed: embed.Build()).ConfigureAwait(false);
                 }
                 foreach (var frame in gifFrames)
                 {
+#pragma warning disable CA1416 // Validate platform compatibility
                     frame.Dispose();
+#pragma warning restore CA1416 // Validate platform compatibility
                 }
+#pragma warning disable CA1416 // Validate platform compatibility
                 gifFrames.Clear();
+#pragma warning restore CA1416 // Validate platform compatibility
             }
             catch (Exception ex)
             {
@@ -366,7 +370,9 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
             var jsonData = File.ReadAllText(TradeBot.ConfigPath);
             var config = JObject.Parse(jsonData);
 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             var ip = config["Bots"][0]["Connection"]["IP"].ToString();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
             return ip;
         }
         catch (Exception ex)
@@ -380,7 +386,6 @@ public class OwnerModule<T> : SudoModule<T> where T : PKM, new()
     [Alias("shutdown")]
     [Summary("Hace que todo el proceso termine solo!")]
     [RequireOwner]
-    // ReSharper disable once UnusedParameter.Global
     public async Task ExitProgram()
     {
         await Context.Channel.EchoAndReply("<a:yes:1206485105674166292> Cerrando... ¡adiós! **Los servicios de bots se están desconectando.**").ConfigureAwait(false);

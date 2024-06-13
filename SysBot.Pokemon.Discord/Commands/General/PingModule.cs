@@ -10,13 +10,15 @@ using System.Threading.Tasks;
 using System.IO;
 using System;
 
+namespace SysBot.Pokemon.Discord;
+
 public class PingModule : ModuleBase<SocketCommandContext>
 {
     private const string StatsFilePath = "user_stats.json";
 
     [Command("ping")]
     [Summary("Hace que el bot responda, indicando que se está ejecutando. O desafía a otro usuario si se menciona.")]
-    public async Task PingAsync(IUser opponent = null)
+    public async Task PingAsync(IUser? opponent = null)
     {
         var userId = Context.User.Id.ToString();
         var stats = LoadOrCreateStats();

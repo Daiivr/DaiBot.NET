@@ -1,22 +1,14 @@
 using PKHeX.Core;
 using SysBot.Base;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TwitchLib.Client;
-using System.Collections.Generic;
 
 namespace SysBot.Pokemon.Twitch
 {
     public class TwitchTradeNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new()
     {
-        private T Data { get; }
-        private PokeTradeTrainerInfo Info { get; }
-        private int Code { get; }
-        private string Username { get; }
-        private TwitchClient Client { get; }
-        private string Channel { get; }
-        private TwitchSettings Settings { get; }
-
         public TwitchTradeNotifier(T data, PokeTradeTrainerInfo info, int code, string username, TwitchClient client, string channel, TwitchSettings settings)
         {
             Data = data;
@@ -27,10 +19,31 @@ namespace SysBot.Pokemon.Twitch
             Channel = channel;
             Settings = settings;
 
-            LogUtil.LogText($"Created trade details for {Username} - {Code}");
+            LogUtil.LogText($"Detalles comerciales creados para {Username} - {Code}");
         }
 
         public Action<PokeRoutineExecutor<T>>? OnFinish { private get; set; }
+
+        private string Channel { get; }
+
+        private TwitchClient Client { get; }
+
+        private int Code { get; }
+
+        private T Data { get; }
+
+        private PokeTradeTrainerInfo Info { get; }
+
+        private TwitchSettings Settings { get; }
+
+        private string Username { get; }
+
+        // Dummy methods because not available on Twitch.
+        public void SendEtumrepEmbed(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, IReadOnlyList<PA8> pkms)
+        { }
+
+        public void SendIncompleteEtumrepEmbed(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, string msg, IReadOnlyList<PA8> pkms)
+        { }
 
         public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, string message)
         {
@@ -38,10 +51,26 @@ namespace SysBot.Pokemon.Twitch
             SendMessage($"@{info.Trainer.TrainerName}: {message}", Settings.NotifyDestination);
         }
 
+        public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeSummary message)
+        {
+            var msg = message.Summary;
+            if (message.Details.Count > 0)
+                msg += ", " + string.Join(", ", message.Details.Select(z => $"{z.Heading}: {z.Detail}"));
+            LogUtil.LogText(msg);
+            SendMessage(msg, Settings.NotifyDestination);
+        }
+
+        public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result, string message)
+        {
+            var msg = $"Detalles para {result.FileName}: " + message;
+            LogUtil.LogText(msg);
+            SendMessage(msg, Settings.NotifyDestination);
+        }
+
         public void TradeCanceled(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeResult msg)
         {
             OnFinish?.Invoke(routine);
-            var line = $"@{info.Trainer.TrainerName}: Trade canceled, {msg}";
+            var line = $"⚠️ @{info.Trainer.TrainerName}: trade cancelado, {msg}";
             LogUtil.LogText(line);
             SendMessage(line, Settings.TradeCanceledDestination);
         }
@@ -50,7 +79,7 @@ namespace SysBot.Pokemon.Twitch
         {
             OnFinish?.Invoke(routine);
             var tradedToUser = Data.Species;
-            var message = $"@{info.Trainer.TrainerName}: " + (tradedToUser != 0 ? $"Trade finished. Enjoy your {(Species)tradedToUser}!" : "Trade finished!");
+            var message = $"@{info.Trainer.TrainerName}: " + (tradedToUser != 0 ? $"✅ Intercambio terminado. Disfrute de su {(Species)tradedToUser}!" : "✅ Intercambio terminado!");
             LogUtil.LogText(message);
             SendMessage(message, Settings.TradeFinishDestination);
         }
@@ -80,22 +109,6 @@ namespace SysBot.Pokemon.Twitch
             SendMessage($"@{info.Trainer.TrainerName} {message}", dest);
         }
 
-        public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, PokeTradeSummary message)
-        {
-            var msg = message.Summary;
-            if (message.Details.Count > 0)
-                msg += ", " + string.Join(", ", message.Details.Select(z => $"{z.Heading}: {z.Detail}"));
-            LogUtil.LogText(msg);
-            SendMessage(msg, Settings.NotifyDestination);
-        }
-
-        public void SendNotification(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, T result, string message)
-        {
-            var msg = $"Detalles para {result.FileName}: " + message;
-            LogUtil.LogText(msg);
-            SendMessage(msg, Settings.NotifyDestination);
-        }
-
         private void SendMessage(string message, TwitchMessageDestination dest)
         {
             switch (dest)
@@ -103,14 +116,11 @@ namespace SysBot.Pokemon.Twitch
                 case TwitchMessageDestination.Channel:
                     Client.SendMessage(Channel, message);
                     break;
+
                 case TwitchMessageDestination.Whisper:
                     Client.SendWhisper(Username, message);
                     break;
             }
         }
-
-        // Dummy methods because not available on Twitch.
-        public void SendEtumrepEmbed(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, IReadOnlyList<PA8> pkms) { }
-        public void SendIncompleteEtumrepEmbed(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info, string msg, IReadOnlyList<PA8> pkms) { }
     }
 }

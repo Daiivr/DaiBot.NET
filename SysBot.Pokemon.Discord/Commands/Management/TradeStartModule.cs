@@ -31,6 +31,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
     }
 
 #pragma warning disable RCS1158 // Static member in generic type should use a type parameter.
+
     public static void RestoreTradeStarting(DiscordSocketClient discord)
     {
         _discordClient = discord; // Store the DiscordSocketClient instance
@@ -77,8 +78,10 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
         {
             if (detail.Type == PokeTradeType.Random) return;
 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             var user = _discordClient.GetUser(detail.Trainer.ID);
-            if (user == null) { Console.WriteLine($"User not found for ID {detail.Trainer.ID}."); return; }
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+            if (user == null) { Console.WriteLine($"<a:warning:1206483664939126795> Usuario no encontrado para ID {detail.Trainer.ID}."); return; }
 
             string speciesName = detail.TradeData != null ? GameInfo.Strings.Species[detail.TradeData.Species] : "";
             string ballImgUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/36e891cc02fe283cd70d9fc8fef2f3c490096d6c/imgs/difficulty.png";
@@ -90,16 +93,21 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                 ballName = ballName == "pokéball" ? "pokeball" : (ballName.Contains("(la)") ? "la" + ballName : ballName);
                 ballImgUrl = $"https://raw.githubusercontent.com/bdawg1989/sprites/main/AltBallImg/28x28/{ballName}.png";
             }
+
+#pragma warning disable CS8604 // Possible null reference argument.
             var embedData = DetailsExtractor<T>.ExtractPokemonDetails(detail.TradeData, user, detail.IsMysteryEgg, false, false, false, false, false, 0, 0, detail.Type);
+#pragma warning restore CS8604 // Possible null reference argument.
 
             // Configura el título y la imagen de acuerdo al tipo de comercio
-            string tradeTitle;
+            string? tradeTitle;
             string embedImageUrl;
 
             if (detail.Type == PokeTradeType.Item)
             {
                 tradeTitle = embedData.HeldItem; // Nombre del item como título
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                 string heldItemName = embedData.HeldItem.ToLower().Replace(" ", "");
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 embedImageUrl = $"https://serebii.net/itemdex/sprites/sv/{heldItemName}.png";
                 ballImgUrl = AbstractTrade<T>.PokeImg(detail.TradeData, false, true);
             }
@@ -189,6 +197,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
         Name = channel.Name,
         Comment = $"Añadido por {Context.User.Username} el {DateTime.Now:yyyy.MM.dd-hh:mm:ss}",
     };
+
     public static async Task<(int R, int G, int B)> GetDominantColorAsync(string imagePath)
     {
         try
@@ -196,11 +205,15 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
             Bitmap image = await LoadImageAsync(imagePath);
 
             var colorCount = new Dictionary<Color, int>();
+#pragma warning disable CA1416 // Validate platform compatibility
             for (int y = 0; y < image.Height; y++)
             {
+#pragma warning disable CA1416 // Validate platform compatibility
                 for (int x = 0; x < image.Width; x++)
                 {
+#pragma warning disable CA1416 // Validate platform compatibility
                     var pixelColor = image.GetPixel(x, y);
+#pragma warning restore CA1416 // Validate platform compatibility
 
                     if (pixelColor.A < 128 || pixelColor.GetBrightness() > 0.9) continue;
 
@@ -223,9 +236,13 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                         colorCount[quantizedColor] = combinedFactor;
                     }
                 }
+#pragma warning restore CA1416 // Validate platform compatibility
             }
+#pragma warning restore CA1416 // Validate platform compatibility
 
+#pragma warning disable CA1416 // Validate platform compatibility
             image.Dispose();
+#pragma warning restore CA1416 // Validate platform compatibility
 
             if (colorCount.Count == 0)
                 return (255, 255, 255);
@@ -236,7 +253,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
         catch (Exception ex)
         {
             // Log or handle exceptions as needed
-            Console.WriteLine($"Error processing image from {imagePath}. Error: {ex.Message}");
+            Console.WriteLine($"Error al procesar la imagen de {imagePath}. Error: {ex.Message}");
             return (255, 255, 255);  // Default to white if an exception occurs
         }
     }
@@ -247,12 +264,16 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
         {
             using var httpClient = new HttpClient();
             using var response = await httpClient.GetAsync(imagePath);
-            using var stream = await response.Content.ReadAsStreamAsync();
+            await using var stream = await response.Content.ReadAsStreamAsync();
+#pragma warning disable CA1416 // Validate platform compatibility
             return new Bitmap(stream);
+#pragma warning restore CA1416 // Validate platform compatibility
         }
         else
         {
+#pragma warning disable CA1416 // Validate platform compatibility
             return new Bitmap(imagePath);
+#pragma warning restore CA1416 // Validate platform compatibility
         }
     }
 }

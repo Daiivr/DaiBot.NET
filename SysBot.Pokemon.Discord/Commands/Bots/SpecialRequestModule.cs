@@ -15,8 +15,8 @@ namespace SysBot.Pokemon.Discord
     /// <summary>
     /// Provides functionality for listing and requesting Pokémon wondercard events via Discord commands.
     /// Users can interact with the system in multiple ways:
-    /// 
-    /// 1. Listing Events: 
+    ///
+    /// 1. Listing Events:
     ///    - Users can list events from a specified generation or game. Optionally, users can filter this list by specifying a Pokémon species name.
     ///    - Command format: .srp {generationOrGame} [speciesName] [pageX]
     ///    - Example: .srp gen9 Mew page2
@@ -39,6 +39,7 @@ namespace SysBot.Pokemon.Discord
     public class SpecialRequestModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new()
     {
         private const int itemsPerPage = 25;
+
         private static TradeQueueInfo<T> Info => SysCord<T>.Runner.Hub.Queues.Info;
 
         private static T? GetRequest(Download<PKM> dl)
@@ -84,15 +85,14 @@ namespace SysBot.Pokemon.Discord
             var eventData = GetEventData(generationOrGame);
             if (eventData == null)
             {
-                await ReplyAsync($"<a:warning:1206483664939126795> Generación o juego no válido: {generationOrGame}").ConfigureAwait(false); ;
+                await ReplyAsync($"<a:warning:1206483664939126795> Generación o juego no válido: {generationOrGame}").ConfigureAwait(false);
                 return;
             }
 
             var allEvents = GetFilteredEvents(eventData, speciesName);
             if (!allEvents.Any())
             {
-                await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention} No se han encontrado eventos para {generationOrGame} con el filtro especificado.").ConfigureAwait(false); ;
-                return;
+                await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention} No se han encontrado eventos para {generationOrGame} con el filtro especificado.").ConfigureAwait(false);
             }
 
             var pageCount = (int)Math.Ceiling((double)allEvents.Count() / itemsPerPage);
@@ -110,7 +110,7 @@ namespace SysBot.Pokemon.Discord
         {
             if (!int.TryParse(args, out int index))
             {
-                await ReplyAsync("<a:warning:1206483664939126795> Índice de eventos no válido. Utilice un número de evento válido del comando").ConfigureAwait(false); ;
+                await ReplyAsync("<a:warning:1206483664939126795> Índice de eventos no válido. Utilice un número de evento válido del comando").ConfigureAwait(false);
                 return;
             }
 
@@ -178,6 +178,10 @@ namespace SysBot.Pokemon.Discord
             {
                 await ReplyAsync($"<a:Error:1223766391958671454> Ocurrió un error: {ex.Message}").ConfigureAwait(false);
             }
+            finally
+            {
+                await CleanupUserMessageAsync().ConfigureAwait(false);
+            }
         }
 
         private static MysteryGift[]? GetEventData(string generationOrGame)
@@ -213,7 +217,9 @@ namespace SysBot.Pokemon.Discord
                     string formName = ShowdownParsing.GetStringFromForm(gift.Form, GameInfo.Strings, gift.Species, gift.Context);
                     formName = !string.IsNullOrEmpty(formName) ? $"-{formName}" : "";
                     string trainerName = gift.OriginalTrainerName;
+
                     string eventDetails = $"{gift.CardHeader} - {species}{formName} | Lvl.{levelInfo} | OT: {trainerName}";
+
                     return (Index: index + 1, EventInfo: eventDetails);
                 })
                 .OrderBy(x => x.Index);
@@ -226,8 +232,7 @@ namespace SysBot.Pokemon.Discord
                 .WithDescription($"Pagina {page} de {pageCount}")
                 .WithColor(DiscordColor.Blue);
 
-            var pageItems = allEvents.Skip((page - 1) * itemsPerPage).Take(itemsPerPage);
-            foreach (var item in pageItems)
+            foreach (var item in allEvents.Skip((page - 1) * itemsPerPage).Take(itemsPerPage))
             {
                 embed.AddField($"{item.Index}. {item.EventInfo}", $"Usa `{botPrefix}srp {generationOrGame} {item.Index}` en el canal correspondiente para solicitar este evento.");
             }
@@ -286,8 +291,7 @@ namespace SysBot.Pokemon.Discord
                 var (start, end) = GetEncounterDateRange(selectedEvent);
                 if (start.HasValue && end.HasValue)
                 {
-                    var randomDate = GenerateRandomDateInRange(start.Value, end.Value);
-                    pk.MetDate = randomDate;
+                    pk.MetDate = GenerateRandomDateInRange(start.Value, end.Value);
                 }
                 else
                 {
@@ -340,10 +344,12 @@ namespace SysBot.Pokemon.Discord
             return startDate.AddDays(randomDays);
         }
 
-        private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes> lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false, bool isHiddenTrade = false)
+        private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false, bool isHiddenTrade = false)
         {
             lgcode ??= TradeModule<T>.GenerateRandomPictocodes(3);
+#pragma warning disable CS8604 // Possible null reference argument.
             var la = new LegalityAnalysis(pk);
+#pragma warning restore CS8604 // Possible null reference argument.
             if(!la.Valid)
             {
                 var customIconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg"; // Custom icon URL for the embed title
@@ -393,4 +399,3 @@ namespace SysBot.Pokemon.Discord
         }
     }
 }
-

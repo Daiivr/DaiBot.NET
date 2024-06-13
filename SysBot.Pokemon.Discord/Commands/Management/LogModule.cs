@@ -44,20 +44,22 @@ public class LogModule : ModuleBase<SocketCommandContext>
         await ReplyAsync("<a:yes:1206485105674166292> ¡Añadida salida de registro a este canal!").ConfigureAwait(false);
     }
 
-    private static void AddLogChannel(ISocketMessageChannel c, ulong cid)
-    {
-        var logger = new ChannelLogger(cid, c);
-        LogUtil.Forwarders.Add(logger);
-        Channels.Add(cid, logger);
-    }
-
-    [Command("logInfo")]
-    [Summary("Dump la configuración de registro.")]
+    [Command("logClearAll")]
+    [Summary("Borra todas las configuraciones de registro.")]
     [RequireSudo]
-    public async Task DumpLogInfoAsync()
+    public async Task ClearLogsAllAsync()
     {
-        foreach (var c in Channels)
-            await ReplyAsync($"{c.Key} - {c.Value}").ConfigureAwait(false);
+        foreach (var l in Channels)
+        {
+            var entry = l.Value;
+            await ReplyAsync($"<a:yes:1206485105674166292> Registro borrado de: {entry.ChannelName} ({entry.ChannelID}!").ConfigureAwait(false);
+            LogUtil.Forwarders.Remove(entry);
+        }
+
+        LogUtil.Forwarders.RemoveAll(y => Channels.Select(z => z.Value).Contains(y));
+        Channels.Clear();
+        SysCordSettings.Settings.LoggingChannels.Clear();
+        await ReplyAsync("<a:yes:1206485105674166292> ¡Registro borrado de todos los canales!").ConfigureAwait(false);
     }
 
     [Command("logClear")]
@@ -77,22 +79,20 @@ public class LogModule : ModuleBase<SocketCommandContext>
         await ReplyAsync($"<a:yes:1206485105674166292> Registro borrado del canal: {Context.Channel.Name}").ConfigureAwait(false);
     }
 
-    [Command("logClearAll")]
-    [Summary("Borra todas las configuraciones de registro.")]
+    [Command("logInfo")]
+    [Summary("Dump la configuración de registro.")]
     [RequireSudo]
-    public async Task ClearLogsAllAsync()
+    public async Task DumpLogInfoAsync()
     {
-        foreach (var l in Channels)
-        {
-            var entry = l.Value;
-            await ReplyAsync($"<a:yes:1206485105674166292> Registro borrado de: {entry.ChannelName} ({entry.ChannelID}!").ConfigureAwait(false);
-            LogUtil.Forwarders.Remove(entry);
-        }
+        foreach (var c in Channels)
+            await ReplyAsync($"{c.Key} - {c.Value}").ConfigureAwait(false);
+    }
 
-        LogUtil.Forwarders.RemoveAll(y => Channels.Select(z => z.Value).Contains(y));
-        Channels.Clear();
-        SysCordSettings.Settings.LoggingChannels.Clear();
-        await ReplyAsync("<a:yes:1206485105674166292> ¡Registro borrado de todos los canales!").ConfigureAwait(false);
+    private static void AddLogChannel(ISocketMessageChannel c, ulong cid)
+    {
+        var logger = new ChannelLogger(cid, c);
+        LogUtil.Forwarders.Add(logger);
+        Channels.Add(cid, logger);
     }
 
     private RemoteControlAccess GetReference(IChannel channel) => new()

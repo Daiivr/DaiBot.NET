@@ -81,7 +81,7 @@ public sealed record TradeQueueInfo<T>(PokeTradeHub<T> Hub)
         {
             var queue = Hub.Queues.GetQueue(t);
             if (queue.Count == 0)
-                return "Nobody in queue.";
+                return "Nadie en la cola.";
             return queue.Summary();
         }
     }
@@ -128,6 +128,7 @@ public sealed record TradeQueueInfo<T>(PokeTradeHub<T> Hub)
                     continue;
                 }
             }
+
             if (RemoveTradeEntry(detail))
                 removedPending = true;
         }
@@ -188,7 +189,7 @@ public sealed record TradeQueueInfo<T>(PokeTradeHub<T> Hub)
     {
         lock (_sync)
         {
-            LogUtil.LogInfo($"Removing {detail.Trade.Trainer.TrainerName}", nameof(TradeQueueInfo<T>));
+            LogUtil.LogInfo($"Removiendo {detail.Trade.Trainer.TrainerName}", nameof(TradeQueueInfo<T>));
             return UsersInQueue.Remove(detail);
         }
     }
@@ -233,7 +234,6 @@ public sealed record TradeQueueInfo<T>(PokeTradeHub<T> Hub)
         {
             code.Add((Pictocodes)Util.Rand.Next(10));
             code.Add(Pictocodes.Pikachu);
-
         }
         return code;
     }

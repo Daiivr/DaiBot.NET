@@ -15,40 +15,52 @@ namespace SysBot.Pokemon.WinForms
 
         public static async Task<(bool UpdateAvailable, bool UpdateRequired, string NewVersion)> CheckForUpdatesAsync(bool showUpdateForm = false)
         {
-            ReleaseInfo latestRelease = await FetchLatestReleaseAsync();
+            ReleaseInfo? latestRelease = await FetchLatestReleaseAsync();
 
             bool updateAvailable = latestRelease != null && latestRelease.TagName != TradeBot.Version;
+#pragma warning disable CS8604 // Possible null reference argument.
             bool updateRequired = latestRelease?.Prerelease == false && IsUpdateRequired(latestRelease.Body);
+#pragma warning restore CS8604 // Possible null reference argument.
             string? newVersion = latestRelease?.TagName;
 
             if (updateAvailable && showUpdateForm)
             {
+#pragma warning disable CS8604 // Possible null reference argument.
                 UpdateForm updateForm = new(updateRequired, newVersion);
+#pragma warning restore CS8604 // Possible null reference argument.
                 updateForm.ShowDialog();
             }
 
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
             return (updateAvailable, updateRequired, newVersion);
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
         }
 
 
         public static async Task<string> FetchChangelogAsync()
         {
-            ReleaseInfo latestRelease = await FetchLatestReleaseAsync();
+            ReleaseInfo? latestRelease = await FetchLatestReleaseAsync();
 
             if (latestRelease == null)
                 return "No se pudo recuperar la información de la versión más reciente.";
 
+#pragma warning disable CS8603 // Possible null reference return.
             return latestRelease.Body;
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
         public static async Task<string?> FetchDownloadUrlAsync()
         {
-            ReleaseInfo latestRelease = await FetchLatestReleaseAsync();
+            ReleaseInfo? latestRelease = await FetchLatestReleaseAsync();
 
             if (latestRelease == null)
                 return null;
 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+#pragma warning disable CS8604 // Possible null reference argument.
             string? downloadUrl = latestRelease.Assets.FirstOrDefault(a => a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))?.BrowserDownloadUrl;
+#pragma warning restore CS8604 // Possible null reference argument.
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
             return downloadUrl;
         }
@@ -70,7 +82,7 @@ namespace SysBot.Pokemon.WinForms
                 }
 
                 string jsonContent = await response.Content.ReadAsStringAsync();
-                ReleaseInfo release = JsonConvert.DeserializeObject<ReleaseInfo>(jsonContent);
+                ReleaseInfo? release = JsonConvert.DeserializeObject<ReleaseInfo>(jsonContent);
 
                 return release;
             }

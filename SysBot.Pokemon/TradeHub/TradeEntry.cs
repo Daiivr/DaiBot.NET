@@ -24,9 +24,10 @@ public sealed record TradeEntry<T> where T : PKM, new()
     }
 
     /// <summary>
-    /// Checks if the provided <see cref="uid"/> and <see cref="uniqueTradeID"/> match this object's data..
+    /// Checks if the provided <see cref="uid"/> and <see cref="uniqueTradeID"/> match this object's data.
     /// </summary>
     /// <param name="uid"></param>
+    /// <param name="uniqueTradeID"></param>
     /// <param name="type"></param>
     /// <returns></returns>
     public bool Equals(ulong uid, int uniqueTradeID, PokeRoutineType type = 0)

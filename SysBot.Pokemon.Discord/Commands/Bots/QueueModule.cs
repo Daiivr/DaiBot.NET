@@ -12,6 +12,74 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 {
     private static TradeQueueInfo<T> Info => SysCord<T>.Runner.Hub.Queues.Info;
 
+    [Command("queueMode")]
+    [Alias("qm")]
+    [Summary("Cambia la forma en que se controlan las colas (manual/umbral/intervalo).")]
+    [RequireSudo]
+    public async Task ChangeQueueModeAsync([Summary("Queue mode")] QueueOpening mode)
+    {
+        SysCord<T>.Runner.Hub.Config.Queues.QueueToggleMode = mode;
+        await ReplyAsync($"<a:yes:1206485105674166292> Modo de cola cambiado a {mode}.").ConfigureAwait(false);
+    }
+
+    [Command("queueClearAll")]
+    [Alias("qca", "tca")]
+    [Summary("Borra a todos los usuarios de las colas comerciales.")]
+    [RequireSudo]
+    public async Task ClearAllTradesAsync()
+    {
+        Info.ClearAllQueues();
+        await ReplyAsync("<a:yes:1206485105674166292> Borrados todo en la cola de espera.").ConfigureAwait(false);
+    }
+
+    [Command("queueClear")]
+    [Alias("qc", "tc")]
+    [Summary("Borra al usuario de las colas comerciales. No eliminará a un usuario si está siendo procesado.")]
+    public async Task ClearTradeAsync()
+    {
+        string msg = ClearTrade(Context.User.Id);
+        await ReplyAndDeleteAsync(msg, 5, Context.Message).ConfigureAwait(false);
+    }
+
+    [Command("queueClearUser")]
+    [Alias("qcu", "tcu")]
+    [Summary("Borra al usuario de las colas comerciales. No eliminará a un usuario si está siendo procesado.")]
+    [RequireSudo]
+    public async Task ClearTradeUserAsync([Summary("Discord user ID")] ulong id)
+    {
+        string msg = ClearTrade(id);
+        await ReplyAsync(msg).ConfigureAwait(false);
+    }
+
+    [Command("queueClearUser")]
+    [Alias("qcu", "tcu")]
+    [Summary("Borra al usuario de las colas comerciales. No eliminará a un usuario si está siendo procesado.")]
+    [RequireSudo]
+    public async Task ClearTradeUserAsync([Summary("Nombre de usuario de la persona a borrar")] string _)
+    {
+        foreach (var user in Context.Message.MentionedUsers)
+        {
+            string msg = ClearTrade(user.Id);
+            await ReplyAsync(msg).ConfigureAwait(false);
+        }
+    }
+
+    [Command("queueClearUser")]
+    [Alias("qcu", "tcu")]
+    [Summary("Clears the user from the trade queues. Will not remove a user if they are being processed.")]
+    [RequireSudo]
+    public async Task ClearTradeUserAsync()
+    {
+        var users = Context.Message.MentionedUsers;
+        if (users.Count == 0)
+        {
+            await ReplyAsync("<a:warning:1206483664939126795> Ningún usuario fue mencionado").ConfigureAwait(false);
+            return;
+        }
+        foreach (var u in users)
+            await ClearTradeUserAsync(u.Id).ConfigureAwait(false);
+    }
+
     [Command("queueStatus")]
     [Alias("qs", "ts")]
     [Summary("Comprueba la posición del usuario en la cola.")]
@@ -34,63 +102,18 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         await ReplyAndDeleteAsync(msg, 5, Context.Message).ConfigureAwait(false);
     }
 
-    [Command("queueClear")]
-    [Alias("qc", "tc")]
-    [Summary("Borra al usuario de las colas comerciales. No eliminará a un usuario si está siendo procesado.")]
-    public async Task ClearTradeAsync()
-    {
-        string msg = ClearTrade(Context.User.Id);
-        await ReplyAndDeleteAsync(msg, 5, Context.Message).ConfigureAwait(false);
-    }
-
-
-    [Command("queueClearUser")]
-    [Alias("qcu", "tcu")]
-    [Summary("Borra al usuario de las colas comerciales. No eliminará a un usuario si está siendo procesado.")]
+    [Command("queueList")]
+    [Alias("ql")]
+    [Summary("Envía al MD la lista de usuarios en la cola.")]
     [RequireSudo]
-    public async Task ClearTradeUserAsync([Summary("ID de usuario de discord")] ulong id)
+    public async Task ListUserQueue()
     {
-        string msg = ClearTrade(id);
-        await ReplyAsync(msg).ConfigureAwait(false);
-    }
-
-    [Command("queueClearUser")]
-    [Alias("qcu", "tcu")]
-    [Summary("Borra al usuario de las colas comerciales. No eliminará a un usuario si está siendo procesado.")]
-    [RequireSudo]
-    public async Task ClearTradeUserAsync([Summary("Nombre de usuario de la persona a borrar")] string _)
-    {
-        foreach (var user in Context.Message.MentionedUsers)
-        {
-            string msg = ClearTrade(user.Id);
-            await ReplyAsync(msg).ConfigureAwait(false);
-        }
-    }
-
-    [Command("queueClearUser")]
-    [Alias("qcu", "tcu")]
-    [Summary("Borra al usuario de las colas comerciales. No eliminará a un usuario si está siendo procesado.")]
-    [RequireSudo]
-    public async Task ClearTradeUserAsync()
-    {
-        var users = Context.Message.MentionedUsers;
-        if (users.Count == 0)
-        {
-            await ReplyAsync("<a:warning:1206483664939126795> Ningún usuario fue mencionado").ConfigureAwait(false);
-            return;
-        }
-        foreach (var u in users)
-            await ClearTradeUserAsync(u.Id).ConfigureAwait(false);
-    }
-
-    [Command("queueClearAll")]
-    [Alias("qca", "tca")]
-    [Summary("Borra a todos los usuarios de las colas comerciales.")]
-    [RequireSudo]
-    public async Task ClearAllTradesAsync()
-    {
-        Info.ClearAllQueues();
-        await ReplyAsync("<a:yes:1206485105674166292> Borrados todo en la cola de espera.").ConfigureAwait(false);
+        var lines = SysCord<T>.Runner.Hub.Queues.Info.GetUserList("(ID {0}) - Code: {1} - {2} - {3}");
+        var msg = string.Join("\n", lines);
+        if (msg.Length < 3)
+            await ReplyAsync("La lista de espera está vacía.").ConfigureAwait(false);
+        else
+            await Context.User.SendMessageAsync(msg).ConfigureAwait(false);
     }
 
     [Command("queueToggle")]
@@ -105,30 +128,6 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             : "<a:warning:1206483664939126795> **Configuración de cola modificada**: Los usuarios __**NO PUEDEN**__ unirse a la `cola` hasta que se vuelva a `habilitar`.";
 
         return Context.Channel.EchoAndReply(msg);
-    }
-
-    [Command("queueMode")]
-    [Alias("qm")]
-    [Summary("Cambia la forma en que se controlan las colas (manual/umbral/intervalo).")]
-    [RequireSudo]
-    public async Task ChangeQueueModeAsync([Summary("Queue mode")] QueueOpening mode)
-    {
-        SysCord<T>.Runner.Hub.Config.Queues.QueueToggleMode = mode;
-        await ReplyAsync($"<a:yes:1206485105674166292> Modo de cola cambiado a {mode}.").ConfigureAwait(false);
-    }
-
-    [Command("queueList")]
-    [Alias("ql")]
-    [Summary("Envía al MD la lista de usuarios en la cola.")]
-    [RequireSudo]
-    public async Task ListUserQueue()
-    {
-        var lines = SysCord<T>.Runner.Hub.Queues.Info.GetUserList("(ID {0}) - Code: {1} - {2} - {3}");
-        var msg = string.Join("\n", lines);
-        if (msg.Length < 3)
-            await ReplyAsync("La lista de espera está vacía.").ConfigureAwait(false);
-        else
-            await Context.User.SendMessageAsync(msg).ConfigureAwait(false);
     }
 
     [Command("addTradeCode")]
@@ -298,17 +297,16 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         return GetClearTradeMessage(result);
     }
 
-    private async Task ReplyAndDeleteAsync(string message, int delaySeconds, IMessage? messageToDelete = null)
+    private static string GetClearTradeMessage(QueueResultRemove result)
     {
-        try
+        return result switch
         {
-            var sentMessage = await ReplyAsync(message).ConfigureAwait(false);
-            _ = DeleteMessagesAfterDelayAsync(sentMessage, messageToDelete, delaySeconds);
-        }
-        catch (Exception ex)
-        {
-            LogUtil.LogSafe(ex, nameof(QueueModule<T>));
-        }
+            QueueResultRemove.Removed => $"<a:yes:1206485105674166292> Eliminé tus operaciones pendientes de la cola.",
+            QueueResultRemove.CurrentlyProcessing => "<a:warning:1206483664939126795> Parece que actualmente tienes operaciones en proceso! No lass eliminé de la cola.",
+            QueueResultRemove.CurrentlyProcessingRemoved => "<a:warning:1206483664939126795> Parece que tiene operaciones en proceso. Se han eliminado otras operaciones pendientes de la cola.",
+            QueueResultRemove.NotInQueue => "<a:warning:1206483664939126795> Lo sentimos, actualmente no estás en la lista.",
+            _ => throw new ArgumentOutOfRangeException(nameof(result), result, null),
+        };
     }
 
     private async Task DeleteMessagesAfterDelayAsync(IMessage sentMessage, IMessage? messageToDelete, int delaySeconds)
@@ -326,15 +324,16 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
     }
 
-    private static string GetClearTradeMessage(QueueResultRemove result)
+    private async Task ReplyAndDeleteAsync(string message, int delaySeconds, IMessage? messageToDelete = null)
     {
-        return result switch
+        try
         {
-            QueueResultRemove.Removed => $"<a:yes:1206485105674166292> Eliminé tus operaciones pendientes de la cola.",
-            QueueResultRemove.CurrentlyProcessing => "<a:warning:1206483664939126795> Parece que actualmente tienes operaciones en proceso! No lass eliminé de la cola.",
-            QueueResultRemove.CurrentlyProcessingRemoved => "<a:warning:1206483664939126795> Parece que tiene operaciones en proceso. Se han eliminado otras operaciones pendientes de la cola.",
-            QueueResultRemove.NotInQueue => "<a:warning:1206483664939126795> Lo sentimos, actualmente no estás en la lista.",
-            _ => throw new ArgumentOutOfRangeException(nameof(result), result, null),
-        };
+            var sentMessage = await ReplyAsync(message).ConfigureAwait(false);
+            _ = DeleteMessagesAfterDelayAsync(sentMessage, messageToDelete, delaySeconds);
+        }
+        catch (Exception ex)
+        {
+            LogUtil.LogSafe(ex, nameof(QueueModule<T>));
+        }
     }
 }

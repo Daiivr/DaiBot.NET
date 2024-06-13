@@ -1,4 +1,3 @@
-using NLog;
 using PKHeX.Core;
 using SysBot.Base;
 using System;
@@ -15,12 +14,14 @@ namespace SysBot.Pokemon.Twitch
 {
     public class TwitchBot<T> where T : PKM, new()
     {
-        private static PokeTradeHub<T> Hub = default!;
-        internal static TradeQueueInfo<T> Info => Hub.Queues.Info;
-
         internal static readonly List<TwitchQueue<T>> QueuePool = new();
-        private readonly TwitchClient client;
+
+        private static PokeTradeHub<T> Hub = default!;
+
         private readonly string Channel;
+
+        private readonly TwitchClient client;
+
         private readonly TwitchSettings Settings;
 
         public TwitchBot(TwitchSettings settings, PokeTradeHub<T> hub)
@@ -60,9 +61,9 @@ namespace SysBot.Pokemon.Twitch
             client.OnLeftChannel += Client_OnLeftChannel;
 
             client.OnMessageSent += (_, e)
-                => LogUtil.LogText($"[{client.TwitchUsername}] - Message Sent in {e.SentMessage.Channel}: {e.SentMessage.Message}");
+                => LogUtil.LogText($"[{client.TwitchUsername}] - Mensaje enviado en {e.SentMessage.Channel}: {e.SentMessage.Message}");
             client.OnWhisperSent += (_, e)
-                => LogUtil.LogText($"[{client.TwitchUsername}] - Whisper Sent to @{e.Receiver}: {e.Message}");
+                => LogUtil.LogText($"[{client.TwitchUsername}] - Susurro enviado a @{e.Receiver}: {e.Message}");
 
             client.OnMessageThrottled += (_, e)
                 => LogUtil.LogError($"Message Throttled: {e.Message}", "TwitchBot");
@@ -82,6 +83,8 @@ namespace SysBot.Pokemon.Twitch
             // Hub.Queues.Forwarders.Add((bot, detail) => client.SendMessage(Channel, $"{bot.Connection.Name} is now trading (ID {detail.ID}) {detail.Trainer.TrainerName}"));
         }
 
+        internal static TradeQueueInfo<T> Info => Hub.Queues.Info;
+
         public void StartingDistribution(string message)
         {
             Task.Run(async () =>
@@ -99,6 +102,13 @@ namespace SysBot.Pokemon.Twitch
                 if (!string.IsNullOrWhiteSpace(message))
                     client.SendMessage(Channel, message);
             });
+        }
+
+        private static int GenerateUniqueTradeID()
+        {
+            long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            int randomValue = new Random().Next(1000);
+            return ((int)(timestamp % int.MaxValue) * 1000) + randomValue;
         }
 
         private bool AddToTradeQueue(T pk, int code, OnWhisperReceivedArgs e, RequestSignificance sig, PokeRoutineType type, out string msg)
@@ -134,53 +144,6 @@ namespace SysBot.Pokemon.Twitch
             return true;
         }
 
-        private static int GenerateUniqueTradeID()
-        {
-            long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            int randomValue = new Random().Next(1000);
-            int uniqueTradeID = ((int)(timestamp % int.MaxValue) * 1000) + randomValue;
-            return uniqueTradeID;
-        }
-
-        private void Client_OnLog(object? sender, OnLogArgs e)
-        {
-            LogUtil.LogText($"[{client.TwitchUsername}] -[{e.BotUsername}] {e.Data}");
-        }
-
-        private void Client_OnConnected(object? sender, OnConnectedArgs e)
-        {
-            LogUtil.LogText($"[{client.TwitchUsername}] - Connected {e.AutoJoinChannel} as {e.BotUsername}");
-        }
-
-        private async void Client_OnDisconnected(object? sender, OnDisconnectedEventArgs e)
-        {
-            LogUtil.LogText($"[{client.TwitchUsername}] - Disconnected.");
-            while (!client.IsConnected)
-            {
-                client.Reconnect();
-                await Task.Delay(5000).ConfigureAwait(false);
-            }
-        }
-
-        private void Client_OnJoinedChannel(object? sender, OnJoinedChannelArgs e)
-        {
-            LogUtil.LogInfo($"Joined {e.Channel}", e.BotUsername);
-            client.SendMessage(e.Channel, "Connected!");
-        }
-
-        private void Client_OnMessageReceived(object? sender, OnMessageReceivedArgs e)
-        {
-            LogUtil.LogText($"[{client.TwitchUsername}] - Received message: @{e.ChatMessage.Username}: {e.ChatMessage.Message}");
-            if (client.JoinedChannels.Count == 0)
-                client.JoinChannel(e.ChatMessage.Channel);
-        }
-
-        private void Client_OnLeftChannel(object? sender, OnLeftChannelArgs e)
-        {
-            LogUtil.LogText($"[{client.TwitchUsername}] - Left channel {e.Channel}");
-            client.JoinChannel(e.Channel);
-        }
-
         private void Client_OnChatCommandReceived(object? sender, OnChatCommandReceivedArgs e)
         {
             if (!Hub.Config.Twitch.AllowCommandsViaChannel || Hub.Config.Twitch.UserBlacklist.Contains(e.Command.ChatMessage.Username))
@@ -197,6 +160,45 @@ namespace SysBot.Pokemon.Twitch
             client.SendMessage(channel, response);
         }
 
+        private void Client_OnConnected(object? sender, OnConnectedArgs e)
+        {
+            LogUtil.LogText($"[{client.TwitchUsername}] - Conectado {e.AutoJoinChannel} as {e.BotUsername}");
+        }
+
+        private async void Client_OnDisconnected(object? sender, OnDisconnectedEventArgs e)
+        {
+            LogUtil.LogText($"[{client.TwitchUsername}] - Desconectado.");
+            while (!client.IsConnected)
+            {
+                client.Reconnect();
+                await Task.Delay(5000).ConfigureAwait(false);
+            }
+        }
+
+        private void Client_OnJoinedChannel(object? sender, OnJoinedChannelArgs e)
+        {
+            LogUtil.LogInfo($"Joined {e.Channel}", e.BotUsername);
+            client.SendMessage(e.Channel, "Conectado!");
+        }
+
+        private void Client_OnLeftChannel(object? sender, OnLeftChannelArgs e)
+        {
+            LogUtil.LogText($"[{client.TwitchUsername}] - Left channel {e.Channel}");
+            client.JoinChannel(e.Channel);
+        }
+
+        private void Client_OnLog(object? sender, OnLogArgs e)
+        {
+            LogUtil.LogText($"[{client.TwitchUsername}] -[{e.BotUsername}] {e.Data}");
+        }
+
+        private void Client_OnMessageReceived(object? sender, OnMessageReceivedArgs e)
+        {
+            LogUtil.LogText($"[{client.TwitchUsername}] - Mensaje recibido: @{e.ChatMessage.Username}: {e.ChatMessage.Message}");
+            if (client.JoinedChannels.Count == 0)
+                client.JoinChannel(e.ChatMessage.Channel);
+        }
+
         private void Client_OnWhisperCommandReceived(object? sender, OnWhisperCommandReceivedArgs e)
         {
             if (!Hub.Config.Twitch.AllowCommandsViaWhisper || Hub.Config.Twitch.UserBlacklist.Contains(e.Command.WhisperMessage.Username))
@@ -210,79 +212,6 @@ namespace SysBot.Pokemon.Twitch
                 return;
 
             client.SendWhisper(msg.Username, response);
-        }
-
-        private string HandleCommand(TwitchLibMessage m, string c, string args, bool whisper)
-        {
-            bool sudo() => m is ChatMessage ch && (ch.IsBroadcaster || Settings.IsSudo(m.Username));
-            bool subscriber() => m is ChatMessage { IsSubscriber: true };
-
-            switch (c)
-            {
-                // User Usable Commands
-                case "donate":
-                    return Settings.DonationLink.Length > 0 ? $"¡Aquí está el enlace de donación! Gracias por tu apoyo :3 {Settings.DonationLink}" : string.Empty;
-                case "discord":
-                    return Settings.DiscordLink.Length > 0 ? $"Aquí está el enlace del servidor de Discord, que tengas una buena estadía. :3 {Settings.DiscordLink}" : string.Empty;
-                case "tutorial":
-                case "help":
-                    return $"{Settings.TutorialText} {Settings.TutorialLink}";
-                case "trade":
-                case "t":
-                    var _ = TwitchCommandsHelper<T>.AddToWaitingList(args, m.DisplayName, m.Username, ulong.Parse(m.UserId), subscriber(), out string msg);
-                    if (msg.Contains("Por favor lee lo que se supone que debes escribir.") && Settings.TutorialLink.Length > 0)
-                        msg += $"\nTutorial de uso: {Settings.TutorialLink}";
-                    return msg;
-                case "ts":
-                case "queue":
-                case "position":
-                    var userID = ulong.Parse(m.UserId);
-                    var tradeEntry = Info.GetDetail(userID);
-                    if (tradeEntry != null)
-                    {
-                        var uniqueTradeID = tradeEntry.UniqueTradeID;
-                        return $"@{m.Username}: {Info.GetPositionString(userID, uniqueTradeID)}";
-                    }
-                    else
-                    {
-                        return $"@{m.Username}: Actualmente no estás en la cola.";
-                    }
-                case "tc":
-                case "cancel":
-                case "remove":
-                    return $"@{m.Username}: {TwitchCommandsHelper<T>.ClearTrade(ulong.Parse(m.UserId))}";
-
-                case "code" when whisper:
-                    return TwitchCommandsHelper<T>.GetCode(ulong.Parse(m.UserId));
-
-                // Sudo Only Commands
-                case "tca" when !sudo():
-                case "pr" when !sudo():
-                case "pc" when !sudo():
-                case "tt" when !sudo():
-                case "tcu" when !sudo():
-                    return "Este comando está bloqueado solo para usuarios de sudo!";
-
-                case "tca":
-                    Info.ClearAllQueues();
-                    return "Despejadas todas las colas!";
-
-                case "pr":
-                    return Info.Hub.Ledy.Pool.Reload(Hub.Config.Folder.DistributeFolder) ? $"Recargado desde la carpeta. Recuento de grupos: {Info.Hub.Ledy.Pool.Count}" : "No se pudo recargar desde la carpeta.";
-
-                case "pc":
-                    return $"El recuento del grupo es: {Info.Hub.Ledy.Pool.Count}";
-
-                case "tt":
-                    return Info.Hub.Queues.Info.ToggleQueue()
-                        ? "Los usuarios ahora pueden unirse a la cola comercial."
-                        : "Configuración de cola modificada: **Los usuarios NO PUEDEN unirse a la cola hasta que se vuelva a activar.**";
-
-                case "tcu":
-                    return TwitchCommandsHelper<T>.ClearTrade(args);
-
-                default: return string.Empty;
-            }
         }
 
         private void Client_OnWhisperReceived(object? sender, OnWhisperReceivedArgs e)
@@ -322,6 +251,81 @@ namespace SysBot.Pokemon.Twitch
             if (Settings.IsSudo(user.UserName))
                 return RequestSignificance.Favored;
             return user.IsSubscriber ? RequestSignificance.Favored : RequestSignificance.None;
+        }
+
+        private string HandleCommand(TwitchLibMessage m, string c, string args, bool whisper)
+        {
+            bool sudo() => m is ChatMessage ch && (ch.IsBroadcaster || Settings.IsSudo(m.Username));
+            bool subscriber() => m is ChatMessage { IsSubscriber: true };
+
+            switch (c)
+            {
+                // User Usable Commands
+                case "donate":
+                    return Settings.DonationLink.Length > 0 ? $"¡Aquí está el enlace de donación! Gracias por tu apoyo :3 {Settings.DonationLink}" : string.Empty;
+
+                case "discord":
+                    return Settings.DiscordLink.Length > 0 ? $"Aquí está el enlace del servidor de Discord, que tengas una buena estadía. :3 {Settings.DiscordLink}" : string.Empty;
+
+                case "tutorial":
+                case "help":
+                    return $"{Settings.TutorialText} {Settings.TutorialLink}";
+
+                case "trade":
+                case "t":
+                    var _ = TwitchCommandsHelper<T>.AddToWaitingList(args, m.DisplayName, m.Username, ulong.Parse(m.UserId), subscriber(), out string msg);
+                    if (msg.Contains("Por favor lee lo que se supone que debes escribir.") && Settings.TutorialLink.Length > 0)
+                        msg += $"\nTutorial de uso: {Settings.TutorialLink}";
+                    return msg;
+
+                case "ts":
+                case "queue":
+                case "position":
+                    var userID = ulong.Parse(m.UserId);
+                    var tradeEntry = Info.GetDetail(userID);
+                    if (tradeEntry != null)
+                    {
+                        var uniqueTradeID = tradeEntry.UniqueTradeID;
+                        return $"@{m.Username}: {Info.GetPositionString(userID, uniqueTradeID)}";
+                    }
+                    else
+                    {
+                        return $"@{m.Username}: Actualmente no estás en la cola.";
+                    }
+                case "tc":
+                case "cancel":
+                case "remove":
+                    return $"@{m.Username}: {TwitchCommandsHelper<T>.ClearTrade(ulong.Parse(m.UserId))}";
+
+                case "code" when whisper:
+                    return TwitchCommandsHelper<T>.GetCode(ulong.Parse(m.UserId));
+
+                // Sudo Only Commands
+                case "tca" when !sudo():
+                case "pr" when !sudo():
+                case "pc" when !sudo():
+                case "tt" when !sudo():
+                case "tcu" when !sudo():
+                    return "Este comando está bloqueado solo para usuarios de sudo!";
+
+                case "tca":
+                    Info.ClearAllQueues();
+                    return "Despejadas todas las colas!";
+
+                case "pr":
+                    return Info.Hub.Ledy.Pool.Reload(Hub.Config.Folder.DistributeFolder) ? $"Recargado desde la carpeta. Recuento de grupos: {Info.Hub.Ledy.Pool.Count}" : "No se pudo recargar desde la carpeta.";
+                case "pc":
+                    return $"El recuento del grupo es: {Info.Hub.Ledy.Pool.Count}";
+
+                case "tt":
+                    return Info.Hub.Queues.Info.ToggleQueue()
+                        ? "Los usuarios ahora pueden unirse a la cola comercial."
+                        : "Configuración de cola modificada: **Los usuarios NO PUEDEN unirse a la cola hasta que se vuelva a activar.**";
+                case "tcu":
+                    return TwitchCommandsHelper<T>.ClearTrade(args);
+
+                default: return string.Empty;
+            }
         }
     }
 }

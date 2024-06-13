@@ -11,13 +11,15 @@ namespace SysBot.Pokemon.WinForms
     public class UpdateForm : Form
     {
         private Button buttonDownload;
-        private Label labelUpdateInfo;
+        private Label? labelUpdateInfo;
         private readonly Label labelChangelogTitle = new();
         private TextBox textBoxChangelog;
         private readonly bool isUpdateRequired;
         private readonly string newVersion;
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public UpdateForm(bool updateRequired, string newVersion)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             isUpdateRequired = updateRequired;
             this.newVersion = newVersion;
@@ -25,8 +27,10 @@ namespace SysBot.Pokemon.WinForms
             Load += async (sender, e) => await FetchAndDisplayChangelog();
             if (isUpdateRequired)
             {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                 labelUpdateInfo.Text = "Hay una actualización requerida disponible. Debes actualizar para continuar usando esta aplicación.";
-                // Optionally, you can also disable the close button on the form if the update is required
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                              // Optionally, you can also disable the close button on the form if the update is required
                 ControlBox = false;
             }
         }
@@ -51,7 +55,9 @@ namespace SysBot.Pokemon.WinForms
             int buttonY = ClientSize.Height - buttonDownload.Size.Height - 20; // Calculate Y position, 20 pixels from the bottom
             buttonDownload.Location = new Point(buttonX, buttonY);
             buttonDownload.Text = $"Descargar la Actualización";
+#pragma warning disable CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
             buttonDownload.Click += ButtonDownload_Click;
+#pragma warning restore CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
 
             // labelChangelogTitle
             labelChangelogTitle.AutoSize = true;
@@ -94,7 +100,9 @@ namespace SysBot.Pokemon.WinForms
 
         private async void ButtonDownload_Click(object sender, EventArgs e)
         {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             string downloadUrl = await UpdateChecker.FetchDownloadUrlAsync();
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             if (!string.IsNullOrWhiteSpace(downloadUrl))
             {
                 string downloadedFilePath = await StartDownloadProcessAsync(downloadUrl);

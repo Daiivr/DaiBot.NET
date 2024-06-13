@@ -22,7 +22,8 @@ public static class TeraTypeDictionaries
         { "Dark", "Siniestro" },
         { "Steel", "Acero" },
         { "Fairy", "Hada" },
-        { "Stellar", "Astral" }
+        { "Stellar", "Astral" },
+        { "99", "Astral" }
     };
 }
 

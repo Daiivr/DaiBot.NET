@@ -17,9 +17,11 @@ namespace SysBot.Pokemon.Discord;
 public class InfoModule : ModuleBase<SocketCommandContext>
 {
     private const string detail = "Soy un bot de Discord impulsado por PKHeX.Core y otro software de código abierto.";
-    private const string repo = "https://github.com/kwsch/SysBot.NET";
+
     private const string gengar = "https://github.com/bdawg1989/MergeBot";
+
     private const string daifork = "https://github.com/Daiivr/SysBot.NET";
+
     private const ulong DisallowedUserId = 195756980873199618;
 
     [Command("info")]

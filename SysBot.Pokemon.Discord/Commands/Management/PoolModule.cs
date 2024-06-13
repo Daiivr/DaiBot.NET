@@ -9,23 +9,8 @@ namespace SysBot.Pokemon.Discord;
 [Summary("Distribution Pool Module")]
 public class PoolModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new()
 {
-    [Command("poolReload")]
-    [Summary("Vuelve a cargar el grupo de bots desde la carpeta de configuración.")]
-    [RequireSudo]
-    public async Task ReloadPoolAsync()
-    {
-        var me = SysCord<T>.Runner;
-        var hub = me.Hub;
-
-        var pool = hub.Ledy.Pool.Reload(hub.Config.Folder.DistributeFolder);
-        if (!pool)
-            await ReplyAsync("<a:warning:1206483664939126795> Fallo al recargar desde carpeta.").ConfigureAwait(false);
-        else
-            await ReplyAsync($"<a:yes:1206485105674166292> Recargado desde carpeta. Recuento de grupos: {hub.Ledy.Pool.Count}").ConfigureAwait(false);
-    }
-
     [Command("pool")]
-    [Summary("Muestra los detalles de los archivos Pokémon en el grupo aleatorio.")]
+    [Summary("Displays the details of Pokémon files in the random pool.")]
     public async Task DisplayPoolCountAsync()
     {
         var me = SysCord<T>.Runner;
@@ -40,7 +25,7 @@ public class PoolModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
             var embed = new EmbedBuilder();
             embed.AddField(x =>
             {
-                x.Name = $"Count: {count}";
+                x.Name = $"Conteo: {count}";
                 x.Value = msg;
                 x.IsInline = false;
             });
@@ -50,5 +35,20 @@ public class PoolModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
         {
             await ReplyAsync($"Pool Count: {count}").ConfigureAwait(false);
         }
+    }
+
+    [Command("poolReload")]
+    [Summary("Vuelve a cargar el grupo de bots desde la carpeta de configuración.")]
+    [RequireSudo]
+    public async Task ReloadPoolAsync()
+    {
+        var me = SysCord<T>.Runner;
+        var hub = me.Hub;
+
+        var pool = hub.Ledy.Pool.Reload(hub.Config.Folder.DistributeFolder);
+        if (!pool)
+            await ReplyAsync("<a:warning:1206483664939126795> Fallo al recargar desde carpeta.").ConfigureAwait(false);
+        else
+            await ReplyAsync($"<a:yes:1206485105674166292> Recargado desde carpeta. Recuento de grupos: {hub.Ledy.Pool.Count}").ConfigureAwait(false);
     }
 }

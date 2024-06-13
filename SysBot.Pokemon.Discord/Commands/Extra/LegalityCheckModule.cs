@@ -11,8 +11,7 @@ public class LegalityCheckModule : ModuleBase<SocketCommandContext>
     [Summary("Verifica la legalidad del archivo adjunto.")]
     public async Task LegalityCheck()
     {
-        var attachments = Context.Message.Attachments;
-        foreach (var att in attachments)
+        foreach (var att in (System.Collections.Generic.IReadOnlyCollection<Attachment>)Context.Message.Attachments)
             await LegalityCheck(att, false).ConfigureAwait(false);
     }
 
@@ -20,8 +19,7 @@ public class LegalityCheckModule : ModuleBase<SocketCommandContext>
     [Summary("Verifica la legalidad del archivo adjunto con una salida detallada.")]
     public async Task LegalityCheckVerbose()
     {
-        var attachments = Context.Message.Attachments;
-        foreach (var att in attachments)
+        foreach (var att in (System.Collections.Generic.IReadOnlyCollection<Attachment>)Context.Message.Attachments)
             await LegalityCheck(att, true).ConfigureAwait(false);
     }
 

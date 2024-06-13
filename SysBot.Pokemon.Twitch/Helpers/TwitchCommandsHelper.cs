@@ -12,26 +12,26 @@ namespace SysBot.Pokemon.Twitch
         {
             if (!TwitchBot<T>.Info.GetCanQueue())
             {
-                msg = "Sorry, I am not currently accepting queue requests!";
+                msg = "❌ Lo siento, actualmente no acepto solicitudes de cola!";
                 return false;
             }
 
             var set = ShowdownUtil.ConvertToShowdown(setstring);
             if (set == null)
             {
-                msg = $"Skipping trade, @{username}: Empty nickname provided for the species.";
+                msg = $"⚠️ Omitiendo intercambio, @{username}: apodo vacío proporcionado para la especie.";
                 return false;
             }
             var template = AutoLegalityWrapper.GetTemplate(set);
             if (template.Species < 1)
             {
-                msg = $"Skipping trade, @{username}: Please read what you are supposed to type as the command argument.";
+                msg = $"⚠️ Saltándose el intercambio, @{username}: lea lo que se supone que debe escribir como argumento del comando.";
                 return false;
             }
 
             if (set.InvalidLines.Count != 0)
             {
-                msg = $"Skipping trade, @{username}: Unable to parse Showdown Set:\n{string.Join("\n", set.InvalidLines)}";
+                msg = $"⚠️ Omitiendo intercambio, @{username}: No se puede analizar el conjunto de enfrentamiento:\n{string.Join("\n", set.InvalidLines)}";
                 return false;
             }
 
@@ -49,7 +49,7 @@ namespace SysBot.Pokemon.Twitch
 
                 if (!pkm.CanBeTraded())
                 {
-                    msg = $"Skipping trade, @{username}: Provided Pokémon content is blocked from trading!";
+                    msg = $"⚠️ Omitiendo intercambio, @{username}: Contenido de Pokémon bloqueado para el intercambio!";
                     return false;
                 }
 
@@ -61,18 +61,18 @@ namespace SysBot.Pokemon.Twitch
                         var tq = new TwitchQueue<T>(pk, new PokeTradeTrainerInfo(display, mUserId), username, sub);
                         TwitchBot<T>.QueuePool.RemoveAll(z => z.UserName == username); // remove old requests if any
                         TwitchBot<T>.QueuePool.Add(tq);
-                        msg = $"@{username} - added to the waiting list. Please whisper your trade code to me! Your request from the waiting list will be removed if you are too slow!";
+                        msg = $"✅ @{username} ➜ ¡Añadido a la lista de espera! ¡Susurrame tu código comercial! ¡Si eres demasiado lento, tu solicitud de la lista de espera se eliminará!";
                         return true;
                     }
                 }
 
-                var reason = result == "Timeout" ? "Set took too long to generate." : "Unable to legalize the Pokémon.";
-                msg = $"Skipping trade, @{username}: {reason}";
+                var reason = result == "Timeout" ? "El conjunto tardó demasiado en generarse." : "No se puede legalizar el Pokémon.";
+                msg = $"⚠️ Omitiendo intercambio, @{username}: {reason}";
             }
             catch (Exception ex)
             {
                 LogUtil.LogSafe(ex, nameof(TwitchCommandsHelper<T>));
-                msg = $"Skipping trade, @{username}: An unexpected problem occurred.";
+                msg = $"⚠️ Omitiendo intercambio, @{username}: Ocurrió un problema inesperado.";
             }
             return false;
         }
@@ -89,23 +89,23 @@ namespace SysBot.Pokemon.Twitch
             return GetClearTradeMessage(result);
         }
 
-        private static string GetClearTradeMessage(QueueResultRemove result)
-        {
-            return result switch
-            {
-                QueueResultRemove.CurrentlyProcessing => "Looks like you're currently being processed! Did not remove from queue.",
-                QueueResultRemove.CurrentlyProcessingRemoved => "Looks like you're currently being processed! Removed from queue.",
-                QueueResultRemove.Removed => "Removed you from the queue.",
-                _ => "Sorry, you are not currently in the queue.",
-            };
-        }
-
         public static string GetCode(ulong parse)
         {
             var detail = TwitchBot<T>.Info.GetDetail(parse);
             return detail == null
-                ? "Sorry, you are not currently in the queue."
-                : $"Your trade code is {detail.Trade.Code:0000 0000}";
+                ? "⚠️ Lo sentimos, actualmente no estás en la cola."
+                : $"✅ Su código comercial es {detail.Trade.Code:0000 0000}";
+        }
+
+        private static string GetClearTradeMessage(QueueResultRemove result)
+        {
+            return result switch
+            {
+                QueueResultRemove.CurrentlyProcessing => "⚠️ ¡Parece que estás siendo procesado actualmente! No se te eliminó de la cola.",
+                QueueResultRemove.CurrentlyProcessingRemoved => "⚠️ ¡Parece que estás siendo procesado actualmente! Eliminado de la cola.",
+                QueueResultRemove.Removed => "✅ Te eliminé de la cola.",
+                _ => "⚠️ Lo sentimos, actualmente no estás en la cola.",
+            };
         }
     }
 }

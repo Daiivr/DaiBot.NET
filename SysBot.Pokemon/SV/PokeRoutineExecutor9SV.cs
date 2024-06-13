@@ -13,10 +13,161 @@ namespace SysBot.Pokemon;
 public abstract class PokeRoutineExecutor9SV : PokeRoutineExecutor<PK9>
 {
     protected const int HidWaitTime = 46;
+
     protected const int KeyboardPressTime = 35;
-    protected PokeDataOffsetsSV Offsets { get; } = new();
+
     protected PokeRoutineExecutor9SV(PokeBotState Config) : base(Config)
     {
+    }
+
+    protected PokeDataOffsetsSV Offsets { get; } = new();
+
+    public async Task CleanExit(CancellationToken token)
+    {
+        await SetScreen(ScreenState.On, token).ConfigureAwait(false);
+        Log("Desconectando los controladores al salir de rutina");
+        await DetachController(token).ConfigureAwait(false);
+    }
+
+    public Task ClearTradePartnerNID(ulong offset, CancellationToken token)
+    {
+        var data = new byte[8];
+        return SwitchConnection.WriteBytesAbsoluteAsync(data, offset, token);
+    }
+
+    public async Task CloseGame(PokeTradeHubConfig config, CancellationToken token)
+    {
+        var timing = config.Timings;
+
+        // Close out of the game
+        await Click(B, 0_500, token).ConfigureAwait(false);
+        await Click(HOME, 2_000 + timing.ExtraTimeReturnHome, token).ConfigureAwait(false);
+        await Click(X, 1_000, token).ConfigureAwait(false);
+        await Click(A, 5_000 + timing.ExtraTimeCloseGame, token).ConfigureAwait(false);
+        Log("Cerre el juego!");
+    }
+
+    public async Task<byte> GetCurrentBox(CancellationToken token)
+    {
+        var data = await SwitchConnection.PointerPeek(1, Offsets.CurrentBoxPointer, token).ConfigureAwait(false);
+        return data[0];
+    }
+
+    public async Task<SAV9SV> GetFakeTrainerSAV(CancellationToken token)
+    {
+        var sav = new SAV9SV();
+        var info = sav.MyStatus;
+        var read = await SwitchConnection.PointerPeek(info.Data.Length, Offsets.MyStatusPointer, token).ConfigureAwait(false);
+
+        byte[] dataBytes = new byte[info.Data.Length];
+        Array.Copy(read, dataBytes, info.Data.Length);
+        dataBytes.CopyTo(info.Data);
+
+        return sav;
+    }
+
+    public async Task<TextSpeedOption> GetTextSpeed(CancellationToken token)
+    {
+        var data = await SwitchConnection.PointerPeek(1, Offsets.ConfigPointer, token).ConfigureAwait(false);
+        return (TextSpeedOption)(data[0] & 3);
+    }
+
+    public async Task<TradeMyStatus> GetTradePartnerMyStatus(IReadOnlyList<long> pointer, CancellationToken token)
+    {
+        var info = new TradeMyStatus();
+        var read = await SwitchConnection.PointerPeek(info.Data.Length, pointer, token).ConfigureAwait(false);
+        read.CopyTo(info.Data, 0);
+        return info;
+    }
+
+    public async Task<ulong> GetTradePartnerNID(ulong offset, CancellationToken token)
+    {
+        var data = await SwitchConnection.ReadBytesAbsoluteAsync(offset, 8, token).ConfigureAwait(false);
+        return BitConverter.ToUInt64(data, 0);
+    }
+
+    public async Task<SAV9SV> IdentifyTrainer(CancellationToken token)
+    {
+        // Check if botbase is on the correct version or later.
+        await VerifyBotbaseVersion(token).ConfigureAwait(false);
+
+        // Check title so we can warn if mode is incorrect.
+        string title = await SwitchConnection.GetTitleID(token).ConfigureAwait(false);
+        if (title is not (ScarletID or VioletID))
+            throw new Exception($"{title} no es un título SV válido. ¿Tu modo es correcto?");
+
+        // Verify the game version.
+        var game_version = await SwitchConnection.GetGameInfo("version", token).ConfigureAwait(false);
+        if (!game_version.SequenceEqual(SVGameVersion))
+            throw new Exception($"La versión del juego no es compatible. Versión esperada {SVGameVersion} y la versión actual del juego es {game_version}.");
+
+        var sav = await GetFakeTrainerSAV(token).ConfigureAwait(false);
+        InitSaveData(sav);
+
+        if (!IsValidTrainerData())
+        {
+            await CheckForRAMShiftingApps(token).ConfigureAwait(false);
+            throw new Exception("Consulte la wiki de SysBot.NET (https://github.com/kwsch/SysBot.NET/wiki/Troubleshooting) para obtener más información.");
+        }
+
+        if (await GetTextSpeed(token).ConfigureAwait(false) < TextSpeedOption.Fast)
+            throw new Exception("La velocidad del texto debe configurarse en RÁPIDO. Solucione esto para un funcionamiento correcto.");
+
+        return sav;
+    }
+
+    public async Task InitializeHardware(IBotStateSettings settings, CancellationToken token)
+    {
+        Log("Separación al iniciar.");
+        await DetachController(token).ConfigureAwait(false);
+        if (settings.ScreenOff)
+        {
+            Log("Apagando la pantalla.");
+            await SetScreen(ScreenState.Off, token).ConfigureAwait(false);
+        }
+
+        Log("Configuración de esperas ocultas específicas de SV");
+        await Connection.SendAsync(SwitchCommand.Configure(SwitchConfigureParameter.keySleepTime, KeyboardPressTime), token).ConfigureAwait(false);
+        await Connection.SendAsync(SwitchCommand.Configure(SwitchConfigureParameter.pollRate, HidWaitTime), token).ConfigureAwait(false);
+    }
+
+    public async Task<bool> IsConnectedOnline(ulong offset, CancellationToken token)
+    {
+        var data = await SwitchConnection.ReadBytesAbsoluteAsync(offset, 1, token).ConfigureAwait(false);
+        return data[0] == 1;
+    }
+
+    // 0x14 in a box and during trades, trade evolutions, and move learning.
+    public async Task<bool> IsInBox(ulong offset, CancellationToken token)
+    {
+        var data = await SwitchConnection.ReadBytesAbsoluteAsync(offset, 1, token).ConfigureAwait(false);
+        return data[0] == 0x14;
+    }
+
+    // 0x10 if fully loaded into Poké Portal.
+    public async Task<bool> IsInPokePortal(ulong offset, CancellationToken token)
+    {
+        var data = await SwitchConnection.ReadBytesAbsoluteAsync(offset, 1, token).ConfigureAwait(false);
+        return data[0] == 0x10;
+    }
+
+    public async Task<bool> IsOnOverworld(ulong offset, CancellationToken token)
+    {
+        var data = await SwitchConnection.ReadBytesAbsoluteAsync(offset, 1, token).ConfigureAwait(false);
+        return data[0] == 0x11;
+    }
+
+    public override Task<PK9> ReadBoxPokemon(int box, int slot, CancellationToken token)
+    {
+        // Shouldn't be reading anything but box1slot1 here. Slots are not consecutive.
+        var jumps = Offsets.BoxStartPokemonPointer.ToArray();
+        return ReadPokemonPointer(jumps, BoxFormatSlotSize, token);
+    }
+
+    public async Task<bool> ReadIsChanged(uint offset, byte[] original, CancellationToken token)
+    {
+        var result = await Connection.ReadBytesAsync(offset, original.Length, token).ConfigureAwait(false);
+        return !result.SequenceEqual(original);
     }
 
     public override Task<PK9> ReadPokemon(ulong offset, CancellationToken token) => ReadPokemon(offset, BoxFormatSlotSize, token);
@@ -35,17 +186,11 @@ public abstract class PokeRoutineExecutor9SV : PokeRoutineExecutor<PK9>
         return await ReadPokemon(offset, token).ConfigureAwait(false);
     }
 
-    public async Task<bool> ReadIsChanged(uint offset, byte[] original, CancellationToken token)
+    public async Task ReOpenGame(PokeTradeHubConfig config, CancellationToken token)
     {
-        var result = await Connection.ReadBytesAsync(offset, original.Length, token).ConfigureAwait(false);
-        return !result.SequenceEqual(original);
-    }
-
-    public override Task<PK9> ReadBoxPokemon(int box, int slot, CancellationToken token)
-    {
-        // Shouldn't be reading anything but box1slot1 here. Slots are not consecutive.
-        var jumps = Offsets.BoxStartPokemonPointer.ToArray();
-        return ReadPokemonPointer(jumps, BoxFormatSlotSize, token);
+        Log("Error detectado, reiniciando el juego!!");
+        await CloseGame(config, token).ConfigureAwait(false);
+        await StartGame(config, token).ConfigureAwait(false);
     }
 
     public Task SetBoxPokemonAbsolute(ulong offset, PK9 pkm, CancellationToken token, ITrainerInfo? sav = null)
@@ -66,83 +211,55 @@ public abstract class PokeRoutineExecutor9SV : PokeRoutineExecutor<PK9>
         return SwitchConnection.PointerPoke([box], Offsets.CurrentBoxPointer, token);
     }
 
-    public async Task<byte> GetCurrentBox(CancellationToken token)
+    public async Task StartGame(PokeTradeHubConfig config, CancellationToken token)
     {
-        var data = await SwitchConnection.PointerPeek(1, Offsets.CurrentBoxPointer, token).ConfigureAwait(false);
-        return data[0];
-    }
+        var timing = config.Timings;
 
-    public async Task<SAV9SV> IdentifyTrainer(CancellationToken token)
-    {
-        // Check if botbase is on the correct version or later.
-        await VerifyBotbaseVersion(token).ConfigureAwait(false);
+        // Open game.
+        await Click(A, 1_000 + timing.ExtraTimeLoadProfile, token).ConfigureAwait(false);
 
-        // Check title so we can warn if mode is incorrect.
-        string title = await SwitchConnection.GetTitleID(token).ConfigureAwait(false);
-        if (title is not (ScarletID or VioletID))
-            throw new Exception($"{title} is not a valid SV title. Is your mode correct?");
-
-        // Verify the game version.
-        var game_version = await SwitchConnection.GetGameInfo("version", token).ConfigureAwait(false);
-        if (!game_version.SequenceEqual(SVGameVersion))
-            throw new Exception($"Game version is not supported. Expected version {SVGameVersion}, and current game version is {game_version}.");
-
-        var sav = await GetFakeTrainerSAV(token).ConfigureAwait(false);
-        InitSaveData(sav);
-
-        if (!IsValidTrainerData())
+        // Menus here can go in the order: Update Prompt -> Profile -> DLC check -> Unable to use DLC.
+        //  The user can optionally turn on the setting if they know of a breaking system update incoming.
+        if (timing.AvoidSystemUpdate)
         {
-            await CheckForRAMShiftingApps(token).ConfigureAwait(false);
-            throw new Exception("Refer to the SysBot.NET wiki (https://github.com/kwsch/SysBot.NET/wiki/Troubleshooting) for more information.");
+            await Click(DUP, 0_600, token).ConfigureAwait(false);
+            await Click(A, 1_000 + timing.ExtraTimeLoadProfile, token).ConfigureAwait(false);
         }
 
-        if (await GetTextSpeed(token).ConfigureAwait(false) < TextSpeedOption.Fast)
-            throw new Exception("Text speed should be set to FAST. Fix this for correct operation.");
+        await Click(A, 1_000 + timing.ExtraTimeCheckDLC, token).ConfigureAwait(false);
 
-        return sav;
-    }
+        // If they have DLC on the system and can't use it, requires pressing UP + A to start the game.
+        // Should be harmless otherwise since they'll be in loading screen.
+        await Click(DUP, 0_600, token).ConfigureAwait(false);
+        await Click(A, 0_600, token).ConfigureAwait(false);
 
-    public async Task<SAV9SV> GetFakeTrainerSAV(CancellationToken token)
-    {
-        var sav = new SAV9SV();
-        var info = sav.MyStatus;
-        var read = await SwitchConnection.PointerPeek(info.Data.Length, Offsets.MyStatusPointer, token).ConfigureAwait(false);
+        Log("¡Reiniciando el juego!");
 
-        byte[] dataBytes = new byte[info.Data.Length];
-        Array.Copy(read, dataBytes, info.Data.Length);
-        dataBytes.CopyTo(info.Data);
+        // Switch Logo and game load screen
+        await Task.Delay(12_000 + timing.ExtraTimeLoadGame, token).ConfigureAwait(false);
 
-        return sav;
-    }
+        for (int i = 0; i < 8; i++)
+            await Click(A, 1_000, token).ConfigureAwait(false);
 
-    public async Task<TradeMyStatus> GetTradePartnerMyStatus(IReadOnlyList<long> pointer, CancellationToken token)
-    {
-        var info = new TradeMyStatus();
-        var read = await SwitchConnection.PointerPeek(info.Data.Length, pointer, token).ConfigureAwait(false);
-        read.CopyTo(info.Data, 0);
-        return info;
-    }
-
-    public async Task InitializeHardware(IBotStateSettings settings, CancellationToken token)
-    {
-        Log("Detaching on startup.");
-        await DetachController(token).ConfigureAwait(false);
-        if (settings.ScreenOff)
+        var timer = 60_000;
+        while (!await IsOnOverworldTitle(token).ConfigureAwait(false))
         {
-            Log("Turning off screen.");
-            await SetScreen(ScreenState.Off, token).ConfigureAwait(false);
+            await Task.Delay(1_000, token).ConfigureAwait(false);
+            timer -= 1_000;
+
+            // We haven't made it back to overworld after a minute, so press A every 6 seconds hoping to restart the game.
+            // Don't risk it if hub is set to avoid updates.
+            if (timer <= 0 && !timing.AvoidSystemUpdate)
+            {
+                Log("¡Aún no estás en el juego, iniciando protocolo de rescate!");
+                while (!await IsOnOverworldTitle(token).ConfigureAwait(false))
+                    await Click(A, 6_000, token).ConfigureAwait(false);
+                break;
+            }
         }
 
-        Log($"Setting SV-specific hid waits");
-        await Connection.SendAsync(SwitchCommand.Configure(SwitchConfigureParameter.keySleepTime, KeyboardPressTime), token).ConfigureAwait(false);
-        await Connection.SendAsync(SwitchCommand.Configure(SwitchConfigureParameter.pollRate, HidWaitTime), token).ConfigureAwait(false);
-    }
-
-    public async Task CleanExit(CancellationToken token)
-    {
-        await SetScreen(ScreenState.On, token).ConfigureAwait(false);
-        Log("Detaching controllers on routine exit.");
-        await DetachController(token).ConfigureAwait(false);
+        await Task.Delay(5_000 + timing.ExtraTimeLoadOverworld, token).ConfigureAwait(false);
+        Log("¡De vuelta al supramundo!");
     }
 
     protected virtual async Task EnterLinkCode(int code, PokeTradeHubConfig config, CancellationToken token)
@@ -157,108 +274,18 @@ public abstract class PokeRoutineExecutor9SV : PokeRoutineExecutor<PK9>
 
             await Connection.SendAsync(SwitchCommand.TypeMultipleKeys(keysToPress), token).ConfigureAwait(false);
             await Task.Delay((HidWaitTime * 8) + 0_200, token).ConfigureAwait(false);
+
             // Confirm Code outside of this method (allow synchronization)
         }
         else
         {
             // Enter link code using directional arrows
-            var keys = TradeUtil.GetPresses(code);
-            foreach (var key in keys)
+            foreach (var key in TradeUtil.GetPresses(code))
             {
                 int delay = config.Timings.KeypressTime;
                 await Click(key, delay, token).ConfigureAwait(false);
             }
         }
-    }
-
-    public async Task ReOpenGame(PokeTradeHubConfig config, CancellationToken token)
-    {
-        Log("Error detected, restarting the game!!");
-        await CloseGame(config, token).ConfigureAwait(false);
-        await StartGame(config, token).ConfigureAwait(false);
-    }
-
-    public async Task CloseGame(PokeTradeHubConfig config, CancellationToken token)
-    {
-        var timing = config.Timings;
-        // Close out of the game
-        await Click(B, 0_500, token).ConfigureAwait(false);
-        await Click(HOME, 2_000 + timing.ExtraTimeReturnHome, token).ConfigureAwait(false);
-        await Click(X, 1_000, token).ConfigureAwait(false);
-        await Click(A, 5_000 + timing.ExtraTimeCloseGame, token).ConfigureAwait(false);
-        Log("Closed out of the game!");
-    }
-
-    public async Task StartGame(PokeTradeHubConfig config, CancellationToken token)
-    {
-        var timing = config.Timings;
-        // Open game.
-        await Click(A, 1_000 + timing.ExtraTimeLoadProfile, token).ConfigureAwait(false);
-
-        // Menus here can go in the order: Update Prompt -> Profile -> DLC check -> Unable to use DLC.
-        //  The user can optionally turn on the setting if they know of a breaking system update incoming.
-        if (timing.AvoidSystemUpdate)
-        {
-            await Click(DUP, 0_600, token).ConfigureAwait(false);
-            await Click(A, 1_000 + timing.ExtraTimeLoadProfile, token).ConfigureAwait(false);
-        }
-
-        await Click(A, 1_000 + timing.ExtraTimeCheckDLC, token).ConfigureAwait(false);
-        // If they have DLC on the system and can't use it, requires pressing UP + A to start the game.
-        // Should be harmless otherwise since they'll be in loading screen.
-        await Click(DUP, 0_600, token).ConfigureAwait(false);
-        await Click(A, 0_600, token).ConfigureAwait(false);
-
-        Log("Restarting the game!");
-
-        // Switch Logo and game load screen
-        await Task.Delay(12_000 + timing.ExtraTimeLoadGame, token).ConfigureAwait(false);
-
-        for (int i = 0; i < 8; i++)
-            await Click(A, 1_000, token).ConfigureAwait(false);
-
-        var timer = 60_000;
-        while (!await IsOnOverworldTitle(token).ConfigureAwait(false))
-        {
-            await Task.Delay(1_000, token).ConfigureAwait(false);
-            timer -= 1_000;
-            // We haven't made it back to overworld after a minute, so press A every 6 seconds hoping to restart the game.
-            // Don't risk it if hub is set to avoid updates.
-            if (timer <= 0 && !timing.AvoidSystemUpdate)
-            {
-                Log("Still not in the game, initiating rescue protocol!");
-                while (!await IsOnOverworldTitle(token).ConfigureAwait(false))
-                    await Click(A, 6_000, token).ConfigureAwait(false);
-                break;
-            }
-        }
-
-        await Task.Delay(5_000 + timing.ExtraTimeLoadOverworld, token).ConfigureAwait(false);
-        Log("Back in the overworld!");
-    }
-
-    public async Task<bool> IsConnectedOnline(ulong offset, CancellationToken token)
-    {
-        var data = await SwitchConnection.ReadBytesAbsoluteAsync(offset, 1, token).ConfigureAwait(false);
-        return data[0] == 1;
-    }
-
-    public async Task<ulong> GetTradePartnerNID(ulong offset, CancellationToken token)
-    {
-        var data = await SwitchConnection.ReadBytesAbsoluteAsync(offset, 8, token).ConfigureAwait(false);
-        return BitConverter.ToUInt64(data, 0);
-    }
-
-    public Task ClearTradePartnerNID(ulong offset, CancellationToken token)
-    {
-        var data = new byte[8];
-        return SwitchConnection.WriteBytesAbsoluteAsync(data, offset, token);
-    }
-
-    public async Task<bool> IsOnOverworld(ulong offset, CancellationToken token)
-    {
-        var data = await SwitchConnection.ReadBytesAbsoluteAsync(offset, 1, token).ConfigureAwait(false);
-        return data[0] == 0x11;
     }
 
     // Only used to check if we made it off the title screen; the pointer isn't viable until a few seconds after clicking A.
@@ -268,25 +295,5 @@ public abstract class PokeRoutineExecutor9SV : PokeRoutineExecutor<PK9>
         if (!valid)
             return false;
         return await IsOnOverworld(offset, token).ConfigureAwait(false);
-    }
-
-    // 0x10 if fully loaded into Poké Portal.
-    public async Task<bool> IsInPokePortal(ulong offset, CancellationToken token)
-    {
-        var data = await SwitchConnection.ReadBytesAbsoluteAsync(offset, 1, token).ConfigureAwait(false);
-        return data[0] == 0x10;
-    }
-
-    // 0x14 in a box and during trades, trade evolutions, and move learning.
-    public async Task<bool> IsInBox(ulong offset, CancellationToken token)
-    {
-        var data = await SwitchConnection.ReadBytesAbsoluteAsync(offset, 1, token).ConfigureAwait(false);
-        return data[0] == 0x14;
-    }
-
-    public async Task<TextSpeedOption> GetTextSpeed(CancellationToken token)
-    {
-        var data = await SwitchConnection.PointerPeek(1, Offsets.ConfigPointer, token).ConfigureAwait(false);
-        return (TextSpeedOption)(data[0] & 3);
     }
 }

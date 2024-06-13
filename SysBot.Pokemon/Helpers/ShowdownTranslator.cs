@@ -1,15 +1,16 @@
-﻿using PKHeX.Core;
-using System.Text.RegularExpressions;
-using System.Collections.Generic;
+using PKHeX.Core;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace SysBot.Pokemon
 {
     public class ShowdownTranslator<T> where T : PKM
     {
-        public static GameStrings GameStringsZh = GameInfo.GetStrings("zh");
         public static GameStrings GameStringsEn = GameInfo.GetStrings("en");
+
+        public static GameStrings GameStringsZh = GameInfo.GetStrings("zh");
+
         public static string Chinese2Showdown(string zh)
         {
             string result = "";
@@ -31,8 +32,10 @@ namespace SysBot.Pokemon
             // 特殊性别差异
             // 29-尼多兰F，32-尼多朗M，678-超能妙喵F，876-爱管侍F，902-幽尾玄鱼F, 916-飘香豚
             if (((Species)specieNo is Species.Meowstic or Species.Indeedee or Species.Basculegion or Species.Oinkologne)
-                && zh.Contains("母")) result += "-F";
-
+                && zh.Contains("母"))
+            {
+                result += "-F";
+            }
 
             // 识别地区形态
             foreach (var s in ShowdownTranslatorDictionary.formDict)
@@ -204,15 +207,16 @@ namespace SysBot.Pokemon
                 result += "\n.Ribbons=$suggestAll\n.RibbonMarkPartner=True\n.RibbonMarkGourmand=True";
                 zh = zh.Replace("全奖章", "");
             }
+
             // 体型大小并添加证章
             if (typeof(T) == typeof(PK9) && zh.Contains("大个子"))
             {
-                result += $"\n.Scale=255\n.RibbonMarkJumbo=True";
+                result += "\n.Scale=255\n.RibbonMarkJumbo=True";
                 zh = zh.Replace("大个子", "");
             }
             else if (typeof(T) == typeof(PK9) && zh.Contains("小不点"))
             {
-                result += $"\n.Scale=0\n.RibbonMarkMini=True";
+                result += "\n.Scale=0\n.RibbonMarkMini=True";
                 zh = zh.Replace("小不点", "");
             }
 
@@ -257,6 +261,5 @@ namespace SysBot.Pokemon
         }
 
         public static bool IsPS(string str) => GameStringsEn.Species.Skip(1).Any(str.Contains);
-
     }
 }

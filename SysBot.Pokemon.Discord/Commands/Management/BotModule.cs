@@ -39,7 +39,9 @@ namespace SysBot.Pokemon.Discord
                 var config = JObject.Parse(jsonData);
 
                 // Access the IP address from the first bot in the Bots array
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                 var ip = config["Bots"][0]["Connection"]["IP"].ToString();
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                 return ip;
             }
             catch (Exception ex)
@@ -58,7 +60,7 @@ namespace SysBot.Pokemon.Discord
         [Command("botStart")]
         [Summary("Inicia el bot que se está ejecutando actualmente.")]
         [RequireSudo]
-        public async Task StartBotAsync([Summary("IP address of the bot")] string ip = null)
+        public async Task StartBotAsync([Summary("IP address of the bot")] string? ip = null)
         {
             if (ip == null)
                 ip = BotModule<T>.GetBotIPFromJsonConfig();
@@ -71,13 +73,13 @@ namespace SysBot.Pokemon.Discord
             }
 
             bot.Start();
-            await ReplyAsync($"<a:yes:1206485105674166292> El bot ha recibido la orden de Iniciar.").ConfigureAwait(false);
+            await ReplyAsync("<a:yes:1206485105674166292> Se ha iniciado el bot.").ConfigureAwait(false);
         }
 
         [Command("botStop")]
         [Summary("Detiene el bot que se está ejecutando actualmente.")]
         [RequireSudo]
-        public async Task StopBotAsync([Summary("IP address of the bot")] string ip = null)
+        public async Task StopBotAsync([Summary("IP address of the bot")] string? ip = null)
         {
             if (ip == null)
                 ip = BotModule<T>.GetBotIPFromJsonConfig();
@@ -90,14 +92,14 @@ namespace SysBot.Pokemon.Discord
             }
 
             bot.Stop();
-            await ReplyAsync($"<a:yes:1206485105674166292> El bot ha recibido la orden de Parar.").ConfigureAwait(false);
+            await ReplyAsync("<a:yes:1206485105674166292> El bot ha sido detenido.").ConfigureAwait(false);
         }
 
         [Command("botIdle")]
         [Alias("botPause")]
         [Summary("Ordena al bot que se está ejecutando actualmente que permanezca inactivo.")]
         [RequireSudo]
-        public async Task IdleBotAsync([Summary("IP address of the bot")] string ip = null)
+        public async Task IdleBotAsync([Summary("IP address of the bot")] string? ip = null)
         {
             if (ip == null)
                 ip = BotModule<T>.GetBotIPFromJsonConfig();
@@ -110,13 +112,13 @@ namespace SysBot.Pokemon.Discord
             }
 
             bot.Pause();
-            await ReplyAsync($"<a:yes:1206485105674166292>El bot ha sido comandado a Idle.").ConfigureAwait(false);
+            await ReplyAsync("<a:yes:1206485105674166292> El bot se ha configurado en inactivo.").ConfigureAwait(false);
         }
 
         [Command("botChange")]
         [Summary("Cambia la rutina del bot actualmente en ejecución (intercambios).")]
         [RequireSudo]
-        public async Task ChangeTaskAsync([Summary("Routine enum name")] PokeRoutineType task, [Summary("IP address of the bot")] string ip = null)
+        public async Task ChangeTaskAsync([Summary("Routine enum name")] PokeRoutineType task, [Summary("IP address of the bot")] string? ip = null)
         {
             if (ip == null)
                 ip = BotModule<T>.GetBotIPFromJsonConfig();
@@ -135,7 +137,7 @@ namespace SysBot.Pokemon.Discord
         [Command("botRestart")]
         [Summary("Reinicia los bots que se están ejecutando actualmente.")]
         [RequireSudo]
-        public async Task RestartBotAsync([Summary("IP address of the bot")] string ip = null)
+        public async Task RestartBotAsync([Summary("IP address of the bot")] string? ip = null)
         {
             if (ip == null)
                 ip = BotModule<T>.GetBotIPFromJsonConfig();
@@ -150,7 +152,7 @@ namespace SysBot.Pokemon.Discord
             var c = bot.Bot.Connection;
             c.Reset();
             bot.Start();
-            await ReplyAsync($"<a:yes:1206485105674166292> El bot ha recibido la orden de Reiniciarse.").ConfigureAwait(false);
+            await ReplyAsync("<a:yes:1206485105674166292> El bot ha recibido la orden de Reiniciarse.").ConfigureAwait(false);
         }
     }
 }

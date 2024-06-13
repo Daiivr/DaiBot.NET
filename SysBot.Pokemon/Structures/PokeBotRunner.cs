@@ -10,18 +10,25 @@ namespace SysBot.Pokemon;
 public interface IPokeBotRunner
 {
     PokeTradeHubConfig Config { get; }
+
     bool RunOnce { get; }
+
     bool IsRunning { get; }
 
     void StartAll();
+
     void StopAll();
+
     void InitializeStart();
 
     void Add(PokeRoutineExecutorBase newbot);
+
     void Remove(IConsoleBotConfig state, bool callStop);
 
     BotSource<PokeBotState>? GetBot(PokeBotState state);
+
     PokeRoutineExecutorBase CreateBotFromConfig(PokeBotState cfg);
+
     bool SupportsRoutine(PokeRoutineType pokeRoutineType);
 
     event EventHandler BotStopped;
@@ -30,24 +37,33 @@ public interface IPokeBotRunner
 public abstract class PokeBotRunner<T> : BotRunner<PokeBotState>, IPokeBotRunner where T : PKM, new()
 {
     public readonly PokeTradeHub<T> Hub;
+
     private readonly BotFactory<T> Factory;
+
     public event EventHandler BotStopped;
 
     public PokeTradeHubConfig Config => Hub.Config;
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+
     protected PokeBotRunner(PokeTradeHub<T> hub, BotFactory<T> factory)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
         Hub = hub;
         Factory = factory;
     }
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+
     protected PokeBotRunner(PokeTradeHubConfig config, BotFactory<T> factory)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
         Factory = factory;
         Hub = new PokeTradeHub<T>(config);
     }
 
-    protected virtual void AddIntegrations() { }
+    protected virtual void AddIntegrations()
+    { }
 
     public override void Add(RoutineExecutor<PokeBotState> bot)
     {
@@ -118,16 +134,20 @@ public abstract class PokeBotRunner<T> : BotRunner<PokeBotState>, IPokeBotRunner
 
         var path = Hub.Config.Folder.DistributeFolder;
         if (!Directory.Exists(path))
-            LogUtil.LogError("The distribution folder was not found. Please verify that it exists!", "Hub");
+            LogUtil.LogError("No se encontró la carpeta de distribución. ¡Por favor verifique que exista!", "Hub");
 
         var pool = Hub.Ledy.Pool;
         if (!pool.Reload(Hub.Config.Folder.DistributeFolder))
-            LogUtil.LogError("Nothing to distribute for Empty Trade Queues!", "Hub");
+            LogUtil.LogError("¡Nada que distribuir para las colas comerciales vacías!", "Hub");
     }
 
     public PokeRoutineExecutorBase CreateBotFromConfig(PokeBotState cfg) => Factory.CreateBot(Hub, cfg);
+
     public BotSource<PokeBotState>? GetBot(PokeBotState state) => base.GetBot(state);
+
     void IPokeBotRunner.Remove(IConsoleBotConfig state, bool callStop) => Remove(state, callStop);
+
     public void Add(PokeRoutineExecutorBase newbot) => Add((RoutineExecutor<PokeBotState>)newbot);
+
     public bool SupportsRoutine(PokeRoutineType t) => Factory.SupportsRoutine(t);
 }

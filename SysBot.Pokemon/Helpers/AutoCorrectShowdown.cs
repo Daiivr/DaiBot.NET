@@ -1,15 +1,15 @@
 using FuzzySharp;
-using System.Buffers;
 using PKHeX.Core;
+using SysBot.Base;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
-using SysBot.Base;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using static PKHeX.Core.LearnMethod;
 using static PKHeX.Core.RibbonIndex;
-using System.Threading.Tasks;
-using System.Text;
 
 namespace SysBot.Pokemon;
 
@@ -30,10 +30,14 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
 
         (string speciesName, string formName, string gender, string heldItem, string nickname) = ParseSpeciesLine(lines[0]);
 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
         string correctedSpeciesName = autoCorrectConfig.AutoCorrectSpeciesAndForm ? await GetClosestSpecies(speciesName).ConfigureAwait(false) ?? speciesName : speciesName;
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
         ushort speciesIndex = (ushort)Array.IndexOf(gameStrings.specieslist, correctedSpeciesName);
         string[] formNames = FormConverter.GetFormList(speciesIndex, gameStrings.types, gameStrings.forms, new List<string>(), generation);
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
         string correctedFormName = autoCorrectConfig.AutoCorrectSpeciesAndForm ? await GetClosestFormName(formName, formNames).ConfigureAwait(false) ?? formName : formName;
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
         PKM pk = originalPk.Clone();
         LegalityAnalysis la = originalLa;
@@ -52,17 +56,27 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
         var personalAbilityInfoTask = Task.Run(() => GetPersonalInfo(speciesIndex));
         var closestAbilityTask = GetClosestAbility(abilityName, speciesIndex, gameStrings, await personalAbilityInfoTask);
         var closestNatureTask = GetClosestNature(natureName, gameStrings);
+#pragma warning disable CS8604 // Possible null reference argument.
         var legalBallTask = GetLegalBall(speciesIndex, correctedFormName, ballName, gameStrings, pk);
+#pragma warning restore CS8604 // Possible null reference argument.
 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
         string correctedAbilityName = autoCorrectConfig.AutoCorrectAbility ? await closestAbilityTask : abilityName;
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
         string correctedNatureName = autoCorrectConfig.AutoCorrectNature ? await closestNatureTask : natureName;
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
         string correctedBallName = autoCorrectConfig.AutoCorrectBall ? await legalBallTask : ballName;
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
         var levelVerifier = new LevelVerifier();
         if (autoCorrectConfig.AutoCorrectLevel)
             levelVerifier.Verify(la);
         if (autoCorrectConfig.AutoCorrectGender)
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             gender = await ValidateGender(pk, gender, speciesName);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
 
         if (autoCorrectConfig.AutoCorrectMovesLearnset)
             ValidateMoves(lines, pk, la, gameStrings, correctedSpeciesName, correctedFormName);
@@ -73,13 +87,17 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
         if (!ValidateEVs(lines) && autoCorrectConfig.AutoCorrectEVs)
             RemoveEVLine(lines);
 
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
         string markLine = null;
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
         if (autoCorrectConfig.AutoCorrectMarks)
         {
             var markVerifier = new MarkVerifier();
             markVerifier.Verify(la);
             if (!la.Valid)
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                 markLine = await CorrectMarks(pk, la.EncounterOriginal, lines);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
         }
 
         string correctedHeldItem = autoCorrectConfig.AutoCorrectHeldItem ? ValidateHeldItem(lines, pk, itemlist, heldItem) : heldItem;
@@ -122,7 +140,7 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
 
         string finalShowdownSet = string.Join(Environment.NewLine, correctedLines);
 
-        await Task.Run(() => LogUtil.LogInfo($"Final Showdown Set:\n{finalShowdownSet}", nameof(AutoCorrectShowdown<T>)));
+        await Task.Run(() => LogUtil.LogInfo($"Conjunto de enfrentamiento final:\n{finalShowdownSet}", nameof(AutoCorrectShowdown<T>)));
 
         return finalShowdownSet;
     }
@@ -234,13 +252,21 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
             return sb.ToString();
         }
         else if (line.StartsWith("Ability:"))
+        {
             return $"Ability: {correctedAbilityName}";
+        }
         else if (line.EndsWith(" Nature"))
+        {
             return $"{correctedNatureName} Nature";
+        }
         else if (line.StartsWith("Ball:"))
+        {
             return $"Ball: {correctedBallName}";
+        }
         else if (line.StartsWith("Level:"))
+        {
             return !la.Valid ? "Level: 100" : $"Level: {levelValue}";
+        }
 
         return line;
     }
@@ -259,7 +285,9 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
             .OrderByDescending(s => s.Distance)
             .FirstOrDefault();
 
+#pragma warning disable CS8604 // Possible null reference argument.
         return Task.FromResult<string>(fuzzySpecies.Distance >= 80 ? fuzzySpecies.Species : null);
+#pragma warning restore CS8604 // Possible null reference argument.
     }
 
     private static Task<string>? GetClosestFormName(string userFormName, string[] validFormNames)
@@ -271,7 +299,9 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
             .ThenBy(f => f.FormName.Length)
             .FirstOrDefault();
 
+#pragma warning disable CS8604 // Possible null reference argument.
         return Task.FromResult<string>(fuzzyFormName.Distance >= 80 ? fuzzyFormName.FormName : null);
+#pragma warning restore CS8604 // Possible null reference argument.
     }
 
     private static string ValidateHeldItem(string[] lines, PKM pk, string[] itemlist, string heldItem)
@@ -280,12 +310,16 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
 
         if (!string.IsNullOrEmpty(heldItem))
         {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             string correctedHeldItem = GetClosestItem(heldItem, itemlist);
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+
             // LogUtil.LogInfo($"Corrected held item: {correctedHeldItem}", nameof(AutoCorrectShowdown<T>));
 
             if (correctedHeldItem != null)
             {
                 int itemIndex = Array.IndexOf(itemlist, correctedHeldItem);
+
                 // LogUtil.LogInfo($"Item index: {itemIndex}", nameof(AutoCorrectShowdown<T>));
 
                 if (ItemRestrictions.IsHeldItemAllowed(itemIndex, pk.Context))
@@ -298,6 +332,7 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
                         if (line.Contains(" @ "))
                         {
                             lines[i] = line.Replace(heldItem, correctedHeldItem);
+
                             // LogUtil.LogInfo($"Updated line: {lines[i]}", nameof(AutoCorrectShowdown<T>));
                             break;
                         }
@@ -315,6 +350,7 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
                         if (line.Contains(" @ "))
                         {
                             lines[i] = line.Split(new[] { " @ " }, StringSplitOptions.None)[0];
+
                             // LogUtil.LogInfo($"Updated line: {lines[i]}", nameof(AutoCorrectShowdown<T>));
                             break;
                         }
@@ -345,7 +381,7 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
 
     private static void ValidateMoves(string[] lines, PKM pk, LegalityAnalysis la, GameStrings gameStrings, string speciesName, string formName)
     {
-        var moveLines = lines.Where(line => line.StartsWith($"- ")).ToArray();
+        var moveLines = lines.Where(line => line.StartsWith("- ")).ToArray();
         var correctedMoveLines = new List<string>(); // Create a list to store corrected move lines
 
         var validMoves = GetValidMoves(pk, gameStrings, speciesName, formName);
@@ -569,7 +605,7 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
             return LearnSource8SWSH.Instance;
         if (pk is PB7)
             return LearnSource7GG.Instance;
-        throw new ArgumentException("Unsupported PKM type.", nameof(pk));
+        throw new ArgumentException("Tipo PKM no admitido.", nameof(pk));
     }
 
     private static Task<string>? GetClosestAbility(string userAbility, ushort speciesIndex, GameStrings gameStrings, IPersonalAbility12 personalInfo)
@@ -583,7 +619,9 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
             .OrderByDescending(a => a.Distance)
             .FirstOrDefault();
 
+#pragma warning disable CS8604 // Possible null reference argument.
         return Task.FromResult<string>(fuzzyAbility.Distance >= 80 ? fuzzyAbility.Ability : null);
+#pragma warning restore CS8604 // Possible null reference argument.
     }
 
     private static Task<string>? GetClosestNature(string userNature, GameStrings gameStrings)
@@ -594,7 +632,9 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
             .OrderByDescending(n => n.Distance)
             .FirstOrDefault();
 
+#pragma warning disable CS8604 // Possible null reference argument.
         return Task.FromResult<string>(fuzzyNature.Distance >= 80 ? fuzzyNature.Nature : null);
+#pragma warning restore CS8604 // Possible null reference argument.
     }
 
     private static Task<string>? GetLegalBall(ushort speciesIndex, string formName, string ballName, GameStrings gameStrings, PKM pk)
@@ -612,7 +652,7 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
         return Task.FromResult(gameStrings.itemlist[legalBall]);
     }
 
-    private static string GetClosestBall(string userBall, GameStrings gameStrings)
+    private static string? GetClosestBall(string userBall, GameStrings gameStrings)
     {
         var ballList = gameStrings.balllist.Where(b => !string.IsNullOrWhiteSpace(b)).ToArray();
 
@@ -637,7 +677,7 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
         if (typeof(T) == typeof(PB7))
             return GameInfo.GetStrings(GetLanguageIndex(GameVersion.GE));
 
-        throw new ArgumentException("Type does not have recognized game strings.", typeof(T).Name);
+        throw new ArgumentException("El tipo no tiene cadenas de juego reconocidas.", typeof(T).Name);
     }
 
     private static IPersonalAbility12 GetPersonalInfo(ushort speciesIndex)
@@ -653,7 +693,7 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
         if (typeof(T) == typeof(PB7))
             return PersonalTable.GG.GetFormEntry(speciesIndex, 0);
 
-        throw new ArgumentException("Type does not have a recognized personal table.", typeof(T).Name);
+        throw new ArgumentException("El tipo no tiene una tabla personal reconocida.", typeof(T).Name);
     }
 
     private static IPersonalFormInfo GetPersonalFormInfo(ushort speciesIndex)
@@ -669,7 +709,7 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
         if (typeof(T) == typeof(PB7))
             return PersonalTable.GG.GetFormEntry(speciesIndex, 0);
 
-        throw new ArgumentException("Type does not have a recognized personal form table.", typeof(T).Name);
+        throw new ArgumentException("El tipo no tiene una tabla de formulario personal reconocida.", typeof(T).Name);
     }
 
     private static EntityContext GetGeneration()
@@ -685,12 +725,12 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
         if (typeof(T) == typeof(PB7))
             return EntityContext.Gen7b;
 
-        throw new ArgumentException("Type does not have a recognized generation.", typeof(T).Name);
+        throw new ArgumentException("El tipo no tiene una generación reconocida.", typeof(T).Name);
     }
 
     private static int GetLanguageIndex(GameVersion version)
     {
-        var language = GameLanguage.DefaultLanguage;
+        const string language = GameLanguage.DefaultLanguage;
         return GameLanguage.GetLanguageIndex(language);
     }
 
@@ -801,12 +841,14 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
     {
         if (pk is not IRibbonIndex m)
         {
-            LogUtil.LogInfo("PKM does not implement IRibbonIndex. Correcting to '.Ribbons=$SuggestAll'.", nameof(AutoCorrectShowdown<T>));
+            LogUtil.LogInfo("PKM no implementa el índice IRibbon. corrigiendo a '.Ribbons=$SuggestAll'.", nameof(AutoCorrectShowdown<T>));
             return Task.FromResult(".Ribbons=$SuggestAll");
         }
 
         // Find the existing mark line in the input showdown set
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
         string existingMarkLine = lines.FirstOrDefault(line => line.StartsWith(".RibbonMark"));
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
         if (!string.IsNullOrEmpty(existingMarkLine))
         {
@@ -820,41 +862,41 @@ public static class AutoCorrectShowdown<T> where T : PKM, new()
                 if (MarkRules.IsEncounterMarkValid(markIndex, pk, encounter))
                 {
                     m.SetRibbon((int)markIndex, true);
-                    LogUtil.LogInfo($"Found valid mark: {markIndex}. Keeping the existing mark line: {existingMarkLine}", nameof(AutoCorrectShowdown<T>));
+                    LogUtil.LogInfo($"Marca válida encontrada: {markIndex}. Manteniendo la línea de marca existente: {existingMarkLine}", nameof(AutoCorrectShowdown<T>));
                     return Task.FromResult(existingMarkLine);
                 }
                 else
                 {
-                    LogUtil.LogInfo($"Mark {markIndex} is not valid for the encounter. Correcting to '.Ribbons=$SuggestAll'.", nameof(AutoCorrectShowdown<T>));
+                    LogUtil.LogInfo($"La marca {markIndex} no es válida para el encuentro. corrigiendo a '.Ribbons=$SuggestAll'.", nameof(AutoCorrectShowdown<T>));
                 }
             }
             else
             {
-                LogUtil.LogInfo($"Invalid mark name: {markName}. Correcting to '.Ribbons=$SuggestAll'.", nameof(AutoCorrectShowdown<T>));
+                LogUtil.LogInfo($"Nombre de marca no válido: {markName}. corrigiendo a '.Ribbons=$SuggestAll'.", nameof(AutoCorrectShowdown<T>));
             }
         }
 
         // Apply valid marks based on the encounter if no valid mark is found
         if (MarkRules.IsEncounterMarkAllowed(encounter, pk))
         {
-            LogUtil.LogInfo("Encounter allows marks. Searching for valid marks.", nameof(AutoCorrectShowdown<T>));
+            LogUtil.LogInfo("El encuentro permite marcas. Buscando marcas válidas.", nameof(AutoCorrectShowdown<T>));
             for (var mark = MarkLunchtime; mark <= MarkSlump; mark++)
             {
                 if (MarkRules.IsEncounterMarkValid(mark, pk, encounter))
                 {
                     m.SetRibbon((int)mark, true);
-                    LogUtil.LogInfo($"Found valid mark: {mark}. Setting the mark line to '.RibbonMark{GetRibbonNameSafe(mark)}=True'.", nameof(AutoCorrectShowdown<T>));
+                    LogUtil.LogInfo($"Marca válida encontrada: {mark}. Establecer la línea de marca a '.RibbonMark{GetRibbonNameSafe(mark)}=True'.", nameof(AutoCorrectShowdown<T>));
                     return Task.FromResult($".RibbonMark{GetRibbonNameSafe(mark)}=True");
                 }
             }
         }
         else
         {
-            LogUtil.LogInfo("Encounter does not allow marks. Correcting to '.Ribbons=$SuggestAll'.", nameof(AutoCorrectShowdown<T>));
+            LogUtil.LogInfo("El encuentro no permite marcas. Corrigiendo a '.Ribbons=$SuggestAll'.", nameof(AutoCorrectShowdown<T>));
         }
 
         // If no valid mark is found, correct the line to ".Ribbons=$SuggestAll"
-        LogUtil.LogInfo("No valid marks found. Correcting to '.Ribbons=$SuggestAll'.", nameof(AutoCorrectShowdown<T>));
+        LogUtil.LogInfo("No se encontraron marcas válidas. Corrigiendo a '.Ribbons=$SuggestAll'.", nameof(AutoCorrectShowdown<T>));
         return Task.FromResult(".Ribbons=$SuggestAll");
     }
 

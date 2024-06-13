@@ -7,14 +7,20 @@ namespace SysBot.Pokemon;
 
 public class RemoteControlBotSV(PokeBotState Config) : PokeRoutineExecutor9SV(Config)
 {
+    public override async Task HardStop()
+    {
+        await SetStick(SwitchStick.LEFT, 0, 0, 0_500, CancellationToken.None).ConfigureAwait(false); // reset
+        await CleanExit(CancellationToken.None).ConfigureAwait(false);
+    }
+
     public override async Task MainLoop(CancellationToken token)
     {
         try
         {
-            Log("Identifying trainer data of the host console.");
+            Log("Identificación de datos del entrenador de la consola host.");
             await IdentifyTrainer(token).ConfigureAwait(false);
 
-            Log("Starting main loop, then waiting for commands.");
+            Log("Iniciando el bucle principal, luego esperando comandos.");
             Config.IterateNextRoutine();
             while (!token.IsCancellationRequested)
             {
@@ -27,15 +33,10 @@ public class RemoteControlBotSV(PokeBotState Config) : PokeRoutineExecutor9SV(Co
             Log(e.Message);
         }
 
-        Log($"Ending {nameof(RemoteControlBotSV)} loop.");
+        Log($"Finalizando el bucle {nameof(RemoteControlBotSV)}.");
         await HardStop().ConfigureAwait(false);
     }
 
-    public override async Task HardStop()
-    {
-        await SetStick(SwitchStick.LEFT, 0, 0, 0_500, CancellationToken.None).ConfigureAwait(false); // reset
-        await CleanExit(CancellationToken.None).ConfigureAwait(false);
-    }
     public override async Task RebootAndStop(CancellationToken t)
     {
         await ReOpenGame(new PokeTradeHubConfig(), t).ConfigureAwait(false);
@@ -44,7 +45,7 @@ public class RemoteControlBotSV(PokeBotState Config) : PokeRoutineExecutor9SV(Co
         await Task.Delay(2_000, t).ConfigureAwait(false);
         if (!t.IsCancellationRequested)
         {
-            Log("Restarting the main loop.");
+            Log("Reiniciando el bucle principal.");
             await MainLoop(t).ConfigureAwait(false);
         }
     }

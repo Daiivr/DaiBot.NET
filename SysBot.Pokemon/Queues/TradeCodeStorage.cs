@@ -11,7 +11,9 @@ public class TradeCodeStorage
 
     public class TradeCodeDetails
     {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public string Code { get; set; }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public string? OT { get; set; }
         public int TID { get; set; }
         public int SID { get; set; }
@@ -24,7 +26,9 @@ public class TradeCodeStorage
         WriteIndented = true
     };
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     public TradeCodeStorage()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     {
         LoadFromFile();
     }
@@ -90,7 +94,9 @@ public class TradeCodeStorage
         if (File.Exists(FileName))
         {
             string json = File.ReadAllText(FileName);
+#pragma warning disable CS8601 // Possible null reference assignment.
             _tradeCodeDetails = JsonSerializer.Deserialize<Dictionary<ulong, TradeCodeDetails>>(json, SerializerOptions);
+#pragma warning restore CS8601 // Possible null reference assignment.
         }
         else
         {
@@ -127,7 +133,7 @@ public class TradeCodeStorage
         return 0;
     }
 
-    public TradeCodeDetails GetTradeDetails(ulong trainerID)
+    public TradeCodeDetails? GetTradeDetails(ulong trainerID)
     {
         LoadFromFile();
 

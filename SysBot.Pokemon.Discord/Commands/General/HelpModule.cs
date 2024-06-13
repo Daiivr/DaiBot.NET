@@ -12,7 +12,9 @@ namespace SysBot.Pokemon.Discord;
 
 public class HelpModule(CommandService commandService) : ModuleBase<SocketCommandContext>
 {
+#pragma warning disable CS9124 // Parameter is captured into the state of the enclosing type and its value is also used to initialize a field, property, or event.
     private readonly CommandService _commandService = commandService;
+#pragma warning restore CS9124 // Parameter is captured into the state of the enclosing type and its value is also used to initialize a field, property, or event.
 
     [Command("help")]
     [Summary("Muestra los comandos disponibles.")]

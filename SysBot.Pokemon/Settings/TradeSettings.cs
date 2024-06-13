@@ -10,19 +10,27 @@ namespace SysBot.Pokemon;
 public class TradeSettings : IBotStateSettings, ICountSettings
 {
     private const string CountStats = nameof(CountStats);
+
     private const string HOMELegality = nameof(HOMELegality);
+
     private const string TradeConfig = nameof(TradeConfig);
+
     private const string AutoCorrectShowdownConfig = nameof(AutoCorrectShowdownConfig);
+
     private const string VGCPastesConfig = nameof(VGCPastesConfig);
+
     private const string Miscellaneous = nameof(Miscellaneous);
+
     private const string RequestFolders = nameof(RequestFolders);
+
     private const string EmbedSettings = nameof(EmbedSettings);
+
     public override string ToString() => "Ajustes de configuración de Trade";
 
     [TypeConverter(typeof(ExpandableObjectConverter))]
     public class EmojiInfo
     {
-        [Description("The full string for the emoji.")]
+        [Description("La cadena completa para el emoji.")]
         public string EmojiString { get; set; } = string.Empty;
 
         public override string ToString()
@@ -34,7 +42,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
     [Category(TradeConfig), Description("Ajustes relacionados con la configuración del trade."), DisplayName("Configuración del trade"), Browsable(true)]
     public TradeSettingsCategory TradeConfiguration { get; set; } = new();
 
-    [Category(VGCPastesConfig), Description("Ajustes relacionados con la Configuración de VGCPastes."),DisplayName("Configuración de VGCPastes"), Browsable(true)]
+    [Category(VGCPastesConfig), Description("Ajustes relacionados con la Configuración de VGCPastes."), DisplayName("Configuración de VGCPastes"), Browsable(true)]
     public VGCPastesCategory VGCPastesConfiguration { get; set; } = new();
 
     [Category(AutoCorrectShowdownConfig), Description("Configuraciones relacionadas con la corrección automática de conjuntos de showdown."), DisplayName("Configuración de la autocorrección de Showdown"), Browsable(true)]
@@ -48,7 +56,6 @@ public class TradeSettings : IBotStateSettings, ICountSettings
 
     [Category(CountStats), Description("Ajustes relacionados con las estadísticas de recuento de trades."), DisplayName("Configuración de las estadísticas de recuento de trades"), Browsable(true)]
     public CountStatsSettingsCategory CountStatsSettings { get; set; } = new();
-
 
     [Category(TradeConfig), TypeConverter(typeof(CategoryConverter<TradeSettingsCategory>))]
     public class TradeSettingsCategory
@@ -65,7 +72,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         public bool StoreTradeCodes { get; set; } = true;
 
         [Category(TradeConfig), Description("Tiempo a esperar por un usuario en segundos."), DisplayName("Tiempo a esperar por un usuario (segundos)")]
-        public int TradeWaitTime { get; set; } = 30;
+        public int TradeWaitTime { get; set; } = 40;
 
         [Category(TradeConfig), Description("Cantidad máxima de tiempo en segundos pulsando A para esperar a que se procese una operación."), DisplayName("Tiempo máximo de confirmación de la operación (segundos)")]
         public int MaxTradeConfirmTime { get; set; } = 25;
@@ -94,24 +101,37 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         [Category(TradeConfig), Description("Dump Trade: Si está activada, la rutina de dump mostrará al usuario información sobre la comprobación de la legalidad."), DisplayName("Verificación de la legalidad del dumping")]
         public bool DumpTradeLegalityCheck { get; set; } = true;
 
-        [Category(TradeConfig), Description("Ajuste LGPE.")]
+        [Category(TradeConfig), Description("Ajustes LGPE.")]
         public int TradeAnimationMaxDelaySeconds = 25;
 
         public enum HeldItem
         {
             None = 0,
-            AbilityPatch = 1606,
-            RareCandy = 50,
-            AbilityCapsule = 645,
-            BottleCap = 795,
-            expCandyL = 1127,
-            expCandyXL = 1128,
+
             MasterBall = 1,
-            Nugget = 92,
-            BigPearl = 89,
-            GoldBottleCap = 796,
+
+            RareCandy = 50,
+
             ppUp = 51,
+
             ppMax = 53,
+
+            BigPearl = 89,
+
+            Nugget = 92,
+
+            AbilityCapsule = 645,
+
+            BottleCap = 795,
+
+            GoldBottleCap = 796,
+
+            expCandyL = 1127,
+
+            expCandyXL = 1128,
+
+            AbilityPatch = 1606,
+
             FreshStartMochi = 2479,
         }
     }
@@ -125,6 +145,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         public bool EnableAutoCorrect { get; set; } = true;
 
         private bool _autoCorrectEmbedIndicator = true;
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, colocaremos un indicador en Trade Embeds que muestre que una operación se corrigió automáticamente."), DisplayName("Mostrar indicador Trade Embed?")]
         public bool AutoCorrectEmbedIndicator
         {
@@ -133,6 +154,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
 
         private bool _autoCorrectNickname = true;
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá los apodos ilegales."), DisplayName("Autocorrección de Apodos")]
         public bool AutoCorrectNickname
         {
@@ -141,6 +163,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
 
         private string _fixedNickname = string.Empty;
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Establezca un apodo predeterminado. Si no se proporciona ninguno, simplemente estará en blanco."), DisplayName("Cambiar el nombre de los apodos no válidos a...")]
         public string FixedNickname
         {
@@ -149,6 +172,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
 
         private bool _autoCorrectSpeciesAndForm = true;
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá las especies y formas incorrectas."), DisplayName("Autocorrección de Especies y Formas")]
         public bool AutoCorrectSpeciesAndForm
         {
@@ -157,6 +181,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
 
         private bool _autoCorrectHeldItem = true;
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá el item incorrecto."), DisplayName("Autocorrección del Item")]
         public bool AutoCorrectHeldItem
         {
@@ -165,6 +190,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
 
         private bool _autoCorrectNature = true;
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá la naturaleza incorrecta."), DisplayName("Autocorrección de Naturaleza")]
         public bool AutoCorrectNature
         {
@@ -173,6 +199,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
 
         private bool _autoCorrectAbility = true;
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en Verdadero, la corrección automática corregirá la habilidad incorrecta."), DisplayName("Autocorrección de Habilidad")]
         public bool AutoCorrectAbility
         {
@@ -181,6 +208,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
 
         private bool _autoCorrectBall = true;
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá el nombre de pokeball incorrecto."), DisplayName("Autocorrección de PokeBall")]
         public bool AutoCorrectBall
         {
@@ -189,6 +217,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
 
         private bool _autoCorrectLevel = true;
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá el nivel incorrecto."), DisplayName("Autocorrección del Nivel")]
         public bool AutoCorrectLevel
         {
@@ -197,6 +226,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
 
         private bool _autoCorrectGender = true;
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá el género incorrecto."), DisplayName("Autocorrección del Genero")]
         public bool AutoCorrectGender
         {
@@ -205,6 +235,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
 
         private bool _autoCorrectMovesLearnset = true;
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la autocorrección corregirá los movimientos erróneos y los learnset."), DisplayName("Autocorrección de los Movimientos/Learnset")]
         public bool AutoCorrectMovesLearnset
         {
@@ -213,6 +244,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
 
         private bool _autoCorrectEVs = true;
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la autocorrección corregirá los EVs erróneos."), DisplayName("Autocorrección de EVs")]
         public bool AutoCorrectEVs
         {
@@ -221,6 +253,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
 
         private bool _autoCorrectIVs = true;
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá los IV erróneos."), DisplayName("Autocorrección de IVs")]
         public bool AutoCorrectIVs
         {
@@ -229,6 +262,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         }
 
         private bool _autoCorrectMarks = true;
+
         [Category(nameof(AutoCorrectShowdownCategory)), Description("Si se establece en True, la corrección automática corregirá las marcas/cintas incorrectas."), DisplayName("Autocorrección de Marcas/Cintas")]
         public bool AutoCorrectMarks
         {
@@ -243,6 +277,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         public override string ToString() => "Ajustes de configuración de Trade Embed";
 
         private bool _useEmbeds = true;
+
         [Category(EmbedSettings), Description("Si es verdadero, mostrará hermosos embeds en sus canales de trade de discord de lo que el usuario este tradeando. False mostrará el texto por defecto."), DisplayName("Usar Embeds")]
         public bool UseEmbeds
         {
@@ -283,7 +318,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         public bool UseTeraEmojis { get; set; } = true;
 
         [Category(EmbedSettings), Description("Si es verdadero, se mostrarán los emojis para las escalas XXXS y XXXL en el Embed Trade."), DisplayName("¿Usar Emojis de Escala?")]
-        public bool UseScaleEmojis { get; set; } = true; // Habilitado por defecto.
+        public bool UseScaleEmojis { get; set; } = true;
 
         [Category(EmbedSettings), Description("Información personalizada de Emoji para los tipos de movimiento."), DisplayName("Emojis de Movimientos")]
         public List<MoveTypeEmojiInfo> CustomTypeEmojis { get; set; } = new List<MoveTypeEmojiInfo>
@@ -306,40 +341,32 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             new(MoveType.Normal),
             new(MoveType.Poison),
             new(MoveType.Fairy),
+            new(MoveType.Stellar)
         };
 
-        [Category(EmbedSettings), TypeConverter(typeof(ExpandableObjectConverter)), Description("Configuración de emojis para todos los tipos Tera, incluyendo 'Stellar'."), DisplayName("Emojis de Tipo Tera")]
-        public class TeraTypeEmojisSettings
+        [Category(EmbedSettings), Description("Configuración de emojis para todos los tipos Tera, incluyendo 'Stellar'."), DisplayName("Emojis de Tipo Tera")]
+        public List<TeraTypeEmojiInfo> TeraTypeEmojis { get; set; } = new List<TeraTypeEmojiInfo>
         {
-            public override string ToString() => "(Collection)";
-
-            [Description("Emoji para los tipos Tera estándar."), DisplayName("Emojis de Tipo Tera")]
-            public List<TeraTypeEmojiInfo> TeraTypeEmojis { get; set; } = new List<TeraTypeEmojiInfo>
-            {
-                new(MoveType.Bug),
-                new(MoveType.Fire),
-                new(MoveType.Flying),
-                new(MoveType.Ground),
-                new(MoveType.Water),
-                new(MoveType.Grass),
-                new(MoveType.Ice),
-                new(MoveType.Rock),
-                new(MoveType.Ghost),
-                new(MoveType.Steel),
-                new(MoveType.Fighting),
-                new(MoveType.Electric),
-                new(MoveType.Dragon),
-                new(MoveType.Psychic),
-                new(MoveType.Dark),
-                new(MoveType.Normal),
-                new(MoveType.Poison),
-                new(MoveType.Fairy)
-            };
-
-            [Description("Emoji para el tipo Tera 'Stellar'."), DisplayName("Emoji Tera Tipo Stellar")]
-            public EmojiInfo StellarTeraTypeEmoji { get; set; } = new EmojiInfo();
-        }
-        public TeraTypeEmojisSettings TeraEmojis { get; set; } = new TeraTypeEmojisSettings(); // Instancia de la configuración de emojis de tipo Tera.
+            new(MoveType.Bug),
+            new(MoveType.Fire),
+            new(MoveType.Flying),
+            new(MoveType.Ground),
+            new(MoveType.Water),
+            new(MoveType.Grass),
+            new(MoveType.Ice),
+            new(MoveType.Rock),
+            new(MoveType.Ghost),
+            new(MoveType.Steel),
+            new(MoveType.Fighting),
+            new(MoveType.Electric),
+            new(MoveType.Dragon),
+            new(MoveType.Psychic),
+            new(MoveType.Dark),
+            new(MoveType.Normal),
+            new(MoveType.Poison),
+            new(MoveType.Fairy),
+            new(MoveType.Stellar)
+        };
 
         [Category(EmbedSettings), TypeConverter(typeof(ExpandableObjectConverter)), Description("Configuración de emojis para las escalas XXXS y XXXL."), DisplayName("Emojis de tamaño")]
         public class ScaleEmojisSettings
@@ -352,7 +379,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             [Description("Emoji para la escala XXXL."), DisplayName("Emoji Escala XXXL")]
             public EmojiInfo ScaleXXXLEmoji { get; set; } = new EmojiInfo();
         }
-        public ScaleEmojisSettings ScaleEmojis { get; set; } = new ScaleEmojisSettings(); // Instancia de la configuración de emojis de escala.
+        public ScaleEmojisSettings ScaleEmojis { get; set; } = new ScaleEmojisSettings();
 
         [Category(EmbedSettings), TypeConverter(typeof(ExpandableObjectConverter)), Description("Configuración de emojis para Pokémon Shiny."), DisplayName("Emojis Shiny")]
         public class ShinyEmojisSettings
@@ -365,7 +392,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             [Description("Emoji para Pokémon Shiny normal."), DisplayName("Emoji Shiny Normal")]
             public EmojiInfo ShinyNormalEmoji { get; set; } = new EmojiInfo();
         }
-        public ShinyEmojisSettings ShinyEmojis { get; set; } = new ShinyEmojisSettings(); // Instancia de la configuración de emojis Shiny.
+        public ShinyEmojisSettings ShinyEmojis { get; set; } = new ShinyEmojisSettings();
 
         [Category(EmbedSettings), TypeConverter(typeof(ExpandableObjectConverter)), Description("Configuración de emojis para géneros."), DisplayName("Emojis de Género")]
         public class GenderEmojisSettings
@@ -398,7 +425,6 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             public EmojiInfo AlphaPLAEmoji { get; set; } = new EmojiInfo();
         }
         public SpecialMarksEmojisSettings SpecialMarksEmojis { get; set; } = new SpecialMarksEmojisSettings(); // Instancia de la configuración de emojis de marcas y estados especiales.
-
 
         [Category(EmbedSettings), Description("Se mostrará la Escala en el Embed Trade (SV y Discord solamente). Requiere que el usuario suba los emojis a su servidor."), DisplayName("Mostrar Tamaño")]
         public bool ShowScale { get; set; } = true;
@@ -456,6 +482,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
     /// Gets a random trade code based on the range settings.
     /// </summary>
     public int GetRandomTradeCode() => Util.Rand.Next(TradeConfiguration.MinTradeCode, TradeConfiguration.MaxTradeCode + 1);
+
     public static List<Pictocodes> GetRandomLGTradeCode(bool randomtrade = false)
     {
         var lgcode = new List<Pictocodes>();
@@ -465,7 +492,6 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             {
                 // code.Add((pictocodes)Util.Rand.Next(10));
                 lgcode.Add(Pictocodes.Pikachu);
-
             }
         }
         else
@@ -473,13 +499,12 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             for (int i = 0; i <= 2; i++)
             {
                 lgcode.Add((Pictocodes)Util.Rand.Next(10));
-                // code.Add(pictocodes.Pikachu);
 
+                // code.Add(pictocodes.Pikachu);
             }
         }
         return lgcode;
     }
-
 
     [Category(CountStats), TypeConverter(typeof(CategoryConverter<CountStatsSettingsCategory>))]
     public class CountStatsSettingsCategory
@@ -487,11 +512,17 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         public override string ToString() => "Estadísticas del recuento de trades";
 
         private int _completedSurprise;
+
         private int _completedDistribution;
+
         private int _completedTrades;
+
         private int _completedSeedChecks;
+
         private int _completedClones;
+
         private int _completedDumps;
+
         private int _completedFixOTs;
 
         [Category(CountStats), Description("Trades sorpresas finalizados")]
@@ -501,7 +532,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             set => _completedSurprise = value;
         }
 
-        [Category(  ), Description("Trades de enlaces finalizados (distribución)")]
+        [Category(), Description("Trades de enlaces finalizados (distribución)")]
         public int CompletedDistribution
         {
             get => _completedDistribution;
@@ -548,11 +579,17 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         public bool EmitCountsOnStatusCheck { get; set; }
 
         public void AddCompletedTrade() => Interlocked.Increment(ref _completedTrades);
+
         public void AddCompletedSeedCheck() => Interlocked.Increment(ref _completedSeedChecks);
+
         public void AddCompletedSurprise() => Interlocked.Increment(ref _completedSurprise);
+
         public void AddCompletedDistribution() => Interlocked.Increment(ref _completedDistribution);
+
         public void AddCompletedDumps() => Interlocked.Increment(ref _completedDumps);
+
         public void AddCompletedClones() => Interlocked.Increment(ref _completedClones);
+
         public void AddCompletedFixOTs() => Interlocked.Increment(ref _completedFixOTs);
 
         public IEnumerable<string> GetNonZeroCounts()
@@ -601,53 +638,74 @@ public class TradeSettings : IBotStateSettings, ICountSettings
     public enum ImageSize
     {
         Size256x256,
+
         Size128x128
+    }
+
+    public enum MoveType
+    {
+        Normal,
+        Fighting,
+        Flying,
+        Poison,
+        Ground,
+        Rock,
+        Bug,
+        Ghost,
+        Steel,
+        Fire,
+        Water,
+        Grass,
+        Electric,
+        Psychic,
+        Ice,
+        Dragon,
+        Dark,
+        Fairy,
+        Stellar
     }
 
     public class MoveTypeEmojiInfo
     {
-        [Description("The type of move.")]
+        [Description("El tipo de movimiento.")]
         public MoveType MoveType { get; set; }
-
-        [Description("The Discord emoji string for this move type.")]
-        public string EmojiCode { get; set; }
-
-        public MoveTypeEmojiInfo() { }
-
+        [Description("La cadena de emoji de Discord para este tipo de movimiento.")]
+        public string EmojiCode { get; set; } = string.Empty;
+        public MoveTypeEmojiInfo()
+        { }
         public MoveTypeEmojiInfo(MoveType moveType)
         {
             MoveType = moveType;
+            EmojiCode = string.Empty;
         }
-
         public override string ToString()
         {
             if (string.IsNullOrEmpty(EmojiCode))
                 return MoveType.ToString();
-
             return $"{EmojiCode}";
         }
     }
 
     public class TeraTypeEmojiInfo
     {
-        [Description("The Tera Type.")]
+        [Description("El tipo Tera.")]
         public MoveType MoveType { get; set; }
-
-        [Description("The Discord emoji string for this tera type.")]
+        [Description("La cadena de emojis de Discord para este tipo de tera.")]
         public string EmojiCode { get; set; }
-
-        public TeraTypeEmojiInfo() { }
-
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        public TeraTypeEmojiInfo()
+        { }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public TeraTypeEmojiInfo(MoveType teraType)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             MoveType = teraType;
         }
-
         public override string ToString()
         {
             if (string.IsNullOrEmpty(EmojiCode))
                 return MoveType.ToString();
-
             return $"{EmojiCode}";
         }
     }
