@@ -154,18 +154,18 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         return ((ulong)trainerID << 32) | (uint)nameHash;
     }
 
-    private async Task<bool> ApplyAutoOT(PB8 toSend, PB8 offered, SAV8BS sav, string tradePartner, CancellationToken token)
+    private async Task<PB8> ApplyAutoOT(PB8 toSend, PB8 offered, SAV8BS sav, string tradePartner, CancellationToken token)
     {
         if (toSend is IHomeTrack pk && pk.HasTracker)
         {
             Log("Rastreador HOME detectado.  No se puede aplicar Auto OT.");
-            return false;
+            return toSend;
         }
         // Current handler cannot be past gen OT
         if (toSend.Generation != toSend.Format)
         {
             Log("No se pueden aplicar los detalles del entrenador: el dueño actual no puede ser de diferente generación OT.");
-            return false;
+            return toSend;
         }
         var cln = toSend.Clone();
         cln.OriginalTrainerGender = offered.OriginalTrainerGender;
@@ -190,13 +190,14 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
             Log("El Pokémon es válido con la información del entrenador comercial aplicada. Intercambiando detalles.");
 
             await SetBoxPokemonAbsolute(BoxStartOffset, cln, token, sav).ConfigureAwait(false);
+            return cln;
         }
         else
         {
             Log("El Pokémon no es válido después de usar la información del entrenador comercial.");
             await SetBoxPokemonAbsolute(BoxStartOffset, cln, token, sav).ConfigureAwait(false);
+            return toSend;
         }
-        return tradeBS.Valid;
     }
 
     private async Task<PokeTradeResult> ConfirmAndStartTrading(PokeTradeDetail<PB8> detail, CancellationToken token)
@@ -799,10 +800,12 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
             }
 
             //lastOffered = await SwitchConnection.ReadBytesAbsoluteAsync(LinkTradePokemonOffset, 8, token).ConfigureAwait(false);
+
             if (Hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT)
             {
-                await ApplyAutoOT(toSend, offered, sav, tradePartner.TrainerName, token);
+                toSend = await ApplyAutoOT(toSend, offered, sav, tradePartner.TrainerName, token);
             }
+
             PokeTradeResult update;
             var trainer = new PartnerDataHolder(0, tradePartner.TrainerName, tradePartner.TID7);
             (toSend, update) = await GetEntityToSend(sav, poke, offered, toSend, trainer, token).ConfigureAwait(false);

@@ -208,27 +208,27 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         };
     }
 
-    private async Task<bool> ApplyAutoOT(PK9 toSend, TradeMyStatus tradePartner, SAV9SV sav, CancellationToken token)
+    private async Task<PK9> ApplyAutoOT(PK9 toSend, TradeMyStatus tradePartner, SAV9SV sav, CancellationToken token)
     {
         // Home Tracker Check
         if (toSend is IHomeTrack pk && pk.HasTracker)
         {
             Log("Rastreador de casa detectado. No se puede aplicar Auto OT.");
-            return false;
+            return toSend;
         }
 
         // Don't apply to Ditto
         if (toSend.Species == (ushort)Species.Ditto)
         {
             Log("No hacer nada para intercambiar Pokémon, ya que el Pokémon es Ditto.");
-            return false;
+            return toSend;
         }
 
         // Current handler cannot be past gen OT
         if (toSend.Generation != toSend.Format)
         {
             Log("No se puede aplicar Detalles del entrenador: El dueño actual no puede ser de una generación diferente a OT.");
-            return false;
+            return toSend;
         }
         var cln = toSend.Clone();
         cln.OriginalTrainerGender = (byte)tradePartner.Gender;
@@ -276,13 +276,13 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         {
             Log("Pokémon es válido, utilizare la información del entrenador comercial (Auto OT).");
             await SetBoxPokemonAbsolute(BoxStartOffset, cln, token, sav).ConfigureAwait(false);
+            return cln;
         }
         else
         {
             Log("No se puede aplicar AutoOT a los Pokémon de intercambio.");
+            return toSend;
         }
-
-        return tradeSV.Valid;
     }
 
     private async Task<PokeTradeResult> ConfirmAndStartTrading(PokeTradeDetail<PK9> detail, CancellationToken token)
@@ -860,7 +860,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
 
             if (Hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT)
             {
-                await ApplyAutoOT(toSend, tradePartnerFullInfo, sav, token);
+                toSend = await ApplyAutoOT(toSend, tradePartnerFullInfo, sav, token);
             }
 
             // Wait for user input...
@@ -1110,9 +1110,8 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         }
         if (Hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT)
         {
-            await ApplyAutoOT(toSend, tradePartnerFullInfo, sav, token);
+            toSend = await ApplyAutoOT(toSend, tradePartnerFullInfo, sav, token);
         }
-
         // Wait for user input...
         var offered = await ReadUntilPresent(TradePartnerOfferedOffset, 25_000, 1_000, BoxFormatSlotSize, token).ConfigureAwait(false);
         var oldEC = await SwitchConnection.ReadBytesAbsoluteAsync(TradePartnerOfferedOffset, 8, token).ConfigureAwait(false);

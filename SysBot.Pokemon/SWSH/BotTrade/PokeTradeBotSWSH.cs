@@ -376,7 +376,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
 
         if (hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT)
         {
-            await ApplyAutoOT(toSend, trainerName, sav, token);
+            toSend = await ApplyAutoOT(toSend, trainerName, sav, token);
         }
 
         // Confirm Box 1 Slot 1
@@ -1144,19 +1144,19 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
         return (clone, PokeTradeResult.Success);
     }
 
-    private async Task<bool> ApplyAutoOT(PK8 toSend, string trainerName, SAV8SWSH sav, CancellationToken token)
+    private async Task<PK8> ApplyAutoOT(PK8 toSend, string trainerName, SAV8SWSH sav, CancellationToken token)
     {
         if (toSend is IHomeTrack pk && pk.HasTracker)
         {
             Log("Rastreador de casa detectado. No se puede aplicar Auto OT.");
-            return false;
+            return toSend;
         }
 
         // Current handler cannot be past gen OT
         if (toSend.Generation != toSend.Format)
         {
             Log("No se pueden aplicar los detalles del socio: el dueño actual no puede ser de diferente generación OT.");
-            return false;
+            return toSend;
         }
         var data = await Connection.ReadBytesAsync(LinkTradePartnerNameOffset - 0x8, 8, token).ConfigureAwait(false);
         var tidsid = BitConverter.ToUInt32(data, 0);
@@ -1181,13 +1181,13 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
         {
             Log("Pokémon es válido con la información del socio comercial aplicada. Intercambiando detalles.");
             await SetBoxPokemon(cln, 0, 0, token, sav).ConfigureAwait(false);
+            return cln;
         }
         else
         {
             Log("Pokémon no es válido después de usar la información del socio comercial.");
+            return toSend;
         }
-
-        return tradeswsh.Valid;
     }
 
     private static void ClearOTTrash(PK8 pokemon, string trainerName)
