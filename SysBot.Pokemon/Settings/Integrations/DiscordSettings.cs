@@ -61,6 +61,12 @@ public class DiscordSettings
         Custom
     }
 
+    [Category(Startup), Description("Token de inicio de sesión del bot.")]
+    public string Token { get; set; } = string.Empty;
+
+    [Category(Startup), Description("Prefijo de comando del bot.")]
+    public string CommandPrefix { get; set; } = "$";
+
     [Category(Operation), Description("Texto adicional para agregar al comienzo del Embed."), DisplayName("Texto adicional del embed")]
     public string[] AdditionalEmbedText { get; set; } = Array.Empty<string>();
 
@@ -105,9 +111,6 @@ public class DiscordSettings
 
     [Category(Channels), Description("Los canales con estos ID son los únicos canales donde el bot reconoce comandos.")]
     public RemoteControlAccessList ChannelWhitelist { get; set; } = new();
-
-    [Category(Startup), Description("Prefijo de comando del bot.")]
-    public string CommandPrefix { get; set; } = "$";
 
     [Category(Operation), Description("El bot puede responder con un conjunto de showdown en cualquier canal que el bot pueda ver, en lugar de solo los canales en los que el bot ha sido incluido en la lista blanca para ejecutarse. Haga esto solo si desea que el bot tenga más utilidad en canales que no son de bot.")]
     public bool ConvertPKMReplyAnyChannel { get; set; }
@@ -186,9 +189,6 @@ public class DiscordSettings
     // Operation
     [Category(Servers), Description("Los servidores con estos ID no podrán utilizar el bot abandonará el servidor.")]
     public RemoteControlAccessList ServerBlacklist { get; set; } = new() { AllowIfEmpty = false };
-
-    [Category(Startup), Description("Token de inicio de sesión del bot.")]
-    public string Token { get; set; } = string.Empty;
 
     [Category(Channels), Description("Canales de registro que registrarán mensajes de inicio de operaciones.")]
     public RemoteControlAccessList TradeStartingChannels { get; set; } = new();
