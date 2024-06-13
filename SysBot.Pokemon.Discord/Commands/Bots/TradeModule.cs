@@ -1716,7 +1716,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await ReplyAsync("<a:warning:1206483664939126795> ¡El archivo adjunto proporcionado no es compatible con este módulo!").ConfigureAwait(false);
             return;
         }
-        await AddTradeToQueueAsync(code, usr.Username, pk, sig, usr).ConfigureAwait(false);
+        await AddTradeToQueueAsync(code, usr.Username, pk, sig, usr, ignoreAutoOT: ignoreAutoOT).ConfigureAwait(false);
     }
 
     private async Task HideTradeAsyncAttach(int code, RequestSignificance sig, SocketUser usr, bool ignoreAutoOT = false)
@@ -1753,8 +1753,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
     private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false, bool setEdited = false)
     {
         lgcode ??= TradeModule<T>.GenerateRandomPictocodes(3);
-#pragma warning disable CS8604 // Possible null reference argument.
-        if (!pk.CanBeTraded())
+        if (pk is not null && !pk.CanBeTraded())
         {
             var errorMessage = $"<a:no:1206485104424128593> {usr.Mention} revisa el conjunto enviado, algun dato esta bloqueando el intercambio.\n\n```📝Soluciones:\n• Revisa detenidamente cada detalle del conjunto y vuelve a intentarlo!```";
             var errorEmbed = new EmbedBuilder
@@ -1773,12 +1772,11 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                  });
 
             var reply = await ReplyAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
-            await Task.Delay(6000); // Delay for 6 seconds
+            await Task.Delay(6000).ConfigureAwait(false); // Delay for 6 seconds
             await reply.DeleteAsync().ConfigureAwait(false);
             return;
         }
-#pragma warning restore CS8604 // Possible null reference argument.
-        var la = new LegalityAnalysis(pk);
+        var la = new LegalityAnalysis(pk!);
         if (!la.Valid)
         {
             string legalityReport = la.Report(verbose: false);
@@ -1786,7 +1784,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             var embedBuilder = new EmbedBuilder(); // Crear el objeto EmbedBuilder
             embedBuilder.WithColor(Color.Red); // Opcional: establecer el color del embed
 
-            if (pk.IsEgg)
+            if (pk?.IsEgg == true)
             {
                 string speciesName = GameInfo.GetStrings("en").specieslist[pk.Species];
                 embedBuilder.WithAuthor("Conjunto de showdown no válido!", customIconUrl);
@@ -1813,7 +1811,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await reply.DeleteAsync().ConfigureAwait(false); // Borrar el mensaje
             return;
         }
-        if (Info.Hub.Config.Legality.DisallowNonNatives && (la.EncounterOriginal.Context != pk.Context || pk.GO))
+        if (Info.Hub.Config.Legality.DisallowNonNatives && (la.EncounterOriginal.Context != pk?.Context || pk?.GO == true))
         {
             var customIconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg"; // Custom icon URL for the embed title
             var customImageUrl = "https://usagif.com/wp-content/uploads/gify/37-pikachu-usagif.gif"; // Custom image URL for the embed
@@ -1869,22 +1867,16 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         // thanks manu https://github.com/Manu098vm/SysBot.NET/commit/d8c4b65b94f0300096704390cce998940413cc0d
         if (!la.Valid && la.Results.Any(m => m.Identifier is CheckIdentifier.Memory))
         {
-            var clone = (T)pk.Clone();
-
+            var clone = (T)pk!.Clone();
             clone.HandlingTrainerName = pk.OriginalTrainerName;
             clone.HandlingTrainerGender = pk.OriginalTrainerGender;
-
             if (clone is PK8 or PA8 or PB8 or PK9)
                 ((dynamic)clone).HandlingTrainerLanguage = (byte)pk.Language;
-
             clone.CurrentHandler = 1;
-
             la = new LegalityAnalysis(clone);
-
             if (la.Valid) pk = clone;
         }
-
-        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryEgg, lgcode, ignoreAutoOT: ignoreAutoOT, setEdited: setEdited).ConfigureAwait(false);
+        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk!, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryEgg, lgcode, ignoreAutoOT: ignoreAutoOT, setEdited: setEdited).ConfigureAwait(false);
     }
 
     public static List<Pictocodes> GenerateRandomPictocodes(int count)
