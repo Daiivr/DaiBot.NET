@@ -1151,13 +1151,6 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
             Log("Rastreador de casa detectado. No se puede aplicar Auto OT.");
             return false;
         }
-        if (toSend is IFatefulEncounterReadOnly fe && fe.FatefulEncounter &&
-            (toSend.TID16 != 0 || toSend.SID16 != 0) &&
-            (toSend.TID16 != 12345 || toSend.SID16 != 54321))
-        {
-            Log("El intercambio es un regalo misterioso con TID/SID específico. No se puede aplicar Auto OT.");
-            return false;
-        }
 
         // Current handler cannot be past gen OT
         if (toSend.Generation != toSend.Format)
