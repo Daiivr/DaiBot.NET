@@ -1775,7 +1775,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
             if (pk?.IsEgg == true)
             {
-                string speciesName = GameInfo.GetStrings("en").specieslist[pk.Species];
+                string speciesName = SpeciesName.GetSpeciesName(pk.Species, (int)LanguageID.English);
                 embedBuilder.WithAuthor("Conjunto de showdown no válido!", customIconUrl);
                 embedBuilder.WithDescription($"<a:no:1206485104424128593> {usr.Mention} El conjunto de showdown __no es válido__ para un huevo de **{speciesName}**.");
                 embedBuilder.AddField("__**Error**__", $"Puede que __**{speciesName}**__ no se pueda obtener en un huevo o algún dato esté impidiendo el trade.", inline: true);
@@ -1783,13 +1783,15 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             }
             else
             {
+                string speciesName = SpeciesName.GetSpeciesName(pk!.Species, (int)LanguageID.English);
                 embedBuilder.WithAuthor("Archivo adjunto no valido!", customIconUrl);
-                embedBuilder.WithDescription($"<a:no:1206485104424128593> {usr.Mention} el archivo **{typeof(T).Name}** no es __legal__ y no puede ser tradeado.\n### He aquí la razón:\n```{legalityReport}```\n```🔊Consejo:\n• Por favor verifica detenidamente la informacion en PKHeX e intentalo de nuevo!\n• Puedes utilizar el plugin de ALM para legalizar tus pokemons y ahorrarte estos problemas.```");
+                embedBuilder.WithDescription($"<a:no:1206485104424128593> {usr.Mention}, este **{speciesName}** no es nativo de este juego y no se puede intercambiar!\n### He aquí la razón:\n```{legalityReport}```\n```🔊Consejo:\n• Por favor verifica detenidamente la informacion en PKHeX e intentalo de nuevo!\n• Puedes utilizar el plugin de ALM para legalizar tus pokemons y ahorrarte estos problemas.```");
             }
             embedBuilder.WithThumbnailUrl("https://i.imgur.com/DWLEXyu.png");
             embedBuilder.WithImageUrl("https://usagif.com/wp-content/uploads/gify/37-pikachu-usagif.gif");
             // Añadir el footer con icono y texto
-            embedBuilder.WithFooter(footer => {
+            embedBuilder.WithFooter(footer =>
+            {
                 footer.WithIconUrl(Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl());
                 footer.WithText($"{Context.User.Username} | {DateTimeOffset.Now.ToString("hh:mm tt")}");
             });
@@ -1800,15 +1802,21 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             await reply.DeleteAsync().ConfigureAwait(false); // Borrar el mensaje
             return;
         }
+        bool isNonNative = false;
+        if (la.EncounterOriginal.Context != pk?.Context || pk?.GO == true)
+        {
+            isNonNative = true;
+        }
         if (Info.Hub.Config.Legality.DisallowNonNatives && (la.EncounterOriginal.Context != pk?.Context || pk?.GO == true))
         {
             var customIconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg"; // Custom icon URL for the embed title
             var customImageUrl = "https://usagif.com/wp-content/uploads/gify/37-pikachu-usagif.gif"; // Custom image URL for the embed
             var customthumbnail = "https://i.imgur.com/DWLEXyu.png";
+            string speciesName = SpeciesName.GetSpeciesName(pk!.Species, (int)LanguageID.English);
             // Allow the owner to prevent trading entities that require a HOME Tracker even if the file has one already.
             var embedBuilder = new EmbedBuilder()
                 .WithAuthor("Error al intentar agregarte a la cola.", customIconUrl)
-                .WithDescription($"<a:no:1206485104424128593> {usr.Mention}, este archivo Pokemon **{typeof(T).Name}** no cuenta con un **HOME TRACKER** y no puede ser tradeado!")
+                .WithDescription($"<a:no:1206485104424128593> {usr.Mention}, este **{speciesName}** no es nativo de este juego y no se puede intercambiar!")
                 .WithColor(Color.Red)
                 .WithImageUrl(customImageUrl)
                 .WithThumbnailUrl(customthumbnail);
@@ -1832,10 +1840,11 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             var customIconUrl = "https://img.freepik.com/free-icon/warning_318-478601.jpg"; // Custom icon URL for the embed title
             var customImageUrl = "https://usagif.com/wp-content/uploads/gify/37-pikachu-usagif.gif"; // Custom image URL for the embed
             var customthumbnail = "https://i.imgur.com/DWLEXyu.png";
+            string speciesName = SpeciesName.GetSpeciesName(pk.Species, (int)LanguageID.English);
             // Allow the owner to prevent trading entities that already have a HOME Tracker.
             var embedBuilder = new EmbedBuilder()
                 .WithAuthor("Error al intentar agregarte a la cola.", customIconUrl)
-                .WithDescription($"<a:no:1206485104424128593> {usr.Mention}, este archivo Pokemon **{typeof(T).Name}** ya tiene un **HOME TRACKER** y no puede ser tradeado!")
+                .WithDescription($"<a:no:1206485104424128593> {usr.Mention}, este archivo de **{speciesName}** ya tiene un **HOME Tracker** y ni puede ser tradeado!")
                 .WithColor(Color.Red)
                 .WithImageUrl(customImageUrl)
                 .WithThumbnailUrl(customthumbnail);
@@ -1865,7 +1874,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             la = new LegalityAnalysis(clone);
             if (la.Valid) pk = clone;
         }
-        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk!, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryEgg, lgcode, ignoreAutoOT: ignoreAutoOT, setEdited: setEdited).ConfigureAwait(false);
+        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk!, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryEgg, lgcode, ignoreAutoOT: ignoreAutoOT, setEdited: setEdited, isNonNative: isNonNative).ConfigureAwait(false);
     }
 
     public static List<Pictocodes> GenerateRandomPictocodes(int count)
