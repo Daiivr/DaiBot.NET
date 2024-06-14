@@ -57,7 +57,7 @@ public static class DetailsExtractor<T> where T : PKM, new()
         else if (tradeType == PokeTradeType.Item)
         {
             // Usa la imagen del Pokémon como thumbnail cuando el tipo de intercambio es 'Item'
-            var speciesImageUrl = AbstractTrade<T>.PokeImg(pk, false, true, null); // Asume que tienes acceso a 'pk' aquí
+            var speciesImageUrl = TradeExtensions<T>.PokeImg(pk, false, true, null); // Asume que tienes acceso a 'pk' aquí
             embedBuilder.WithThumbnailUrl(speciesImageUrl);
         }
         else if (!string.IsNullOrEmpty(heldItemUrl))
@@ -294,7 +294,7 @@ public static class DetailsExtractor<T> where T : PKM, new()
         }
         if (pk is IRibbonIndex ribbonIndex)
         {
-            AbstractTrade<T>.HasMark(ribbonIndex, out RibbonIndex result, out markTitle);
+            TradeExtensions<T>.HasMark(ribbonIndex, out RibbonIndex result, out markTitle);
         }
         string alphaSymbol = (pk is IAlpha alpha && alpha.IsAlpha) ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.SpecialMarksEmojis.AlphaPLAEmoji.EmojiString : string.Empty;
         string genderSymbol = GameInfo.GenderSymbolASCII[pk.Gender];

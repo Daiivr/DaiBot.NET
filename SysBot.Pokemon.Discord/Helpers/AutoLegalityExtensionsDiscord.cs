@@ -59,7 +59,7 @@ public static class AutoLegalityExtensionsDiscord
             var successMsg = $" Aqui esta tu **{speciesName}** legalizado.";
             var showdownText = ReusableActions.GetFormattedShowdownText(pkm);
             bool canGmax = pkm is PK8 pk8 && pk8.CanGigantamax;
-            var speciesImageUrl = AbstractTrade<PK9>.PokeImg(pkm, canGmax, false);
+            var speciesImageUrl = TradeExtensions<PK9>.PokeImg(pkm, canGmax, false);
 
             var embed = new EmbedBuilder()
                 .WithDescription(successMsg)
@@ -129,19 +129,19 @@ public static class AutoLegalityExtensionsDiscord
 
         if (pkm is PK8 pk8)
         {
-            pokeImgUrl = AbstractTrade<PK8>.PokeImg(pk8, false, false);
+            pokeImgUrl = TradeExtensions<PK8>.PokeImg(pk8, false, false);
         }
         else if (pkm is PK9 pk9)
         {
-            pokeImgUrl = AbstractTrade<PK9>.PokeImg(pk9, false, false);
+            pokeImgUrl = TradeExtensions<PK9>.PokeImg(pk9, false, false);
         }
         else if (pkm is PB8 pb8)
         {
-            pokeImgUrl = AbstractTrade<PB8>.PokeImg(pb8, false, false);
+            pokeImgUrl = TradeExtensions<PB8>.PokeImg(pb8, false, false);
         }
         else if (pkm is PA8 pa8)
         {
-            pokeImgUrl = AbstractTrade<PB8>.PokeImg(pa8, false, false);
+            pokeImgUrl = TradeExtensions<PB8>.PokeImg(pa8, false, false);
         }
 
         if (pokeImgUrl == null)

@@ -4,7 +4,7 @@ using System;
 
 namespace SysBot.Pokemon.Dodo
 {
-    public class DodoTrade<T> : AbstractTrade<T> where T : PKM, new()
+    public class DodoTrade<T> : TradeExtensions<T> where T : PKM, new()
     {
         private readonly string channelId = default!;
         private readonly string islandSourceId = default!;

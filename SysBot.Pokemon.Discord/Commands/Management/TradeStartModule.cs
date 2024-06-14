@@ -109,7 +109,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                 string heldItemName = embedData.HeldItem.ToLower().Replace(" ", "");
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
                 embedImageUrl = $"https://serebii.net/itemdex/sprites/sv/{heldItemName}.png";
-                ballImgUrl = AbstractTrade<T>.PokeImg(detail.TradeData, false, true);
+                ballImgUrl = TradeExtensions<T>.PokeImg(detail.TradeData, false, true);
             }
             else
             {
@@ -128,7 +128,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                     PokeTradeType.Dump => "https://i.imgur.com/9wfEHwZ.png",
                     PokeTradeType.FixOT => "https://i.imgur.com/gRZGFIi.png",
                     PokeTradeType.Seed => "https://i.imgur.com/EI1BHr5.png",
-                    _ => detail.TradeData != null ? AbstractTrade<T>.PokeImg(detail.TradeData, false, true) : ""
+                    _ => detail.TradeData != null ? TradeExtensions<T>.PokeImg(detail.TradeData, false, true) : ""
                 };
             }
 

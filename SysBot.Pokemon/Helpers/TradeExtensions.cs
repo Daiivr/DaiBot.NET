@@ -16,7 +16,7 @@ namespace SysBot.Pokemon.Helpers
     /// Note that SetPokeTradeTrainerInfo and SetTradeQueueInfo must be called in the constructor of the abstract class.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class AbstractTrade<T> where T : PKM, new()
+    public abstract class TradeExtensions<T> where T : PKM, new()
     {
         public static readonly string[] MarkTitle =
         [
@@ -473,15 +473,15 @@ namespace SysBot.Pokemon.Helpers
                         msg = "Ya añadido a la cola de espera. Si seleccionas un Pokémon demasiado lentamente, ¡tu solicitud de entrega será cancelada!";
                         return true;
                     }
-                    LogUtil.LogInfo($"Razón ilegal:\n{la.Report()}", nameof(AbstractTrade<T>));
+                    LogUtil.LogInfo($"Razón ilegal:\n{la.Report()}", nameof(TradeExtensions<T>));
                 }
-                LogUtil.LogInfo($"pkm type:{pkm.GetType()}, T:{typeof(T)}", nameof(AbstractTrade<T>));
+                LogUtil.LogInfo($"pkm type:{pkm.GetType()}, T:{typeof(T)}", nameof(TradeExtensions<T>));
                 const string reason = "No puedo crear Pokémon ilegales.";
                 msg = $"{reason}";
             }
             catch (Exception ex)
             {
-                LogUtil.LogSafe(ex, nameof(AbstractTrade<T>));
+                LogUtil.LogSafe(ex, nameof(TradeExtensions<T>));
                 msg = "Cancelar entrega, ocurrió un error.";
             }
             return false;
@@ -524,7 +524,7 @@ namespace SysBot.Pokemon.Helpers
             }
             catch (Exception ex)
             {
-                LogUtil.LogSafe(ex, nameof(AbstractTrade<T>));
+                LogUtil.LogSafe(ex, nameof(TradeExtensions<T>));
                 msg = "Cancelar entrega, ocurrió un error.";
             }
             return false;
@@ -566,7 +566,7 @@ namespace SysBot.Pokemon.Helpers
         public void StartTradeChinesePs(string chinesePs)
         {
             var ps = ShowdownTranslator<T>.Chinese2Showdown(chinesePs);
-            LogUtil.LogInfo($"Código PS después de la conversión china:\n{ps}", nameof(AbstractTrade<T>));
+            LogUtil.LogInfo($"Código PS después de la conversión china:\n{ps}", nameof(TradeExtensions<T>));
             StartTradePs(ps);
         }
 
@@ -597,12 +597,12 @@ namespace SysBot.Pokemon.Helpers
                 var _ = CheckPkm(rawPkms[i], out var msg);
                 if (!_)
                 {
-                    LogUtil.LogInfo($"Hay un problema con el {i + 1}º Pokémon del lote:{msg}", nameof(AbstractTrade<T>));
+                    LogUtil.LogInfo($"Hay un problema con el {i + 1}º Pokémon del lote:{msg}", nameof(TradeExtensions<T>));
                     invalidCount++;
                 }
                 else
                 {
-                    LogUtil.LogInfo($"El lote {i + 1}: {GameInfo.GetStrings("en").Species[rawPkms[i].Species]}", nameof(AbstractTrade<T>));
+                    LogUtil.LogInfo($"El lote {i + 1}: {GameInfo.GetStrings("en").Species[rawPkms[i].Species]}", nameof(TradeExtensions<T>));
                     skipAutoOTList.Add(false);
                     pkms.Add(rawPkms[i]);
                 }
@@ -749,12 +749,12 @@ namespace SysBot.Pokemon.Helpers
                 var _ = CheckAndGetPkm(ps, out var msg, out var pkm);
                 if (!_)
                 {
-                    LogUtil.LogInfo($"Hay un problema con el {i + 1}º Pokémon del lote:{msg}", nameof(AbstractTrade<T>));
+                    LogUtil.LogInfo($"Hay un problema con el {i + 1}º Pokémon del lote:{msg}", nameof(TradeExtensions<T>));
                     invalidCount++;
                 }
                 else
                 {
-                    LogUtil.LogInfo($"Código PS después de la conversión al chino:\n{ps}", nameof(AbstractTrade<T>));
+                    LogUtil.LogInfo($"Código PS después de la conversión al chino:\n{ps}", nameof(TradeExtensions<T>));
                     skipAutoOTList.Add(ps.Contains("Language: "));
                     pkms.Add(pkm);
                 }

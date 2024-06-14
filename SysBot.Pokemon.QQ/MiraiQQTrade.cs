@@ -4,7 +4,7 @@ using SysBot.Pokemon.Helpers;
 
 namespace SysBot.Pokemon.QQ
 {
-    public class MiraiQQTrade<T> : AbstractTrade<T> where T : PKM, new()
+    public class MiraiQQTrade<T> : TradeExtensions<T> where T : PKM, new()
     {
         private readonly string GroupId = default!;
 

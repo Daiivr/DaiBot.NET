@@ -100,7 +100,7 @@ public class BotSource<T>(RoutineExecutor<T> Bot)
             return;
         }
 
-        LogUtil.LogError("¡El robot ha fallado!", ident);
+        LogUtil.LogError("¡El bot ha fallado!", ident);
 
         if (!string.IsNullOrEmpty(ae.Message))
             LogUtil.LogError("Mensaje agregado: " + ae.Message, ident);
@@ -112,7 +112,7 @@ public class BotSource<T>(RoutineExecutor<T> Bot)
         foreach (var e in ae.InnerExceptions)
         {
             if (!string.IsNullOrEmpty(e.Message))
-                LogUtil.LogError("mensaje interior: " + e.Message, ident);
+                LogUtil.LogError("Mensaje interior: " + e.Message, ident);
             LogUtil.LogError("Trazado de pila interno: " + e.StackTrace, ident);
         }
     }
