@@ -22,5 +22,12 @@
     <ProjectReference Include="..\SysBot.Pokemon\SysBot.Pokemon.csproj" />
     <ProjectReference Include="..\SysBot.Pokemon.Z3\SysBot.Pokemon.Z3.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="PKHeX.Core">
+      <HintPath>..\SysBot.Pokemon\deps\PKHeX.Core.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 
 </Project>
