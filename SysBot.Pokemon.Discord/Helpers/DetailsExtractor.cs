@@ -313,26 +313,30 @@ public static class DetailsExtractor<T> where T : PKM, new()
 
     private static string GetTeraTypeString(PK9 pk9)
     {
+        // Determinar si el tipo Tera es 'Stellar' o un tipo regular usando el nombre completo del namespace para MoveType
+        var isStellar = pk9.TeraTypeOverride == (PKHeX.Core.MoveType)TeraTypeUtil.Stellar || (int)pk9.TeraType == 99;
+        var teraType = isStellar ? SysBot.Pokemon.TradeSettings.MoveType.Stellar : (SysBot.Pokemon.TradeSettings.MoveType)pk9.TeraType;
         string teraTypeEmoji = "";
-        string teraTypeName = pk9.TeraType.ToString();  // Obtiene el nombre del tipo Tera
+        string teraTypeName = teraType.ToString();  // Convierte el tipo Tera a string usando el enum de TradeSettings
 
+        // Obtener el emoji si está habilitado, especificando el namespace completo para evitar conflictos
         if (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.UseTeraEmojis)
         {
-            var teraType = pk9.TeraTypeOverride == (PKHeX.Core.MoveType)TeraTypeUtil.Stellar || (int)pk9.TeraType == 99 ? TradeSettings.MoveType.Stellar : (TradeSettings.MoveType)pk9.TeraType;
             var emojiInfo = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.TeraTypeEmojis.Find(e => e.MoveType == teraType);
             if (emojiInfo != null && !string.IsNullOrEmpty(emojiInfo.EmojiCode))
             {
-                teraTypeEmoji = emojiInfo.EmojiCode + " ";  // Asegúrate de agregar un espacio para separar el emoji del nombre
+                teraTypeEmoji = emojiInfo.EmojiCode + " ";  // Añade un espacio después del emoji para separarlo del nombre
             }
         }
 
-        // Utiliza el diccionario de traducciones para obtener la cadena traducida del tipo Tera
+        // Utiliza el diccionario de traducciones para obtener la cadena traducida del tipo Tera (si aplica)
         if (TeraTypeDictionaries.TeraTranslations.TryGetValue(teraTypeName, out var translatedType))
         {
             teraTypeName = translatedType;
         }
 
-        return teraTypeEmoji + teraTypeName;  // Combina el emoji y el nombre del tipo Tera
+        // Devuelve la combinación del emoji (si existe) y el nombre traducido del tipo Tera
+        return teraTypeEmoji + teraTypeName;
     }
 
     private static string GetTradeTitle(bool isMysteryEgg, bool isCloneRequest, bool isDumpRequest, bool isFixOTRequest, bool isSpecialRequest, bool isBatchTrade, int batchTradeNumber, string pokemonDisplayName, bool isShiny)
