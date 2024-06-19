@@ -6,14 +6,12 @@ using PKHeX.Core;
 using SysBot.Base;
 using SysBot.Pokemon.Helpers;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static SysBot.Pokemon.TradeSettings.TradeSettingsCategory;
 
@@ -606,12 +604,25 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 // Perform auto correct if it's on and send that shit through again
                 if (SysCord<T>.Runner.Config.Trade.AutoCorrectConfig.EnableAutoCorrect && !la.Valid)
                 {
-                    var correctedContent = await AutoCorrectShowdown<T>.PerformAutoCorrect(content, pkm, la);
-                    set = new ShowdownSet(correctedContent);
+                    var (finalShowdownSet, correctionMessages) = await AutoCorrectShowdown<T>.PerformAutoCorrect(content, pkm, la);
+                    set = new ShowdownSet(finalShowdownSet);
                     template = AutoLegalityWrapper.GetTemplate(set);
                     pkm = sav.GetLegal(template, out result);
                     la = new LegalityAnalysis(pkm);
                     setEdited = true;
+                    if (correctionMessages.Count > 0)
+                    {
+                        var userName = Context.User.Mention;
+                        var changesEmbed = new EmbedBuilder()
+                            .WithTitle("Correcciones del set de Showdown")
+                            .WithColor(Color.Orange)
+                            .WithThumbnailUrl("https://raw.githubusercontent.com/bdawg1989/sprites/main/profoak.png")
+                            .WithDescription(string.Join("\n", correctionMessages))
+                            .AddField("Set de Showdown corregido:", $"```{finalShowdownSet}```")
+                            .Build();
+
+                        await ReplyAsync($"{userName}, tu conjunto de showdown era incorrecto o inválido y lo hemos corregido.\nAquí están las correcciones hechas:", embed: changesEmbed).ConfigureAwait(false);
+                    }
                 }
 
                 if (pkm is not T correctedPk || !la.Valid)
@@ -826,12 +837,25 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 // Perform auto correct if it's on and send that shit through again
                 if (SysCord<T>.Runner.Config.Trade.AutoCorrectConfig.EnableAutoCorrect && !la.Valid)
                 {
-                    var correctedContent = await AutoCorrectShowdown<T>.PerformAutoCorrect(content, pkm, la);
-                    set = new ShowdownSet(correctedContent);
+                    var (finalShowdownSet, correctionMessages) = await AutoCorrectShowdown<T>.PerformAutoCorrect(content, pkm, la);
+                    set = new ShowdownSet(finalShowdownSet);
                     template = AutoLegalityWrapper.GetTemplate(set);
                     pkm = sav.GetLegal(template, out result);
                     la = new LegalityAnalysis(pkm);
                     setEdited = true;
+                    if (correctionMessages.Count > 0)
+                    {
+                        var userName = Context.User.Mention;
+                        var changesEmbed = new EmbedBuilder()
+                            .WithTitle("Correcciones del set de Showdown")
+                            .WithColor(Color.Orange)
+                            .WithThumbnailUrl("https://raw.githubusercontent.com/bdawg1989/sprites/main/profoak.png")
+                            .WithDescription(string.Join("\n", correctionMessages))
+                            .AddField("Set de Showdown corregido:", $"```{finalShowdownSet}```")
+                            .Build();
+
+                        await ReplyAsync($"{userName}, tu conjunto de showdown era incorrecto o inválido y lo hemos corregido.\nAquí están las correcciones hechas:", embed: changesEmbed).ConfigureAwait(false);
+                    }
                 }
 
                 if (pkm is not T correctedPk || !la.Valid)
@@ -1167,12 +1191,26 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 // Perform auto correct if it's on and send that shit through again
                 if (SysCord<T>.Runner.Config.Trade.AutoCorrectConfig.EnableAutoCorrect && !la.Valid)
                 {
-                    var correctedContent = await AutoCorrectShowdown<T>.PerformAutoCorrect(tradeContent, pkm, la);
-                    set = new ShowdownSet(correctedContent);
+                    var (finalShowdownSet, correctionMessages) = await AutoCorrectShowdown<T>.PerformAutoCorrect(tradeContent, pkm, la);
+                    set = new ShowdownSet(finalShowdownSet);
                     template = AutoLegalityWrapper.GetTemplate(set);
                     pkm = sav.GetLegal(template, out result);
                     la = new LegalityAnalysis(pkm);
                     setEdited = true;
+
+                    if (correctionMessages.Count > 0)
+                    {
+                        var userName = Context.User.Mention;
+                        var changesEmbed = new EmbedBuilder()
+                            .WithTitle("Correcciones del set de Showdown")
+                            .WithColor(Color.Orange)
+                            .WithThumbnailUrl("https://raw.githubusercontent.com/bdawg1989/sprites/main/profoak.png")
+                            .WithDescription(string.Join("\n", correctionMessages))
+                            .AddField("Set de Showdown corregido:", $"```{finalShowdownSet}```")
+                            .Build();
+
+                        await ReplyAsync($"{userName}, tu conjunto de showdown era incorrecto o inválido y lo hemos corregido.\nAquí están las correcciones hechas:", embed: changesEmbed).ConfigureAwait(false);
+                    }
                 }
 
                 if (pkm is not T correctedPk || !la.Valid)
