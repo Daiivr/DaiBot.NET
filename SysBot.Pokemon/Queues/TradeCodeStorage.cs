@@ -1,3 +1,5 @@
+using SysBot.Base;
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.IO;
@@ -118,8 +120,23 @@ public class TradeCodeStorage
 
     private void SaveToFile()
     {
-        string json = JsonSerializer.Serialize(_tradeCodeDetails, SerializerOptions);
-        File.WriteAllText(FileName, json);
+        try
+        {
+            string json = JsonSerializer.Serialize(_tradeCodeDetails, SerializerOptions);
+            File.WriteAllText(FileName, json);
+        }
+        catch (IOException ex)
+        {
+            LogUtil.LogInfo("TradeCodeStorage", $"Error al guardar códigos comerciales para archivar: {ex.Message}");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            LogUtil.LogInfo("TradeCodeStorage", $"Acceso denegado al guardar códigos comerciales en el archivo: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            LogUtil.LogInfo("TradeCodeStorage", $"Se produjo un error al guardar códigos comerciales para archivar: {ex.Message}");
+        }
     }
 
     public int GetTradeCount(ulong trainerID)

@@ -40,7 +40,9 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
     private byte[] lastOffered = new byte[8];
 
     // Stores whether the last trade was Distribution with fixed code, in which case we don't need to re-enter the code.
+#pragma warning disable CS0414 // The field 'PokeTradeBotSV.LastTradeDistributionFixed' is assigned but its value is never used
     private bool LastTradeDistributionFixed;
+#pragma warning restore CS0414 // The field 'PokeTradeBotSV.LastTradeDistributionFixed' is assigned but its value is never used
 
     // Store the current save's OT and TID/SID for comparison.
     private string OT = string.Empty;
