@@ -70,7 +70,6 @@ public static class QueueHelper<T> where T : PKM, new()
         var user = trader;
         var userID = user.Id;
         var name = user.Username;
-
         var trainer = new PokeTradeTrainerInfo(trainerName, userID);
 #pragma warning disable CS8604 // Possible null reference argument.
         var notifier = new DiscordTradeNotifier<T>(pk, trainer, code, trader, batchTradeNumber, totalBatchTrades, isMysteryEgg, lgcode: lgcode);
@@ -80,8 +79,9 @@ public static class QueueHelper<T> where T : PKM, new()
         var trade = new TradeEntry<T>(detail, userID, PokeRoutineType.LinkTrade, name, uniqueTradeID);
         var hub = SysCord<T>.Runner.Hub;
         var Info = hub.Queues.Info;
-        var canAddMultiple = isBatchTrade || sig == RequestSignificance.None;
-        var added = Info.AddToTradeQueue(trade, userID, canAddMultiple);
+        var allowMultiple = isBatchTrade;
+        var isSudo = sig == RequestSignificance.Owner;
+        var added = Info.AddToTradeQueue(trade, userID, allowMultiple, isSudo);
 
         int totalTradeCount = 0;
         TradeCodeStorage.TradeCodeDetails? tradeDetails = null;
