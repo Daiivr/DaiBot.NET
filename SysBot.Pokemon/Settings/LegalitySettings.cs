@@ -65,11 +65,10 @@ public class LegalitySettings
     [Category(Generate), Description("Fuerza la bola especificada si es legal.")]
     public bool ForceSpecifiedBall { get; set; } = true;
 
-    [Browsable(false)]
     [Category(Generate), Description("El orden en el que se intentan los tipos de encuentro Pokémon.")]
     public List<EncounterTypeGroup> PrioritizeEncounters { get; set; } =
     [
-        EncounterTypeGroup.Egg, EncounterTypeGroup.Slot,
+        EncounterTypeGroup.Slot, EncounterTypeGroup.Egg,
         EncounterTypeGroup.Static, EncounterTypeGroup.Mystery,
         EncounterTypeGroup.Trade,
     ];
