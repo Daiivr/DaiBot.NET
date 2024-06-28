@@ -311,9 +311,6 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         [Category(EmbedSettings), Description("URL del título de Emebed."), DisplayName("URL del título del Embed")]
         public string TradingBotUrl { get; set; } = "";
 
-        [Category(EmbedSettings), Description("Texto adicional para mostrar cuando el pokemon no es nativo."), DisplayName("Texto de Pokemon no nativo")]
-        public string NonNativePokemonText { get; set;} = "*No podrá ir a HOME y AutoOT no fue aplicado.*";
-
         [Category(EmbedSettings), Description("Mostrará los iconos de tipo de movimiento junto a los movimientos en el Embed Trade (sólo Discord). Requiere que el usuario suba los emojis a su servidor."), DisplayName("¿Mostrar Emojis de Movimientos?")]
         public bool MoveTypeEmojis { get; set; } = true;
 

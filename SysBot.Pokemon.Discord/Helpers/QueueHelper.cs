@@ -187,7 +187,7 @@ public static class QueueHelper<T> where T : PKM, new()
             if (isNonNative)
             {
                 embedBuilder.Footer.IconUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/exclamation.gif";
-                embedBuilder.AddField("__**Aviso**__: **Este Pokémon no es nativo.**", "*No podrá ir a HOME y AutoOT no fue aplicado.*");
+                embedBuilder.AddField("__**Aviso**__: **Este Pokémon no es nativo.**", "*Puede que no pueda ir a HOME y AutoOT no fue aplicado.*");
             }
 
             DetailsExtractor<T>.AddThumbnails(embedBuilder, type == PokeRoutineType.Clone, type == PokeRoutineType.SeedCheck, type == PokeRoutineType.Dump, type == PokeRoutineType.FixOT, embedData.HeldItemUrl, pk, t);
