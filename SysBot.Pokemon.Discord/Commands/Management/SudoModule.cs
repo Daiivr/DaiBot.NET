@@ -179,6 +179,48 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
         await ReplyAsync("Done.").ConfigureAwait(false);
     }
 
+    [Command("banTrade")]
+    [Alias("bant")]
+    [Summary("Bans a user from trading with a reason.")]
+    [RequireSudo]
+    public async Task BanTradeUser(ulong userNID, string? userName = null, [Remainder] string? banReason = null)
+    {
+        var botPrefix = SysCordSettings.HubConfig.Discord.CommandPrefix;
+        await Context.Message.DeleteAsync();
+        var dmChannel = await Context.User.CreateDMChannelAsync();
+        try
+        {
+            // Check if the ban reason is provided
+            if (string.IsNullOrWhiteSpace(banReason))
+            {
+                await dmChannel.SendMessageAsync($"<a:warning:1206483664939126795> No se proporcionó ningún motivo. Utilice el comando de la siguiente manera:\n{botPrefix}banTrade {{NID}} {{opcional: Name}} {{Razón}}\nEjemplo: {botPrefix}banTrade 123456789 Espamear Trades");
+                return;
+            }
+
+            // Use a default name if none is provided
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                userName = "Unknown";
+            }
+
+            var me = SysCord<T>.Runner;
+            var hub = me.Hub;
+            var bannedUser = new RemoteControlAccess
+            {
+                ID = userNID,
+                Name = userName,
+                Comment = $"Baneado por {Context.User.Username} el {DateTime.Now:yyyy.MM.dd-hh:mm:ss}. Razón: {banReason}"
+            };
+
+            hub.Config.TradeAbuse.BannedIDs.AddIfNew([bannedUser]);
+            await dmChannel.SendMessageAsync($"<a:yes:1206485105674166292> Listo. Se le ha prohibido el comercio al usuario {userName} con el NID {userNID}.");
+        }
+        catch (Exception ex)
+        {
+            await dmChannel.SendMessageAsync($"Ocurrió un error: {ex.Message}");
+        }
+    }
+
     protected static IEnumerable<ulong> GetIDs(string content)
     {
         return content.Split([",", ", ", " "], StringSplitOptions.RemoveEmptyEntries)
