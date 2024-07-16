@@ -339,6 +339,9 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
 
             // Save the OT, TID7, and SID7 information in the TradeCodeStorage for tradepartnersav
             tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, tradepartnersav.OT, int.Parse(tid7), int.Parse(sid7));
+
+            // Send notification with trainer details
+            poke.SendNotification(this, $"Entrenador comercial de enlace encontrado: {tradepartnersav2.OT}, TID7: {tid7}, SID7: {sid7}");
         }
 
         if (tradepartnersav2.OT != sav.OT)
@@ -351,6 +354,9 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
 
             // Save the OT, TID7, and SID7 information in the TradeCodeStorage for tradepartnersav2
             tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, tradepartnersav2.OT, int.Parse(tid7), int.Parse(sid7));
+
+            // Send notification with trainer details
+            poke.SendNotification(this, $"Entrenador comercial de enlace encontrado: {tradepartnersav2.OT}, TID7: {tid7}, SID7: {sid7}");
         }
 
         if (poke.Type == PokeTradeType.Dump)
