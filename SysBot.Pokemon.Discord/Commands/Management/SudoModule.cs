@@ -193,7 +193,7 @@ public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new
             // Check if the ban reason is provided
             if (string.IsNullOrWhiteSpace(banReason))
             {
-                await dmChannel.SendMessageAsync($"<a:warning:1206483664939126795> No se proporcionó ningún motivo. Utilice el comando de la siguiente manera:\n{botPrefix}banTrade {{NID}} {{opcional: Name}} {{Razón}}\nEjemplo: {botPrefix}banTrade 123456789 Espamear Trades");
+                await dmChannel.SendMessageAsync($"<a:warning:1206483664939126795> No se proporcionó ningún motivo. Utilice el comando de la siguiente manera:\n\n{botPrefix}banTrade **{{NID}} {{Opcional: Nombre}} {{Razón}}**\n\n**Ejemplo**: {botPrefix}banTrade 123456789 Espamear Trades");
                 return;
             }
 
