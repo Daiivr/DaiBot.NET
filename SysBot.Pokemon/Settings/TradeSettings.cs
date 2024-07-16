@@ -308,8 +308,22 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         [Category(EmbedSettings), Description("Tamaño preferido de la imagen de la especie para embeds."), DisplayName("Tamaño de la imagen del Pokémon")]
         public ImageSize PreferredImageSize { get; set; } = ImageSize.Size128x128;
 
-        [Category(EmbedSettings), Description("URL del título de Emebed."), DisplayName("URL del título del Embed")]
-        public string TradingBotUrl { get; set; } = "";
+        [Category(EmbedSettings), TypeConverter(typeof(ExpandableObjectConverter)), Description("Opciones Extras para el embed"), DisplayName("Opciones Extras")]
+        public class EmbedTxTOptions
+        {
+            public override string ToString() => "(Collection)";
+
+            [Category(EmbedSettings), Description("URL que aparece al hacer click en el titulo de embed."), DisplayName("URL del título del Embed")]
+            public string TradingBotUrl { get; set; } = "";
+
+            [Category(EmbedSettings), Description("Mensaje que aparece en el embed cuando el Pokémon solicitado no es nativo del juego actual."), DisplayName("Texto para Pokémon no nativo")]
+            public string NonNativeTexT { get; set; } = "*Puede que no pueda ir a HOME y AutoOT no fue aplicado.*";
+
+            [Category(EmbedSettings), Description("Mensaje que aparece en el embed cuando el Bot autocorrige algún dato del conjunto enviado.."), DisplayName("Texto para autocorrección")]
+            public string AutocorrectText { get; set; } = "Auto corregido para hacerlo legal.";
+
+        }
+        public EmbedTxTOptions ExtraEmbedOptions { get; set; } = new EmbedTxTOptions();
 
         [Category(EmbedSettings), Description("Mostrará los iconos de tipo de movimiento junto a los movimientos en el Embed Trade (sólo Discord). Requiere que el usuario suba los emojis a su servidor."), DisplayName("¿Mostrar Emojis de Movimientos?")]
         public bool MoveTypeEmojis { get; set; } = true;

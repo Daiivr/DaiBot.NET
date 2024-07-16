@@ -66,7 +66,9 @@ public static class QueueHelper<T> where T : PKM, new()
 
     private static async Task<TradeQueueResult> AddToTradeQueue(SocketCommandContext context, T pk, int code, string trainerName, RequestSignificance sig, PokeRoutineType type, PokeTradeType t, SocketUser trader, bool isBatchTrade, int batchTradeNumber, int totalBatchTrades, bool isHiddenTrade, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, bool ignoreAutoOT = false, bool setEdited = false, bool isNonNative = false)
     {
-        string tradingUrl = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.TradingBotUrl;
+        string tradingUrl = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ExtraEmbedOptions.TradingBotUrl;
+        string NonNative = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ExtraEmbedOptions.NonNativeTexT;
+        string AutocorrectText = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ExtraEmbedOptions.AutocorrectText;
         var user = trader;
         var userID = user.Id;
         var name = user.Username;
@@ -182,12 +184,12 @@ public static class QueueHelper<T> where T : PKM, new()
             if (setEdited && Info.Hub.Config.Trade.AutoCorrectConfig.AutoCorrectEmbedIndicator)
             {
                 embedBuilder.Footer.IconUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/setedited.png";
-                embedBuilder.AddField("__**Aviso**__: **Tu conjunto de showdown no era válido.**", "Auto corregido para hacerlo legal.");
+                embedBuilder.AddField("__**Aviso**__: **Tu conjunto de showdown no era válido.**", $"{AutocorrectText}");
             }
             if (isNonNative)
             {
                 embedBuilder.Footer.IconUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/exclamation.gif";
-                embedBuilder.AddField("__**Aviso**__: **Este Pokémon no es nativo.**", "*Puede que no pueda ir a HOME y AutoOT no fue aplicado.*");
+                embedBuilder.AddField("__**Aviso**__: **Este Pokémon no es nativo.**", $"{NonNative}");
             }
 
             DetailsExtractor<T>.AddThumbnails(embedBuilder, type == PokeRoutineType.Clone, type == PokeRoutineType.SeedCheck, type == PokeRoutineType.Dump, type == PokeRoutineType.FixOT, embedData.HeldItemUrl, pk, t);
