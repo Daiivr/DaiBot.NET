@@ -44,7 +44,7 @@ public static class DetailsExtractor<T> where T : PKM, new()
     public static void AddSpecialTradeFields(EmbedBuilder embedBuilder, bool isMysteryEgg, bool isSpecialRequest, bool isCloneRequest, bool isFixOTRequest, string trainerMention)
     {
         string specialDescription = $"**Entrenador:** {trainerMention}\n" +
-                                    (isMysteryEgg ? "Huevo Misterioso" : isSpecialRequest ? "Solicitud Especial" : isCloneRequest ? "Solicitud de clonación" : isFixOTRequest ? "FixOT Request" : "Solicitud de Dump");
+                                    (isMysteryEgg ? "Huevo Misterioso" : isSpecialRequest ? "Solicitud Especial" : isCloneRequest ? "Solicitud de clonación" : isFixOTRequest ? "Solicitud de FixOT" : "Solicitud de Dump");
         embedBuilder.AddField("\u200B", specialDescription, inline: false);
     }
 
