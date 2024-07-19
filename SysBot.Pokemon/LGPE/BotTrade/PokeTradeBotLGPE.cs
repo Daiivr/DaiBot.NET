@@ -378,7 +378,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
         poke.SendNotification(this, "Tienes **15 segundos** para seleccionar tu Pokémon comercial");
         Log("Esperando en la pantalla de comercio...");
 
-        await Task.Delay(15_000).ConfigureAwait(false);
+        await Task.Delay(5_000, token).ConfigureAwait(false);
         var tradeResult = await ConfirmAndStartTrading(poke, 0, token);
         if (tradeResult != PokeTradeResult.Success)
         {
@@ -410,9 +410,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
         poke.TradeFinished(this, received);
 
         // Still need to wait out the trade animation.
-
-        for (var i = 0; i < 30; i++)
-            await Click(B, 0_500, token).ConfigureAwait(false);
+        await Task.Delay(10_000, token).ConfigureAwait(false);
 
         await ExitTrade(false, token).ConfigureAwait(false);
         return PokeTradeResult.Success;
@@ -449,6 +447,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
             {
                 // If we don't detect a B1S1 change, the trade didn't go through in that time.
                 Log("No detectó un cambio en la ranura 1.");
+                await Click(B, 1_000, token).ConfigureAwait(false);
                 return PokeTradeResult.TrainerTooSlow;
             }
 
@@ -723,19 +722,35 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
                 return;
             }
 
+            // Press B to bring up the exit screen
+            Log("Saliendo del comercio...");
             await Click(B, 1_000, token).ConfigureAwait(false);
             if (await IsOnOverworldStandard(token))
                 return;
 
-            await Click(BitConverter.ToUInt16(await SwitchConnection.ReadBytesMainAsync(ScreenOff, 2, token), 0) == Boxscreen ? A : B, 1_000, token).ConfigureAwait(false);
-            if (await IsOnOverworldStandard(token))
-                return;
+            // Press A to confirm the exit
+            Log("Presionando A para salir...");
+            await Click(A, 1_000, token).ConfigureAwait(false);
+
+            // Wait 10 seconds
+            await Task.Delay(10_000, token);
+
+            // Press B three more times to navigate back to the overworld
+            Log("Presionando B para retroceder completamente.");
 
             await Click(B, 1_000, token).ConfigureAwait(false);
-            if (await IsOnOverworldStandard(token))
-                return;
+            await Click(B, 1_000, token).ConfigureAwait(false);
+            await Click(B, 1_000, token).ConfigureAwait(false);
 
-            ctr -= 3_000;
+            // Check if we are on the overworld
+            Log("Comprobando si estamos en el pverworld.");
+            if (await IsOnOverworldStandard(token))
+            {
+                Log("Con éxito en el overworld.");
+                return;
+            }
+
+            ctr -= 6_000; // Subtract 6 seconds for the additional B presses and delay
         }
     }
 
