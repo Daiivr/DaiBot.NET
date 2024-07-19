@@ -115,7 +115,7 @@ public static class QueueHelper<T> where T : PKM, new()
 
             (string embedImageUrl, DiscordColor embedColor) = await PrepareEmbedDetails(pk, t, itemImageUrl);
 
-            embedData.EmbedImageUrl = isMysteryEgg ? "https://i.imgur.com/RAj0syZ.png" :
+            embedData.EmbedImageUrl = isMysteryEgg ? "https://i.imgur.com/AwuBs4D.png" :
                                        type == PokeRoutineType.Dump ? "https://i.imgur.com/9wfEHwZ.png" :
                                        type == PokeRoutineType.Clone ? "https://i.imgur.com/aSTCjUn.png" :
                                        type == PokeRoutineType.SeedCheck ? "https://i.imgur.com/EI1BHr5.png" :
@@ -319,15 +319,23 @@ public static class QueueHelper<T> where T : PKM, new()
 
         if (Uri.TryCreate(embedImageUrl, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeFile)
         {
+#pragma warning disable CA1416 // Validate platform compatibility
             using var localImage = System.Drawing.Image.FromFile(uri.LocalPath);
+#pragma warning restore CA1416 // Validate platform compatibility
             using var ballImage = await LoadImageFromUrl(ballImgUrl);
             if (ballImage != null)
             {
+#pragma warning disable CA1416 // Validate platform compatibility
                 using (var graphics = Graphics.FromImage(localImage))
                 {
+#pragma warning disable CA1416 // Validate platform compatibility
                     var ballPosition = new Point(localImage.Width - ballImage.Width, localImage.Height - ballImage.Height);
+#pragma warning restore CA1416 // Validate platform compatibility
+#pragma warning disable CA1416 // Validate platform compatibility
                     graphics.DrawImage(ballImage, ballPosition);
+#pragma warning restore CA1416 // Validate platform compatibility
                 }
+#pragma warning restore CA1416 // Validate platform compatibility
                 embedImageUrl = SaveImageLocally(localImage);
             }
         }
@@ -351,7 +359,8 @@ public static class QueueHelper<T> where T : PKM, new()
         }
         else
         {
-            (int R, int G, int B) = await GetDominantColorAsync(embedImageUrl);
+            string colorImageUrl = pk.IsEgg ? speciesImageUrl : embedImageUrl;
+            (int R, int G, int B) = await GetDominantColorAsync(colorImageUrl);
             embedColor = new DiscordColor(R, G, B);
         }
 
