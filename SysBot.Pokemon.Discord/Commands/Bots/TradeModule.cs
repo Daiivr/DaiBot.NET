@@ -764,6 +764,16 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         var ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
         content = ReusableActions.StripCodeBlock(content);
+
+        // List of egg nicknames in different languages
+        var eggNicknames = new List<string>
+        {
+            "Egg", "タマゴ", "Œuf", "Uovo", "Ei", "Huevo", "알", "蛋"
+        };
+
+        // Check if the showdown set contains any of the egg nicknames
+        bool isEgg = eggNicknames.Any(nickname => content.Contains(nickname, StringComparison.OrdinalIgnoreCase));
+
         var set = new ShowdownSet(content);
         var template = AutoLegalityWrapper.GetTemplate(set);
 
@@ -796,44 +806,51 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             var pkm = sav.GetLegal(template, out var result);
             var la = new LegalityAnalysis(pkm);
             var spec = GameInfo.Strings.Species[template.Species];
-            if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
+            if (isEgg && pkm is T eggPk)
             {
-                switch (pkm)
+                eggPk.IsNicknamed = false; // Make sure we don't set a nickname
+                TradeExtensions<T>.EggTrade(eggPk, template);
+                pkm = eggPk; // Update the pkm reference
+                la = new LegalityAnalysis(pkm); // Re-analyze legality
+            }
+            else
+            {
+                if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.SuggestRelearnMoves)
                 {
-                    case PK9 pk9:
-                        pk9.SetRecordFlagsAll();
-                        break;
+                    switch (pkm)
+                    {
+                        case PK9 pk9:
+                            pk9.SetRecordFlagsAll();
+                            break;
+                        case PK8 pk8:
+                            pk8.SetRecordFlagsAll();
+                            break;
+                        case PB8 pb8:
+                            pb8.SetRecordFlagsAll();
+                            break;
+                        case PB7 pb7:
+                        case PA8 pa8:
+                            break;
+                    }
+                }
+                pkm.HeldItem = pkm switch
+                {
+                    PA8 => (int)HeldItem.None,
+                    _ when pkm.HeldItem == 0 && !pkm.IsEgg => (int)SysCord<T>.Runner.Config.Trade.TradeConfiguration.DefaultHeldItem,
+                    _ => pkm.HeldItem
+                };
 
-                    case PK8 pk8:
-                        pk8.SetRecordFlagsAll();
-                        break;
-
-                    case PB8 pb8:
-                        pb8.SetRecordFlagsAll();
-                        break;
-
-                    case PB7 pb7:
-                    case PA8 pa8:
-                        break;
+                if (pkm is PB7)
+                {
+                    lgcode = TradeModule<T>.GenerateRandomPictocodes(3);
+                    if (pkm.Species == (int)Species.Mew && pkm.IsShiny)
+                    {
+                        await ReplyAsync($"<a:warning:1206483664939126795> Lo siento {Context.User.Mention}, Mew **no** puede ser Shiny en LGPE. PoGo Mew no se transfiere y Pokeball Plus Mew tiene shiny lock.");
+                        return;
+                    }
                 }
             }
 
-            pkm.HeldItem = pkm switch
-            {
-                PA8 => (int)HeldItem.None,
-                _ when pkm.HeldItem == 0 && !pkm.IsEgg => (int)SysCord<T>.Runner.Config.Trade.TradeConfiguration.DefaultHeldItem,
-                _ => pkm.HeldItem
-            };
-
-            if (pkm is PB7)
-            {
-                lgcode = TradeModule<T>.GenerateRandomPictocodes(3);
-                if (pkm.Species == (int)Species.Mew && pkm.IsShiny)
-                {
-                    await ReplyAsync($"<a:warning:1206483664939126795> Lo siento {Context.User.Mention}, Mew **no** puede ser Shiny en LGPE. PoGo Mew no se transfiere y Pokeball Plus Mew tiene shiny lock.");
-                    return;
-                }
-            }
             bool setEdited = false;
             if (pkm is not T pk || !la.Valid || !string.IsNullOrEmpty(set.Form.ToString()))
             {
@@ -900,6 +917,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 }
                 pk = correctedPk;
             }
+
             if (pk.WasEgg)
                 pk.EggMetDate = pk.MetDate;
             pk.ResetPartyStats();
