@@ -59,7 +59,7 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
         {
             await InitializeHardware(Hub.Config.Trade, token).ConfigureAwait(false);
 
-            Log("Identificación de datos del entrenador de la consola host.");
+            Log("Identificando los datos del entrenador de la consola host.");
             var sav = await IdentifyTrainer(token).ConfigureAwait(false);
             RecentTrainerCache.SetRecentTrainer(sav);
 

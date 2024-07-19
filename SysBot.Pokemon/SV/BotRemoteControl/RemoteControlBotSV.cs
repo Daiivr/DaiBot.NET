@@ -17,7 +17,7 @@ public class RemoteControlBotSV(PokeBotState Config) : PokeRoutineExecutor9SV(Co
     {
         try
         {
-            Log("Identificación de datos del entrenador de la consola host.");
+            Log("Identificando los datos del entrenador de la consola host.");
             await IdentifyTrainer(token).ConfigureAwait(false);
 
             Log("Iniciando el bucle principal, luego esperando comandos.");

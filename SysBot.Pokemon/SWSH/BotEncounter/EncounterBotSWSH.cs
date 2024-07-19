@@ -54,7 +54,7 @@ public abstract class EncounterBotSWSH : PokeRoutineExecutor8SWSH, IEncounterBot
     public override async Task MainLoop(CancellationToken token)
     {
         var settings = Hub.Config.EncounterSWSH;
-        Log("Identificación de datos del entrenador de la consola host.");
+        Log("Identificando los datos del entrenador de la consola host.");
         var sav = await IdentifyTrainer(token).ConfigureAwait(false);
         await InitializeHardware(settings, token).ConfigureAwait(false);
 

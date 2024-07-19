@@ -106,7 +106,14 @@ public static class QueueHelper<T> where T : PKM, new()
 
         try
         {
-            (string embedImageUrl, DiscordColor embedColor) = await PrepareEmbedDetails(pk);
+            var itemImageUrl = string.Empty;
+            if (t == PokeTradeType.Item && !string.IsNullOrWhiteSpace(embedData.HeldItem))
+            {
+                string heldItemName = embedData.HeldItem.ToLower().Replace(" ", "");
+                itemImageUrl = $"https://serebii.net/itemdex/sprites/sv/{heldItemName}.png";
+            }
+
+            (string embedImageUrl, DiscordColor embedColor) = await PrepareEmbedDetails(pk, t, itemImageUrl);
 
             embedData.EmbedImageUrl = isMysteryEgg ? "https://i.imgur.com/RAj0syZ.png" :
                                        type == PokeRoutineType.Dump ? "https://i.imgur.com/9wfEHwZ.png" :
@@ -278,7 +285,7 @@ public static class QueueHelper<T> where T : PKM, new()
         return filePath;
     }
 
-    private static async Task<(string, DiscordColor)> PrepareEmbedDetails(T pk)
+    private static async Task<(string, DiscordColor)> PrepareEmbedDetails(T pk, PokeTradeType tradeType, string itemImageUrl = "")
     {
         string embedImageUrl;
         string speciesImageUrl;
@@ -310,27 +317,17 @@ public static class QueueHelper<T> where T : PKM, new()
 
         string ballImgUrl = $"https://raw.githubusercontent.com/bdawg1989/sprites/main/AltBallImg/20x20/{ballName}.png";
 
-        // Check if embedImageUrl is a local file or a web URL
         if (Uri.TryCreate(embedImageUrl, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeFile)
         {
-            // Load local image directly
-#pragma warning disable CA1416 // Validate platform compatibility
             using var localImage = System.Drawing.Image.FromFile(uri.LocalPath);
-#pragma warning restore CA1416 // Validate platform compatibility
             using var ballImage = await LoadImageFromUrl(ballImgUrl);
             if (ballImage != null)
             {
-#pragma warning disable CA1416 // Validate platform compatibility
                 using (var graphics = Graphics.FromImage(localImage))
                 {
-#pragma warning disable CA1416 // Validate platform compatibility
                     var ballPosition = new Point(localImage.Width - ballImage.Width, localImage.Height - ballImage.Height);
-#pragma warning restore CA1416 // Validate platform compatibility
-#pragma warning disable CA1416 // Validate platform compatibility
                     graphics.DrawImage(ballImage, ballPosition);
-#pragma warning restore CA1416 // Validate platform compatibility
                 }
-#pragma warning restore CA1416 // Validate platform compatibility
                 embedImageUrl = SaveImageLocally(localImage);
             }
         }
@@ -342,13 +339,23 @@ public static class QueueHelper<T> where T : PKM, new()
             if (!ballImageLoaded)
             {
                 Console.WriteLine($"No se pudo cargar la imagen de la pokeball: {ballImgUrl}");
-
-                // await context.Channel.SendMessageAsync($"Ball image could not be loaded: {ballImgUrl}"); // for debugging purposes
             }
         }
 
-        (int R, int G, int B) = await GetDominantColorAsync(embedImageUrl);
-        return (embedImageUrl, new DiscordColor(R, G, B));
+        DiscordColor embedColor;
+
+        if (tradeType == PokeTradeType.Item && !string.IsNullOrEmpty(itemImageUrl))
+        {
+            (int R, int G, int B) = await GetDominantColorAsync(itemImageUrl);
+            embedColor = new DiscordColor(R, G, B);
+        }
+        else
+        {
+            (int R, int G, int B) = await GetDominantColorAsync(embedImageUrl);
+            embedColor = new DiscordColor(R, G, B);
+        }
+
+        return (embedImageUrl, embedColor);
     }
 
     private static async Task<(System.Drawing.Image, bool)> OverlayBallOnSpecies(string speciesImageUrl, string ballImageUrl)
@@ -384,7 +391,6 @@ public static class QueueHelper<T> where T : PKM, new()
                     graphics.DrawImage(ballImage, ballPosition);
 #pragma warning restore CA1416 // Validate platform compatibility
                 }
-#pragma warning restore CA1416 // Validate platform compatibility
 
 #pragma warning disable CA1416 // Validate platform compatibility
                 return ((System.Drawing.Image)speciesImage.Clone(), true);
@@ -428,7 +434,6 @@ public static class QueueHelper<T> where T : PKM, new()
             g.DrawImage(resizedSpeciesImage, speciesX, speciesY, resizedSpeciesImage.Width, resizedSpeciesImage.Height);
 #pragma warning restore CA1416 // Validate platform compatibility
         }
-#pragma warning restore CA1416 // Validate platform compatibility
 
         // Dispose of the species image and the resized species image if they're no longer needed
 #pragma warning disable CA1416 // Validate platform compatibility
@@ -468,7 +473,6 @@ public static class QueueHelper<T> where T : PKM, new()
             g.DrawImage(eggImage, x, y, newWidth, newHeight);
 #pragma warning restore CA1416 // Validate platform compatibility
         }
-#pragma warning restore CA1416 // Validate platform compatibility
 #pragma warning disable CA1416 // Validate platform compatibility
         eggImage.Dispose();
 #pragma warning restore CA1416 // Validate platform compatibility
@@ -609,9 +613,7 @@ public static class QueueHelper<T> where T : PKM, new()
                         colorCount[quantizedColor] = combinedFactor;
                     }
                 }
-#pragma warning restore CA1416 // Validate platform compatibility
             }
-#pragma warning restore CA1416 // Validate platform compatibility
 
 #pragma warning disable CA1416 // Validate platform compatibility
             image.Dispose();
@@ -770,7 +772,6 @@ public static class QueueHelper<T> where T : PKM, new()
                 new Rectangle(new Point(), spritearray[2].Size), GraphicsUnit.Pixel);
 #pragma warning restore CA1416 // Validate platform compatibility
         }
-#pragma warning restore CA1416 // Validate platform compatibility
         System.Drawing.Image finalembedpic = outputImage;
         var filename = $"{Directory.GetCurrentDirectory()}//finalcode.png";
 #pragma warning disable CA1416 // Validate platform compatibility

@@ -42,7 +42,7 @@ public class RaidBotSWSH(PokeBotState Config, PokeTradeHub<PK8> Hub) : PokeRouti
 
         try
         {
-            Log("Identificación de datos del entrenador de la consola host.");
+            Log("Identificando los datos del entrenador de la consola host.");
             await IdentifyTrainer(token).ConfigureAwait(false);
             await InitializeSessionOffsets(token).ConfigureAwait(false);
 

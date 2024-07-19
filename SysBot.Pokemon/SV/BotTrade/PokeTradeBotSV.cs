@@ -86,7 +86,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         {
             await InitializeHardware(Hub.Config.Trade, token).ConfigureAwait(false);
 
-            Log("Identificación de datos del entrenador de la consola host.");
+            Log("Identificando los datos del entrenador de la consola host.");
             var sav = await IdentifyTrainer(token).ConfigureAwait(false);
             OT = sav.OT;
             DisplaySID = sav.DisplaySID;
@@ -1480,7 +1480,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         {
             // Updates the assets.
             Hub.Config.Stream.IdleAssets(this);
-            Log("Nothing to check, waiting for new users...");
+            Log("Nada que comprobar, esperando nuevos usuarios...");
         }
 
         return Task.Delay(1_000, token);
