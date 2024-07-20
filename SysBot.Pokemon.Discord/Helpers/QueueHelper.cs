@@ -143,7 +143,14 @@ public static class QueueHelper<T> where T : PKM, new()
             var botct = Info.Hub.Bots.Count;
             var baseEta = position.Position > botct ? Info.Hub.Config.Queues.EstimateDelay(position.Position, botct) : 0;
             var etaMessage = $"Tiempo Estimado: {baseEta:F1} minuto(s) para el trade {batchTradeNumber}/{totalBatchTrades}.";
-            string footerText = $"Posición actual: {(position.Position == -1 ? 1 : position.Position)}";
+            string footerText = string.Empty;
+
+            if (totalTradeCount > 0)
+            {
+                footerText += $"Trades: {totalTradeCount}\n";
+            }
+
+            footerText += $"Posición actual: {(position.Position == -1 ? 1 : position.Position)}";
 
             string userDetailsText = DetailsExtractor<T>.GetUserDetails(totalTradeCount, tradeDetails);
             if (!string.IsNullOrEmpty(userDetailsText))

@@ -146,15 +146,11 @@ public static class DetailsExtractor<T> where T : PKM, new()
     public static string GetUserDetails(int totalTradeCount, TradeCodeStorage.TradeCodeDetails? tradeDetails)
     {
         string userDetailsText = "";
-        if (totalTradeCount > 0)
-        {
-            userDetailsText = $"Trades: {totalTradeCount}";
-        }
         if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.StoreTradeCodes && tradeDetails != null)
         {
             if (!string.IsNullOrEmpty(tradeDetails?.OT))
             {
-                userDetailsText += $" | OT: {tradeDetails?.OT}";
+                userDetailsText += $"OT: {tradeDetails?.OT}";
             }
             if (tradeDetails?.TID != null)
             {
