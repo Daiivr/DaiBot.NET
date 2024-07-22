@@ -67,6 +67,9 @@ public class DiscordSettings
     [Category(Startup), Description("Prefijo de comando del bot.")]
     public string CommandPrefix { get; set; } = "$";
 
+    [Category(Startup), Description("Estado personalizado del bot."), DisplayName("Estado de Juego del Bot")]
+    public string BotGameStatus { get; set; } = "SysBot.NET: Pokémon";
+
     [Category(Operation), Description("Texto adicional para agregar al comienzo del Embed."), DisplayName("Texto adicional del embed")]
     public string[] AdditionalEmbedText { get; set; } = Array.Empty<string>();
 
@@ -106,9 +109,6 @@ public class DiscordSettings
         public string OfflineEmoji { get; set; } = "❌";
     }
 
-    [Category(Startup), Description("Estado personalizado del bot."), DisplayName("Estado de Juego del Bot")]
-    public string BotGameStatus { get; set; } = "SysBot.NET: Pokémon";
-
     [Category(Channels), Description("Los canales con estos ID son los únicos canales donde el bot reconoce comandos.")]
     public RemoteControlAccessList ChannelWhitelist { get; set; } = new();
 
@@ -124,14 +124,21 @@ public class DiscordSettings
     [Category(Operation), Description("Mensaje personalizado con el que el bot responderá cuando un usuario lo salude. Utilice formato de cadena para mencionar al usuario en la respuesta.")]
     public string HelloResponse { get; set; } = "Hi {0}!";
 
-    [Category(Operation), Description("Enlace de transmisión."), DisplayName("Link al Stream")]
-    public string StreamLink { get; set; } = string.Empty;
+    [Category(Operation), TypeConverter(typeof(ExpandableObjectConverter)), Description("Opciones Extras sobre el stream del host"), DisplayName("Opciones del Stream")]
+    public StreamOptions Stream { get; set; } = new StreamOptions();
 
-    [Category(Operation), Description("Opción de icono para la transmisión."), DisplayName("Icono de la plataforma de Stream")]
-    public StreamIconOption StreamIcon { get; set; } = StreamIconOption.Twitch;
+    public class StreamOptions
+    {
+        public override string ToString() => "(Collection)";
 
-    // URLs for the stream icons
-    public static readonly Dictionary<StreamIconOption, string> StreamIconUrls = new()
+        [Category(Operation), Description("Enlace de transmisión."), DisplayName("Link al Stream")]
+        public string StreamLink { get; set; } = string.Empty;
+
+        [Category(Operation), Description("Opción de icono para la transmisión."), DisplayName("Icono de la plataforma de Stream")]
+        public StreamIconOption StreamIcon { get; set; } = StreamIconOption.Twitch;
+
+        // URLs for the stream icons
+        public static readonly Dictionary<StreamIconOption, string> StreamIconUrls = new()
         {
             { StreamIconOption.Twitch, "https://i.imgur.com/zD95Rzy.png" },
             { StreamIconOption.Youtube, "https://i.imgur.com/VzFGPdo.png" },
@@ -139,6 +146,7 @@ public class DiscordSettings
             { StreamIconOption.Kick, "https://i.imgur.com/HH8AAJY.jpg" },
             { StreamIconOption.TikTok, "https://i.imgur.com/Jm89lHP.png" }
         };
+    }
 
     [Category(Operation), Description("Enlace de donación."),DisplayName("Link para Donaciones")]
     public string DonationLink { get; set; } = string.Empty;

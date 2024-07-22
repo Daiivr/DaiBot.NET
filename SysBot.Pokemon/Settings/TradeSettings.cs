@@ -309,6 +309,8 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         public ImageSize PreferredImageSize { get; set; } = ImageSize.Size128x128;
 
         [Category(EmbedSettings), TypeConverter(typeof(ExpandableObjectConverter)), Description("Opciones Extras para el embed"), DisplayName("Opciones Extras")]
+        public EmbedTxTOptions ExtraEmbedOptions { get; set; } = new EmbedTxTOptions();
+
         public class EmbedTxTOptions
         {
             public override string ToString() => "(Collection)";
@@ -321,9 +323,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
 
             [Category(EmbedSettings), Description("Mensaje que aparece en el embed cuando el Bot autocorrige algún dato del conjunto enviado.."), DisplayName("Texto para autocorrección")]
             public string AutocorrectText { get; set; } = "Auto corregido para hacerlo legal.";
-
         }
-        public EmbedTxTOptions ExtraEmbedOptions { get; set; } = new EmbedTxTOptions();
 
         [Category(EmbedSettings), Description("Mostrará los iconos de tipo de movimiento junto a los movimientos en el Embed Trade (sólo Discord). Requiere que el usuario suba los emojis a su servidor."), DisplayName("¿Mostrar Emojis de Movimientos?")]
         public bool MoveTypeEmojis { get; set; } = true;
@@ -383,6 +383,8 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         };
 
         [Category(EmbedSettings), TypeConverter(typeof(ExpandableObjectConverter)), Description("Configuración de emojis para las escalas XXXS y XXXL."), DisplayName("Emojis de tamaño")]
+        public ScaleEmojisSettings ScaleEmojis { get; set; } = new ScaleEmojisSettings();
+
         public class ScaleEmojisSettings
         {
             public override string ToString() => "(Collection)";
@@ -393,9 +395,10 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             [Description("Emoji para la escala XXXL."), DisplayName("Emoji Escala XXXL")]
             public EmojiInfo ScaleXXXLEmoji { get; set; } = new EmojiInfo();
         }
-        public ScaleEmojisSettings ScaleEmojis { get; set; } = new ScaleEmojisSettings();
 
         [Category(EmbedSettings), TypeConverter(typeof(ExpandableObjectConverter)), Description("Configuración de emojis para Pokémon Shiny."), DisplayName("Emojis Shiny")]
+        public ShinyEmojisSettings ShinyEmojis { get; set; } = new ShinyEmojisSettings();
+
         public class ShinyEmojisSettings
         {
             public override string ToString() => "(Collection)";
@@ -406,9 +409,10 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             [Description("Emoji para Pokémon Shiny normal."), DisplayName("Emoji Shiny Normal")]
             public EmojiInfo ShinyNormalEmoji { get; set; } = new EmojiInfo();
         }
-        public ShinyEmojisSettings ShinyEmojis { get; set; } = new ShinyEmojisSettings();
 
         [Category(EmbedSettings), TypeConverter(typeof(ExpandableObjectConverter)), Description("Configuración de emojis para géneros."), DisplayName("Emojis de Género")]
+        public GenderEmojisSettings GenderEmojis { get; set; } = new GenderEmojisSettings();
+
         public class GenderEmojisSettings
         {
             public override string ToString() => "(Collection)";
@@ -419,9 +423,10 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             [Description("La cadena completa para el emoji de género femenino."), DisplayName("Emoji Femenino")]
             public EmojiInfo FemaleEmoji { get; set; } = new EmojiInfo();
         }
-        public GenderEmojisSettings GenderEmojis { get; set; } = new GenderEmojisSettings(); // Instancia de la configuración de emojis de género.
 
         [Category(EmbedSettings), TypeConverter(typeof(ExpandableObjectConverter)), Description("Configuración de emojis para marcas especiales y estados."), DisplayName("Emojis de Marcas y Estados Especiales")]
+        public SpecialMarksEmojisSettings SpecialMarksEmojis { get; set; } = new SpecialMarksEmojisSettings();
+
         public class SpecialMarksEmojisSettings
         {
             public override string ToString() => "(Collection)";
@@ -438,7 +443,6 @@ public class TradeSettings : IBotStateSettings, ICountSettings
             [Description("La información emoji para mostrar el emoji alfa en Legends: Arceus."), DisplayName("Emoji Alfa PLA")]
             public EmojiInfo AlphaPLAEmoji { get; set; } = new EmojiInfo();
         }
-        public SpecialMarksEmojisSettings SpecialMarksEmojis { get; set; } = new SpecialMarksEmojisSettings(); // Instancia de la configuración de emojis de marcas y estados especiales.
 
         [Category(EmbedSettings), Description("Se mostrará la Escala en el Embed Trade (SV y Discord solamente). Requiere que el usuario suba los emojis a su servidor."), DisplayName("Mostrar Tamaño")]
         public bool ShowScale { get; set; } = true;

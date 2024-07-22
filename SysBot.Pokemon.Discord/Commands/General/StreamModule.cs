@@ -12,13 +12,13 @@ namespace SysBot.Pokemon.Discord
         public async Task PingAsync()
         {
             var settings = SysCordSettings.Settings;
-            var streamIconUrl = DiscordSettings.StreamIconUrls[settings.StreamIcon];
-            var embedColor = GetEmbedColor(settings.StreamIcon); // Get the color based on the selected icon option
+            var streamIconUrl = DiscordSettings.StreamOptions.StreamIconUrls[settings.Stream.StreamIcon];
+            var embedColor = GetEmbedColor(settings.Stream.StreamIcon); // Get the color based on the selected icon option
 
             var embed = new EmbedBuilder()
                 .WithTitle("¡Enlace del Stream!")
-                .WithDescription($"Aquí está el enlace del Stream, ¡disfrutar! :3 \n{settings.StreamLink}")
-                .WithUrl(settings.StreamLink) // Optional: Add the URL to the stream link here as well
+                .WithDescription($"Aquí está el enlace del Stream, ¡disfrutar! :3 \n{settings.Stream.StreamLink}")
+                .WithUrl(settings.Stream.StreamLink) // Optional: Add the URL to the stream link here as well
                 .WithThumbnailUrl(streamIconUrl)
                 .WithColor(embedColor) // Set the color based on the selected icon option
                 .WithFooter(footer =>
