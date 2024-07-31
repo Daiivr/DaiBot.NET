@@ -59,15 +59,6 @@ public static class NatureTranslations
     };
 }
 
-public static class ScaleEmojisDictionary
-{
-    public static readonly Dictionary<string, string> ScaleEmojis = new Dictionary<string, string>
-    {
-        { "XXXS", "<:minimark:1158632782013136946>" }, // Emoji para XXXS
-        { "XXXL", "<:jumbomark:1158632783380492318>" }  // Emoji para XXXL
-    };
-}
-
 public static class AbilityTranslationDictionary
 {
     public static readonly Dictionary<string, string> AbilityTranslation = new Dictionary<string, string>
