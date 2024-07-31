@@ -215,7 +215,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         // Home Tracker Check
         if (toSend is IHomeTrack pk && pk.HasTracker)
         {
-            Log("Rastreador de casa detectado. No se puede aplicar Auto OT.");
+            Log("Rastreador de Home detectado. No se puede aplicar Auto OT.");
             return toSend;
         }
 
@@ -844,7 +844,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
                 }
                 else
                 {
-                    Log("OT, TID o SID es nulo. Omitir UpdateTradeDetails.");
+                    Log("El OT, TID o SID es nulo. Omitir UpdateTradeDetails.");
                 }
             }
 
@@ -919,7 +919,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             }
 
             // As long as we got rid of our inject in b1s1, assume the trade went through.
-            Log("El usuario completó la tradeo.");
+            Log($"El usuario completó el intercambio.");
             poke.TradeFinished(this, received);
 
             // Only log if we completed the trade.
