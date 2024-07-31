@@ -14,8 +14,6 @@ Este bot recibirá todas las actualizaciones que MergeBot reciba.
 
 3- Para el **Simbolo de Warning** en Visual Studio presioná `crtl+shift+f` para buscar, pegas `<a:warning:1206483664939126795>` y lo cambias por tu emoji a preferencia.
 
-4- Para el **Tera Tipo** y **Tamaño** buscar el archivo `Diccionarios.c` localizado en `DaiBot.NET\SysBot.Pokemon\Helpers` y los cambias por tus emojis.
-
 - __PD: Si sientes que es mucho trabajo, puedes agregarme a [discord](https://discordid.netlify.app/?id=271701484922601472) y agregaré tus bots a mi servidor donde están los emojis__.
 
 # Este sysBot ofrece todas las características que puedas desear <3
