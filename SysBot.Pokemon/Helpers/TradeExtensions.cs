@@ -201,6 +201,7 @@ namespace SysBot.Pokemon.Helpers
             pk.CurrentHandler = 0;
             pk.OriginalTrainerFriendship = 1;
             pk.HandlingTrainerName = "";
+            ClearHandlingTrainerTrash(pk);
             pk.HandlingTrainerFriendship = 0;
             pk.ClearMemories();
             pk.StatNature = pk.Nature;
@@ -482,6 +483,22 @@ namespace SysBot.Pokemon.Helpers
             {
                 trash[actualLength * 2] = 0x00;
                 trash[(actualLength * 2) + 1] = 0x00;
+            }
+        }
+
+        private static void ClearHandlingTrainerTrash(PKM pk)
+        {
+            switch (pk)
+            {
+                case PK8 pk8:
+                    ClearTrash(pk8.HandlingTrainerTrash, "");
+                    break;
+                case PB8 pb8:
+                    ClearTrash(pb8.HandlingTrainerTrash, "");
+                    break;
+                case PK9 pk9:
+                    ClearTrash(pk9.HandlingTrainerTrash, "");
+                    break;
             }
         }
     }

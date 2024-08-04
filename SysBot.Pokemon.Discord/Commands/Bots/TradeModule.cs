@@ -1852,6 +1852,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 embedBuilder.WithDescription($"<a:no:1206485104424128593> {usr.Mention} El conjunto de showdown __no es válido__ para un huevo de **{speciesName}**.");
                 embedBuilder.AddField("__**Error**__", $"Puede que __**{speciesName}**__ no se pueda obtener en un huevo o algún dato esté impidiendo el trade.", inline: true);
                 embedBuilder.AddField("__**Solución**__", $"Revisa tu __información__ y vuelve a intentarlo.", inline: true);
+                embedBuilder.AddField("Reporte:", $"\n```{la.Report()}```");
             }
             else
             {
