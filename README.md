@@ -1,9 +1,4 @@
 # Bienvenido a MergeBot!
-Para soporte y sugerencias, únete al Discord Hangout - https://notpaldea.net (Ten en cuenta que este discord es de habla inglesa)
-
-## Información Importante (No IGNORAR)
-Este bot es un fork de [**MergeBot**](https://github.com/bdawg1989/MergeBot) con algunos cambios mínimos y traducido al español casi en su totalidad.
-Este bot recibirá todas las actualizaciones que MergeBot reciba. 
 
 - __Este Bot cuenta con algunos emojis de discord customizados a mi gusto, por lo que deberás cambiarlos por tus propios emojis para que sean visibles en tu bot__.
 - __A continuación la lista de emojis y cómo cambiarlos__.
