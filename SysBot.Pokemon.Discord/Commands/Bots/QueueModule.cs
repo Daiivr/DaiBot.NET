@@ -291,20 +291,21 @@ public class QueueModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         return codeStr.Substring(0, 4) + " " + codeStr.Substring(4, 4); // Inserta un espacio después de los primeros 4 dígitos.
     }
 
-    private static string ClearTrade(ulong userID)
+    private string ClearTrade(ulong userID)
     {
         var result = Info.ClearTrade(userID);
-        return GetClearTradeMessage(result);
+        var userMention = Context.User.Mention; // Obtén la mención del usuario
+        return GetClearTradeMessage(result, userMention);
     }
 
-    private static string GetClearTradeMessage(QueueResultRemove result)
+    private static string GetClearTradeMessage(QueueResultRemove result, string userMention)
     {
         return result switch
         {
-            QueueResultRemove.Removed => $"<a:yes:1206485105674166292> Eliminé tus operaciones pendientes de la cola.",
-            QueueResultRemove.CurrentlyProcessing => "<a:warning:1206483664939126795> Parece que actualmente tienes operaciones en proceso! No lass eliminé de la cola.",
-            QueueResultRemove.CurrentlyProcessingRemoved => "<a:warning:1206483664939126795> Parece que tiene operaciones en proceso. Se han eliminado otras operaciones pendientes de la cola.",
-            QueueResultRemove.NotInQueue => "<a:warning:1206483664939126795> Lo sentimos, actualmente no estás en la lista.",
+            QueueResultRemove.Removed => $"<a:yes:1206485105674166292> {userMention}, eliminé tus operaciones pendientes de la cola.",
+            QueueResultRemove.CurrentlyProcessing => $"<a:warning:1206483664939126795> {userMention}, parece que actualmente tienes operaciones en proceso! No las eliminé de la cola.",
+            QueueResultRemove.CurrentlyProcessingRemoved => $"<a:warning:1206483664939126795> {userMention}, parece que tiene operaciones en proceso. Se han eliminado otras operaciones pendientes de la cola.",
+            QueueResultRemove.NotInQueue => $"<a:warning:1206483664939126795> Lo sentimos {userMention}, actualmente no estás en la lista.",
             _ => throw new ArgumentOutOfRangeException(nameof(result), result, null),
         };
     }

@@ -17,8 +17,7 @@ namespace SysBot.Pokemon.Discord
 
         [Command("mysteryegg")]
         [Alias("me")]
-        [Summary("Trades a random mystery egg with perfect stats and shiny appearance.")]
-        [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
+        [Summary("Intercambia un huevo generado a partir de un Pokémon aleatorio.")]
         public async Task TradeMysteryEggAsync()
         {
             var userID = Context.User.Id;
@@ -51,92 +50,63 @@ namespace SysBot.Pokemon.Discord
                 return;
             }
             var code = Info.GetRandomTradeCode(userID);
-            await Task.Run(async () =>
+
+            // Start the long-running task without awaiting it
+            _ = Task.Run(async () =>
             {
-                await TradeMysteryEggAsync(code).ConfigureAwait(false);
-            }).ConfigureAwait(false);
+                try
+                {
+                    await ProcessMysteryEggTradeAsync(code).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    LogUtil.LogSafe(ex, nameof(MysteryEggModule<T>));
+                    await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, se produjo un error al procesar la solicitud.").ConfigureAwait(false);
+                }
+            });
+
+            await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention}, tu solicitud de intercambio de huevos misteriosos se ha puesto en cola. Por favor, espere a que se procese.").ConfigureAwait(false);
         }
 
-        [Command("mysteryegg")]
-        [Alias("me")]
-        [Summary("Trades a random mystery egg with perfect stats and shiny appearance.")]
-        [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
-        public async Task TradeMysteryEggAsync([Summary("Trade Code")] int code)
+        private async Task ProcessMysteryEggTradeAsync(int code)
         {
-            var userID = Context.User.Id;
-            if (Info.IsUserInQueue(userID))
+            var gameVersion = GetGameVersion();
+            var speciesList = GetBreedableSpecies(gameVersion, "en");
+            int attempts = 0;
+            while (attempts < 5)
             {
-                var currentTime = DateTime.UtcNow;
-                var formattedTime = currentTime.ToString("hh:mm tt");
-
-                var queueEmbed = new EmbedBuilder
+                var randomIndex = new Random().Next(speciesList.Count);
+                ushort speciesId = speciesList[randomIndex];
+                var speciesName = GameInfo.GetStrings("en").specieslist[speciesId];
+                var showdownSet = new ShowdownSet(speciesName);
+                var template = AutoLegalityWrapper.GetTemplate(showdownSet);
+                var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
+                var pk = sav.GetLegal(template, out var result);
+                if (pk != null)
                 {
-                    Color = Color.Red,
-                    ImageUrl = "https://c.tenor.com/rDzirQgBPwcAAAAd/tenor.gif",
-                    ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
-                };
-
-                queueEmbed.WithAuthor("Error al intentar agregarte a la lista", "https://i.imgur.com/0R7Yvok.gif");
-
-                // Añadir un field al Embed para indicar el error
-                queueEmbed.AddField("__**Error**__:", $"<a:no:1206485104424128593> {Context.User.Mention} No pude agregarte a la cola", true);
-                queueEmbed.AddField("__**Razón**__:", "No puedes agregar más operaciones hasta que la actual se procese.", true);
-                queueEmbed.AddField("__**Solución**__:", "Espera un poco hasta que la operación existente se termine e intentalo de nuevo.");
-
-                queueEmbed.Footer = new EmbedFooterBuilder
-                {
-                    Text = $"{Context.User.Username} • {formattedTime}",
-                    IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl()
-                };
-
-                await ReplyAsync(embed: queueEmbed.Build()).ConfigureAwait(false);
-                return;
-            }
-            try
-            {
-                var gameVersion = GetGameVersion();
-                var speciesList = GetBreedableSpecies(gameVersion, "en");
-                int attempts = 0;
-                while (attempts < 5)
-                {
-                    var randomIndex = new Random().Next(speciesList.Count);
-                    ushort speciesId = speciesList[randomIndex];
-                    var speciesName = GameInfo.GetStrings("en").specieslist[speciesId];
-                    var showdownSet = new ShowdownSet(speciesName);
-                    var template = AutoLegalityWrapper.GetTemplate(showdownSet);
-                    var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
-                    var pk = sav.GetLegal(template, out var result);
-                    if (pk != null)
+                    pk = EntityConverter.ConvertToType(pk, typeof(T), out _) ?? pk;
+                    if (pk is T validPk)
                     {
-                        pk = EntityConverter.ConvertToType(pk, typeof(T), out _) ?? pk;
-                        if (pk is T validPk)
+                        var la = new LegalityAnalysis(validPk);
+                        if (la.Valid)
                         {
-                            var la = new LegalityAnalysis(validPk);
-                            if (la.Valid)
+                            TradeExtensions<T>.EggTrade(validPk, template);
+                            SetHaX(validPk);
+                            var sig = Context.User.GetFavor();
+                            await AddTradeToQueueAsync(code, Context.User.Username, validPk, sig, Context.User, isMysteryEgg: true, skipLegalityCheck: true).ConfigureAwait(false);
+
+                            if (Context.Message is IUserMessage userMessage)
                             {
-                                TradeExtensions<T>.EggTrade(validPk, template);
-                                SetHaX(validPk);
-                                var sig = Context.User.GetFavor();
-                                await AddTradeToQueueAsync(code, Context.User.Username, validPk, sig, Context.User, isMysteryEgg: true).ConfigureAwait(false);
-
-                                if (Context.Message is IUserMessage userMessage)
-                                {
-                                    await DeleteMessageAfterDelay(userMessage, 2000).ConfigureAwait(false);
-                                }
-
-                                return;
+                                await DeleteMessageAfterDelay(userMessage, 2000).ConfigureAwait(false);
                             }
+
+                            return;
                         }
                     }
-                    attempts++;
                 }
-                await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, no se pudo generar un huevo misterioso legal después de 5 intentos. Por favor, inténtelo de nuevo más tarde.").ConfigureAwait(false);
+                attempts++;
             }
-            catch (Exception ex)
-            {
-                LogUtil.LogSafe(ex, nameof(MysteryEggModule<T>));
-                await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, se produjo un error al procesar la solicitud.").ConfigureAwait(false);
-            }
+            await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, no se pudo generar un huevo misterioso legal después de 5 intentos. Por favor, inténtelo de nuevo más tarde.").ConfigureAwait(false);
         }
 
         private static async Task DeleteMessageAfterDelay(IUserMessage message, int delayMilliseconds)
@@ -221,23 +191,36 @@ namespace SysBot.Pokemon.Discord
             };
         }
 
-        private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false)
+        private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false, bool skipLegalityCheck = false)
         {
             lgcode ??= GenerateRandomPictocodes(3);
-#pragma warning disable CS8604 // Possible null reference argument.
-            var la = new LegalityAnalysis(pk);
-#pragma warning restore CS8604 // Possible null reference argument.
-            if (!la.Valid)
-            {
-                string responseMessage;
-                string speciesName = GameInfo.GetStrings("en").specieslist[pk.Species];
-                responseMessage = $"<a:warning:1206483664939126795> Conjunto de enfrentamiento no válido para un huevo de {speciesName}. Por favor revisa tu información y vuelve a intentarlo..";
+            LegalityAnalysis la;
 
-                var reply = await ReplyAsync(responseMessage).ConfigureAwait(false);
-                await Task.Delay(6000);
-                await reply.DeleteAsync().ConfigureAwait(false);
-                return;
+            if (!skipLegalityCheck)
+            {
+#pragma warning disable CS8604 // Possible null reference argument.
+                la = new LegalityAnalysis(pk);
+#pragma warning restore CS8604 // Possible null reference argument.
+                if (!la.Valid)
+                {
+                    string responseMessage;
+                    string speciesName = GameInfo.GetStrings("en").specieslist[pk.Species];
+                    responseMessage = $"<a:warning:1206483664939126795> Conjunto de enfrentamiento no válido para un huevo de {speciesName}. Por favor revisa tu información y vuelve a intentarlo..";
+
+                    var reply = await ReplyAsync(responseMessage).ConfigureAwait(false);
+                    await Task.Delay(6000);
+                    await reply.DeleteAsync().ConfigureAwait(false);
+                    return;
+                }
             }
+            else
+            {
+                // If we're skipping the initial check, we still need to create a LegalityAnalysis object
+#pragma warning disable CS8604 // Possible null reference argument.
+                la = new LegalityAnalysis(pk);
+#pragma warning restore CS8604 // Possible null reference argument.
+            }
+
             if (!la.Valid && la.Results.Any(m => m.Identifier is CheckIdentifier.Memory))
             {
                 var clone = (T)pk.Clone();
