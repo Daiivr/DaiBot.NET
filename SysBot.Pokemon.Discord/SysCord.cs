@@ -1,5 +1,6 @@
 using Discord;
 using Discord.Commands;
+using Discord.Net;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using PKHeX.Core;
@@ -483,37 +484,63 @@ public sealed class SysCord<T> where T : PKM, new()
 
     private async Task<bool> TryHandleCommandAsync(SocketUserMessage msg, SocketCommandContext context, int pos)
     {
-        var AbuseSettings = Hub.Config.TradeAbuse;
-
-        // Check if the user is in the bannedIDs list
-        if (msg.Author is SocketGuildUser user && AbuseSettings.BannedIDs.List.Any(z => z.ID == user.Id))
+        try
         {
-            await msg.Channel.SendMessageAsync($"<a:no:1206485104424128593> {user.Mention} Tienes prohibido usar este bot.").ConfigureAwait(false);
+            var AbuseSettings = Hub.Config.TradeAbuse;
+            // Check if the user is in the bannedIDs list
+            if (msg.Author is SocketGuildUser user && AbuseSettings.BannedIDs.List.Any(z => z.ID == user.Id))
+            {
+                await SysCord<T>.SafeSendMessageAsync(msg.Channel, "Tienes prohibido usar este bot.").ConfigureAwait(false);
+                return true;
+            }
+
+            var mgr = Manager;
+            if (!mgr.CanUseCommandUser(msg.Author.Id))
+            {
+                await SysCord<T>.SafeSendMessageAsync(msg.Channel, "No tiene permitido usar este comando").ConfigureAwait(false);
+                return true;
+            }
+
+            if (!mgr.CanUseCommandChannel(msg.Channel.Id) && msg.Author.Id != mgr.Owner)
+            {
+                if (Hub.Config.Discord.ReplyCannotUseCommandInChannel)
+                    await SysCord<T>.SafeSendMessageAsync(msg.Channel, "No puedes usar ese comando aquí.").ConfigureAwait(false);
+                return true;
+            }
+
+            var guild = msg.Channel is SocketGuildChannel g ? g.Guild.Name : "Servidor desconocido";
+            await Log(new LogMessage(LogSeverity.Info, "Command", $"Ejecutando el comando desde {guild}#{msg.Channel.Name}:@{msg.Author.Username}. Contenido: {msg}")).ConfigureAwait(false);
+
+            var result = await _commands.ExecuteAsync(context, pos, _services).ConfigureAwait(false);
+
+            if (result.Error == CommandError.UnknownCommand)
+                return false;
+
+            if (!result.IsSuccess)
+                await SysCord<T>.SafeSendMessageAsync(msg.Channel, result.ErrorReason).ConfigureAwait(false);
+
             return true;
         }
-
-        var mgr = Manager;
-        if (!mgr.CanUseCommandUser(msg.Author.Id))
+        catch (Exception ex)
         {
-            await msg.Channel.SendMessageAsync("<a:warning:1206483664939126795> No está permitido utilizar este comando.").ConfigureAwait(false);
-            return true;
-        }
-        if (!mgr.CanUseCommandChannel(msg.Channel.Id) && msg.Author.Id != mgr.Owner)
-        {
-            if (Hub.Config.Discord.ReplyCannotUseCommandInChannel)
-                await msg.Channel.SendMessageAsync("<a:warning:1206483664939126795> No puedes usar ese comando aquí.").ConfigureAwait(false);
-            return true;
-        }
-
-        var guild = msg.Channel is SocketGuildChannel g ? g.Guild.Name : "Servidor desconocido";
-        await Log(new LogMessage(LogSeverity.Info, "Command", $"Ejecutando comando de {guild}#{msg.Channel.Name}:@{msg.Author.Username}. Contenido: {msg}")).ConfigureAwait(false);
-        var result = await _commands.ExecuteAsync(context, pos, _services).ConfigureAwait(false);
-
-        if (result.Error == CommandError.UnknownCommand)
+            await Log(new LogMessage(LogSeverity.Error, "Command", $"Error al ejecutar el comando: {ex.Message}", ex)).ConfigureAwait(false);
             return false;
+        }
+    }
 
-        if (!result.IsSuccess)
-            await msg.Channel.SendMessageAsync(result.ErrorReason).ConfigureAwait(false);
-        return true;
+    private static async Task SafeSendMessageAsync(IMessageChannel channel, string message)
+    {
+        try
+        {
+            await channel.SendMessageAsync(message).ConfigureAwait(false);
+        }
+        catch (HttpException ex) when (ex.DiscordCode == DiscordErrorCode.InsufficientPermissions) // Missing Permissions
+        {
+            await Log(new LogMessage(LogSeverity.Warning, "Command", $"Faltan permisos para poder enviar mensajes en el canal {channel.Name}")).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            await Log(new LogMessage(LogSeverity.Error, "Command", $"Error al enviar el mensaje: {ex.Message}", ex)).ConfigureAwait(false);
+        }
     }
 }
