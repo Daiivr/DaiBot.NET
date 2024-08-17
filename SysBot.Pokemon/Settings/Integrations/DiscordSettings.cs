@@ -70,6 +70,18 @@ public class DiscordSettings
     [Category(Startup), Description("Estado personalizado del bot."), DisplayName("Estado de Juego del Bot")]
     public string BotGameStatus { get; set; } = "SysBot.NET: Pokémon";
 
+    [Category("Insignias"), Description("Lista de emojis personalizados para las insignias que se dara al usuario luego de completar x cantidad de trades.\nPuede mirar las insignias con el comando (profile)"), DisplayName("Insignias")]
+    public List<Badge> CustomBadgeEmojis { get; set; } = new List<Badge>
+    {
+        new Badge(10, "🏅"),
+        new Badge(100, "🎖️"),
+        new Badge(500, "🥉"),
+        new Badge(1000, "🥈"),
+        new Badge(1500, "🥇"),
+        new Badge(3000, "🏆"),
+        new Badge(5000, "👑")
+    };
+
     [Category(Operation), Description("Texto adicional para agregar al comienzo del Embed."), DisplayName("Texto adicional del embed")]
     public string[] AdditionalEmbedText { get; set; } = Array.Empty<string>();
 
@@ -235,4 +247,18 @@ public enum StreamIconOption
     Facebook,
     Kick,
     TikTok
+}
+
+public class Badge
+{
+    public int TradeCount { get; }
+    public string Emoji { get; set; }
+
+    public Badge(int tradeCount, string emoji)
+    {
+        TradeCount = tradeCount;
+        Emoji = emoji;
+    }
+
+    public override string ToString() => $"{Emoji}";
 }
