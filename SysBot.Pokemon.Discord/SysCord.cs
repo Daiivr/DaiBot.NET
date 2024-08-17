@@ -100,12 +100,71 @@ public sealed class SysCord<T> where T : PKM, new()
         _services = ConfigureServices();
 
         _client.PresenceUpdated += Client_PresenceUpdated;
+
+        _client.Disconnected += async (exception) =>
+        {
+            LogUtil.LogText($"Se perdió la conexión de Discord. Motivo: {exception?.Message ?? "Desconocido"}");
+            await ReconnectAsync();
+        };
     }
 
     public static PokeBotRunner<T> Runner { get; private set; } = default!;
 
     // Track loading of Echo/Logging channels, so they aren't loaded multiple times.
     private bool MessageChannelsLoaded { get; set; }
+
+    private async Task ReconnectAsync()
+    {
+        const int maxRetries = 5;
+        const int delayBetweenRetries = 5000; // 5 seconds
+        const int initialDelay = 10000; // 10 seconds
+
+        // Initial delay to allow Discord's automatic reconnection
+        await Task.Delay(initialDelay).ConfigureAwait(false);
+
+        for (int i = 0; i < maxRetries; i++)
+        {
+            try
+            {
+                if (_client.ConnectionState == ConnectionState.Connected)
+                {
+                    LogUtil.LogText("El cliente se reconecta automáticamente.");
+                    return; // Already reconnected
+                }
+
+                // Check if the client is in the process of reconnecting
+                if (_client.ConnectionState == ConnectionState.Connecting)
+                {
+                    LogUtil.LogText("El cliente ya está intentando reconectarse.");
+                    await Task.Delay(delayBetweenRetries).ConfigureAwait(false);
+                    continue;
+                }
+
+                await _client.LoginAsync(TokenType.Bot, Hub.Config.Discord.Token).ConfigureAwait(false);
+                await _client.StartAsync().ConfigureAwait(false);
+                LogUtil.LogText("Reconectado exitosamente.");
+                return;
+            }
+            catch (Exception ex)
+            {
+                LogUtil.LogText($"Intento de reconexión {i + 1} fallido: {ex.Message}");
+                if (i < maxRetries - 1)
+                    await Task.Delay(delayBetweenRetries).ConfigureAwait(false);
+            }
+        }
+
+        // If all attempts to reconnect fail, stop and restart the bot
+        LogUtil.LogText("No se pudo volver a conectar después de la cantidad máxima de intentos. Reiniciando el bot...");
+
+        // Stop the bot
+        await _client.StopAsync().ConfigureAwait(false);
+
+        // Restart the bot
+        await _client.LoginAsync(TokenType.Bot, Hub.Config.Discord.Token).ConfigureAwait(false);
+        await _client.StartAsync().ConfigureAwait(false);
+
+        LogUtil.LogText("El bot se reinició correctamente.");
+    }
 
     public async Task AnnounceBotStatus(string status, EmbedColorOption color)
     {
@@ -185,12 +244,26 @@ public sealed class SysCord<T> where T : PKM, new()
 
     public async Task HandleBotStart()
     {
-        await AnnounceBotStatus("En línea", EmbedColorOption.Green);
+        try
+        {
+            await AnnounceBotStatus("Online", EmbedColorOption.Green);
+        }
+        catch (Exception ex)
+        {
+            LogUtil.LogText($"HandleBotStart: Excepción al anunciar el inicio del bot: {ex.Message}");
+        }
     }
 
     public async Task HandleBotStop()
     {
-        await AnnounceBotStatus("Desconectado", EmbedColorOption.Red);
+        try
+        {
+            await AnnounceBotStatus("Offline", EmbedColorOption.Red);
+        }
+        catch (Exception ex)
+        {
+            LogUtil.LogText($"HandleBotStop: Excepción al anunciar la detención del bot: {ex.Message}");
+        }
     }
 
     public async Task InitCommands()

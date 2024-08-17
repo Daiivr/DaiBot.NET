@@ -766,19 +766,7 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
         // Wait for user input... Needs to be different from the previously offered Pokémon.
         var tradeOffered = await ReadUntilChanged(LinkTradePokemonOffset, lastOffered, 25_000, 1_000, false, true, token).ConfigureAwait(false);
         if (!tradeOffered)
-        {
-            // Check if b1s1 slot didn't change at all
-            var currentB1S1 = await ReadPokemon(BoxStartOffset, BoxFormatSlotSize, token).ConfigureAwait(false);
-            if (SearchUtil.HashByDetails(currentB1S1) == SearchUtil.HashByDetails(toSend) && currentB1S1.Checksum == toSend.Checksum)
-            {
-                Log("No se ha detectado ningún cambio de Pokémon en b1s1. Entrenador demasiado lento.");
-
-                // Exit back to overworld
-                await EnsureOutsideOfUnionRoom(token).ConfigureAwait(false);
-
-                return PokeTradeResult.TrainerTooSlow;
-            }
-        }
+            return PokeTradeResult.TrainerTooSlow;
 
         // If we detected a change, they offered something.
         var offered = await ReadPokemon(LinkTradePokemonOffset, BoxFormatSlotSize, token).ConfigureAwait(false);
