@@ -79,7 +79,8 @@ public class DiscordSettings
         new Badge(1000, "🥈"),
         new Badge(1500, "🥇"),
         new Badge(3000, "🏆"),
-        new Badge(5000, "👑")
+        new Badge(5000, "👑"),
+        new Badge(10000, "💎")
     };
 
     [Category(Operation), Description("Texto adicional para agregar al comienzo del Embed."), DisplayName("Texto adicional del embed")]
