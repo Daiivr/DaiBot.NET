@@ -101,10 +101,11 @@ public sealed class SysCord<T> where T : PKM, new()
 
         _client.PresenceUpdated += Client_PresenceUpdated;
 
-        _client.Disconnected += async (exception) =>
+        _client.Disconnected += (exception) =>
         {
             LogUtil.LogText($"Se perdió la conexión de Discord. Motivo: {exception?.Message ?? "Desconocido"}");
-            await ReconnectAsync();
+            Task.Run(() => ReconnectAsync());
+            return Task.CompletedTask;
         };
     }
 
