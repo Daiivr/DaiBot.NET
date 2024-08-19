@@ -322,7 +322,7 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         [Category(EmbedSettings), Description("Mostrará los iconos de Tera Tipo junto a los movimientos en el Embed Trade (sólo Discord). Requiere que el usuario suba los emojis a su servidor."), DisplayName("¿Mostrar Emojis de Tipo Tera?")]
         public bool UseTeraEmojis { get; set; } = true;
 
-        [Category(EmbedSettings), Description("Si es verdadero, se mostrarán los emojis para las escalas XXXS y XXXL en el Embed Trade."), DisplayName("¿Usar Emojis de Escala?")]
+        [Category(EmbedSettings), Description("Si es verdadero, se mostrarán los emojis para las escalas XXXS y XXXL en el Embed Trade."), DisplayName("¿Usar Emojis de Tamaño?")]
         public bool UseScaleEmojis { get; set; } = true;
 
         [Category(EmbedSettings), Description("Información personalizada de Emoji para los tipos de movimiento."), DisplayName("Emojis de Movimientos")]

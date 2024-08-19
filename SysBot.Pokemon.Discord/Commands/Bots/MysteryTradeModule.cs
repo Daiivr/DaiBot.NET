@@ -15,8 +15,8 @@ namespace SysBot.Pokemon.Discord
     {
         private static TradeQueueInfo<T> Info => SysCord<T>.Runner.Hub.Queues.Info;
 
-        [Command("surprise")]
-        [Alias("random", "st", "randomize", "randomtrade", "rt")]
+        [Command("mysterytrade")]
+        [Alias("mt", "st")]
         [Summary("Intercambia un Pokémon aleatorio con estadísticas perfectas y apariencia shiny.")]
         public async Task TradeRandomPokemonAsync()
         {
@@ -58,8 +58,8 @@ namespace SysBot.Pokemon.Discord
             }).ConfigureAwait(false);
         }
 
-        [Command("surprise")]
-        [Alias("random", "st", "randomize", "randomtrade", "rt")]
+        [Command("mysterytrade")]
+        [Alias("mt", "st")]
         [Summary("Intercambia un Pokémon aleatorio con estadísticas perfectas y apariencia shiny.")]
         [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
         public async Task TradeRandomPokemonAsync([Summary("Trade Code")] int code)

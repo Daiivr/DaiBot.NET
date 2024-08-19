@@ -247,13 +247,16 @@ public static class DetailsExtractor<T> where T : PKM, new()
         // Aplica los emojis si están habilitados
         if (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.UseScaleEmojis)
         {
-            if (scaleText == "XXXS")
+            var scaleXXXSEmoji = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ScaleEmojis.ScaleXXXSEmoji.EmojiString;
+            var scaleXXXLEmoji = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ScaleEmojis.ScaleXXXLEmoji.EmojiString;
+
+            if (scaleText == "XXXS" && !string.IsNullOrEmpty(scaleXXXSEmoji))
             {
-                scaleTextWithNumber = $"{SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ScaleEmojis.ScaleXXXSEmoji} {scaleTextWithNumber}";
+                scaleTextWithNumber = $"{scaleXXXSEmoji} {scaleTextWithNumber}";
             }
-            else if (scaleText == "XXXL")
+            else if (scaleText == "XXXL" && !string.IsNullOrEmpty(scaleXXXLEmoji))
             {
-                scaleTextWithNumber = $"{SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ScaleEmojis.ScaleXXXLEmoji} {scaleTextWithNumber}";
+                scaleTextWithNumber = $"{scaleXXXLEmoji} {scaleTextWithNumber}";
             }
         }
 

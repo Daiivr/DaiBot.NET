@@ -247,7 +247,7 @@ public sealed class SysCord<T> where T : PKM, new()
     {
         try
         {
-            await AnnounceBotStatus("Online", EmbedColorOption.Green);
+            await AnnounceBotStatus("En línea", EmbedColorOption.Green);
         }
         catch (Exception ex)
         {
@@ -259,7 +259,7 @@ public sealed class SysCord<T> where T : PKM, new()
     {
         try
         {
-            await AnnounceBotStatus("Offline", EmbedColorOption.Red);
+            await AnnounceBotStatus("Desconectado", EmbedColorOption.Red);
         }
         catch (Exception ex)
         {
@@ -438,7 +438,7 @@ public sealed class SysCord<T> where T : PKM, new()
             return;
 
         string thanksText = msg.Content.ToLower();
-        if (SysCordSettings.Settings.ReplyToThanks && (thanksText.Contains("thank") || thanksText.Contains("thx") || thanksText.Contains("gracias")))
+        if (SysCordSettings.Settings.ReplyToThanks && (thanksText.Contains("thank") || thanksText.Contains("thx") || thanksText.Contains("gracias") || thanksText.Contains("grax")))
         {
             await SysCord<T>.RespondToThanksMessage(msg).ConfigureAwait(false);
             return;
