@@ -52,6 +52,7 @@ namespace SysBot.Pokemon.Discord
                 return;
             }
             var code = Info.GetRandomTradeCode(userID);
+
             await Task.Run(async () =>
             {
                 await TradeRandomPokemonAsync(code).ConfigureAwait(false);
@@ -133,7 +134,7 @@ namespace SysBot.Pokemon.Discord
                 }
 
                 var sig = Context.User.GetFavor();
-                await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User).ConfigureAwait(false);
+                await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isMysteryTrade: true).ConfigureAwait(false);
 
                 if (Context.Message is IUserMessage userMessage)
                 {
@@ -393,7 +394,7 @@ namespace SysBot.Pokemon.Discord
             };
         }
 
-        private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false)
+        private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false, bool isMysteryTrade = false)
         {
 #pragma warning disable CS8604 // Possible null reference argument.
             var la = new LegalityAnalysis(pk);
@@ -410,7 +411,7 @@ namespace SysBot.Pokemon.Discord
                 return;
             }
 
-            await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, PokeTradeType.Specific, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade).ConfigureAwait(false);
+            await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, PokeTradeType.Specific, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryTrade).ConfigureAwait(false);
         }
     }
 }

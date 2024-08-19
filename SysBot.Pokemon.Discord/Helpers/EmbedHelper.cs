@@ -47,7 +47,7 @@ public static class EmbedHelper
         await user.SendMessageAsync(embed: embed).ConfigureAwait(false);
     }
 
-    public static async Task SendTradeFinishedEmbedAsync<T>(IUser user, string message, T pk, bool isMysteryEgg)
+    public static async Task SendTradeFinishedEmbedAsync<T>(IUser user, string message, T pk, bool isMysteryTrade, bool isMysteryEgg)
         where T : PKM, new()
     {
         string thumbnailUrl;
@@ -55,6 +55,10 @@ public static class EmbedHelper
         if (isMysteryEgg)
         {
             thumbnailUrl = "https://i.imgur.com/RAj0syZ.png";
+        }
+        else if (isMysteryTrade)
+        {
+            thumbnailUrl = "https://i.imgur.com/Xg7wdyR.png";
         }
         else
         {
@@ -72,11 +76,15 @@ public static class EmbedHelper
         await user.SendMessageAsync(embed: embed).ConfigureAwait(false);
     }
 
-    public static async Task SendTradeInitializingEmbedAsync(IUser user, string speciesName, int code, bool isMysteryEgg, string? message = null)
+    public static async Task SendTradeInitializingEmbedAsync(IUser user, string speciesName, int code, bool isMysteryTrade, bool isMysteryEgg, string? message = null)
     {
         if (isMysteryEgg)
         {
             speciesName = "**Huevo Misterioso**";
+        }
+        else if (isMysteryTrade)
+        {
+            speciesName = "**Pokemon Misterioso**";
         }
 
         var embed = new EmbedBuilder()

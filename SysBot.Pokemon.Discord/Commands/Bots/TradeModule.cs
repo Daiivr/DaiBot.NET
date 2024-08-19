@@ -71,7 +71,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var lgcode = Info.GetRandomLGTradeCode();
         var sig = Context.User.GetFavor();
 
-        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, new T(), PokeRoutineType.FixOT, PokeTradeType.FixOT, Context.User, false, 1, 1, false, false, lgcode).ConfigureAwait(false);
+        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, new T(), PokeRoutineType.FixOT, PokeTradeType.FixOT, Context.User, false, 1, 1, false, false, false, lgcode).ConfigureAwait(false);
         if (Context.Message is IUserMessage userMessage)
         {
             _ = DeleteMessagesAfterDelayAsync(userMessage, null, 2);
@@ -120,7 +120,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var sig = Context.User.GetFavor();
         var lgcode = Info.GetRandomLGTradeCode();
 
-        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, new T(), PokeRoutineType.FixOT, PokeTradeType.FixOT, Context.User, false, 1, 1, false, false, lgcode).ConfigureAwait(false);
+        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, new T(), PokeRoutineType.FixOT, PokeTradeType.FixOT, Context.User, false, 1, 1, false, false, false, lgcode).ConfigureAwait(false);
         if (Context.Message is IUserMessage userMessage)
         {
             _ = DeleteMessagesAfterDelayAsync(userMessage, null, 2);
@@ -1811,7 +1811,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         };
     }
 
-    private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false, bool setEdited = false)
+    private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false, bool isMysteryTrade = false, bool isMysteryEgg = false,  List<Pictocodes>? lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false, bool setEdited = false)
     {
         lgcode ??= TradeModule<T>.GenerateRandomPictocodes(3);
         if (pk is not null && !pk.CanBeTraded())
@@ -1947,7 +1947,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             la = new LegalityAnalysis(clone);
             if (la.Valid) pk = clone;
         }
-        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk!, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryEgg, lgcode, ignoreAutoOT: ignoreAutoOT, setEdited: setEdited, isNonNative: isNonNative).ConfigureAwait(false);
+        await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk!, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryTrade, isMysteryEgg, lgcode, ignoreAutoOT: ignoreAutoOT, setEdited: setEdited, isNonNative: isNonNative).ConfigureAwait(false);
     }
 
     public static List<Pictocodes> GenerateRandomPictocodes(int count)

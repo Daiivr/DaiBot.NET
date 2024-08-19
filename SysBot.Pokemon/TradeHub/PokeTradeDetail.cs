@@ -61,13 +61,15 @@ namespace SysBot.Pokemon
 
         public bool IsMysteryEgg { get; }
 
+        public bool IsMysteryTrade { get; }
+
         public bool IgnoreAutoOT { get; }
 
         public bool SetEdited { get; set; }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-        public PokeTradeDetail(TPoke pkm, PokeTradeTrainerInfo info, IPokeTradeNotifier<TPoke> notifier, PokeTradeType type, int code, bool favored = false, List<Pictocodes>? lgcode = null, int batchTradeNumber = 0, int totalBatchTrades = 0, bool isMysteryEgg = false, int uniqueTradeID = 0, bool ignoreAutoOT = false, bool setEdited = false)
+        public PokeTradeDetail(TPoke pkm, PokeTradeTrainerInfo info, IPokeTradeNotifier<TPoke> notifier, PokeTradeType type, int code, bool favored = false, List<Pictocodes>? lgcode = null, int batchTradeNumber = 0, int totalBatchTrades = 0, bool isMysteryTrade = false, bool isMysteryEgg = false, int uniqueTradeID = 0, bool ignoreAutoOT = false, bool setEdited = false)
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             ID = Interlocked.Increment(ref CreatedCount) % 3000;
@@ -84,6 +86,7 @@ namespace SysBot.Pokemon
             BatchTradeNumber = batchTradeNumber;
             TotalBatchTrades = totalBatchTrades;
             IsMysteryEgg = isMysteryEgg;
+            IsMysteryTrade = isMysteryTrade;
             UniqueTradeID = uniqueTradeID;
             IgnoreAutoOT = ignoreAutoOT;
             SetEdited = setEdited;

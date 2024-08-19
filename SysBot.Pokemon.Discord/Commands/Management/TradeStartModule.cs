@@ -95,7 +95,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
             }
 
 #pragma warning disable CS8604 // Possible null reference argument.
-            var embedData = DetailsExtractor<T>.ExtractPokemonDetails(detail.TradeData, user, detail.IsMysteryEgg, false, false, false, false, false, 0, 0, detail.Type);
+            var embedData = DetailsExtractor<T>.ExtractPokemonDetails(detail.TradeData, user, detail.IsMysteryTrade, detail.IsMysteryEgg, false, false, false, false, false, 0, 0, detail.Type);
 #pragma warning restore CS8604 // Possible null reference argument.
 
             // Configura el título y la imagen de acuerdo al tipo de comercio
@@ -114,7 +114,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
             else
             {
                 // Comportamiento existente para otros tipos de comercio
-                tradeTitle = detail.IsMysteryEgg ? "✨ Huevo misterioso Shiny ✨" : detail.Type switch
+                tradeTitle = detail.IsMysteryTrade ? "🎭 Pokemon Misterioso 🎭" : detail.IsMysteryEgg ? "✨ Huevo misterioso Shiny ✨" : detail.Type switch
                 {
                     PokeTradeType.Clone => "Solicitud de Clonación",
                     PokeTradeType.Dump => "Solicitud de Dump",
@@ -122,7 +122,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                     PokeTradeType.Seed => "Solicitud Especial",
                     _ => GameInfo.Strings.Species[detail.TradeData.Species]
                 };
-                embedImageUrl = detail.IsMysteryEgg ? "https://i.imgur.com/RAj0syZ.png" : detail.Type switch
+                embedImageUrl = detail.IsMysteryTrade ? "https://i.imgur.com/Xg7wdyR.png" : detail.IsMysteryEgg ? "https://i.imgur.com/RAj0syZ.png" : detail.Type switch
                 {
                     PokeTradeType.Clone => "https://i.imgur.com/aSTCjUn.png",
                     PokeTradeType.Dump => "https://i.imgur.com/9wfEHwZ.png",
@@ -138,7 +138,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                 ? "Iniciando el comercio ahora."
                 : detail.Type == PokeTradeType.Item
                     ? $"Iniciando el comercio ahora.\nDisfrute de su item: {embedData.HeldItem}!"
-                    : $"Iniciando el comercio ahora.\nDisfrute de su {(detail.IsMysteryEgg ? "✨ Huevo Misterioso ✨" : speciesName)}!";
+                    : $"Iniciando el comercio ahora.\nDisfrute de su {(detail.IsMysteryTrade ? "🎭 Pokemon Misterioso 🎭" : detail.IsMysteryEgg ? "✨ Huevo Misterioso ✨" : speciesName)}!";
 
             var embed = new EmbedBuilder()
                 .WithColor(new DiscordColor(r, g, b))

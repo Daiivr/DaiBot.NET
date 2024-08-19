@@ -238,7 +238,7 @@ namespace SysBot.Pokemon.Discord
                 if (la.Valid) pk = clone;
             }
 
-            await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryEgg, lgcode, ignoreAutoOT).ConfigureAwait(false);
+            await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, false, isMysteryEgg, lgcode, ignoreAutoOT).ConfigureAwait(false);
         }
 
         private static List<Pictocodes> GenerateRandomPictocodes(int count)
