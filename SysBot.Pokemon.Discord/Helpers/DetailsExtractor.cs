@@ -65,6 +65,10 @@ public static class DetailsExtractor<T> where T : PKM, new()
         {
             specialDescription += "Solicitud de FixOT";
         }
+        else
+        {
+            specialDescription += "Solicitud de Dump";
+        }
 
         embedBuilder.AddField("\u200B", specialDescription, inline: false);
     }
