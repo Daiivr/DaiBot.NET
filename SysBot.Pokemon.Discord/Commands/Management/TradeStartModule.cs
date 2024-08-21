@@ -122,7 +122,7 @@ public class TradeStartModule<T> : ModuleBase<SocketCommandContext> where T : PK
                     PokeTradeType.Seed => "Solicitud Especial",
                     _ => GameInfo.Strings.Species[detail.TradeData.Species]
                 };
-                embedImageUrl = detail.IsMysteryTrade ? "https://i.imgur.com/Xg7wdyR.png" : detail.IsMysteryEgg ? "https://i.imgur.com/RAj0syZ.png" : detail.Type switch
+                embedImageUrl = detail.IsMysteryTrade ? "https://i.imgur.com/FdESYAv.png" : detail.IsMysteryEgg ? "https://i.imgur.com/RAj0syZ.png" : detail.Type switch
                 {
                     PokeTradeType.Clone => "https://i.imgur.com/aSTCjUn.png",
                     PokeTradeType.Dump => "https://i.imgur.com/9wfEHwZ.png",

@@ -115,7 +115,7 @@ public static class QueueHelper<T> where T : PKM, new()
 
             (string embedImageUrl, DiscordColor embedColor) = await PrepareEmbedDetails(pk, t, itemImageUrl);
 
-            embedData.EmbedImageUrl = isMysteryTrade ? "https://i.imgur.com/Xg7wdyR.png" :
+            embedData.EmbedImageUrl = isMysteryTrade ? "https://i.imgur.com/FdESYAv.png" :
                                       isMysteryEgg ? "https://i.imgur.com/AwuBs4D.png" :
                                        type == PokeRoutineType.Dump ? "https://i.imgur.com/9wfEHwZ.png" :
                                        type == PokeRoutineType.Clone ? "https://i.imgur.com/aSTCjUn.png" :

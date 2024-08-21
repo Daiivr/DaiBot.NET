@@ -528,7 +528,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         content = ReusableActions.StripCodeBlock(content);
 
         // Check if the showdown set contains "Egg"
-        bool isEgg = content.Contains("Egg", StringComparison.OrdinalIgnoreCase);
+        bool isEgg = TradeExtensions<T>.IsEggCheck(content);
 
         var set = new ShowdownSet(content);
         var template = AutoLegalityWrapper.GetTemplate(set);
@@ -779,7 +779,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         content = ReusableActions.StripCodeBlock(content);
 
         // Check if the showdown set contains "Egg"
-        bool isEgg = content.Contains("Egg", StringComparison.OrdinalIgnoreCase);
+        bool isEgg = TradeExtensions<T>.IsEggCheck(content);
 
         var set = new ShowdownSet(content);
         var template = AutoLegalityWrapper.GetTemplate(set);

@@ -58,7 +58,7 @@ public static class EmbedHelper
         }
         else if (isMysteryTrade)
         {
-            thumbnailUrl = "https://i.imgur.com/Xg7wdyR.png";
+            thumbnailUrl = "https://i.imgur.com/FdESYAv.png";
         }
         else
         {

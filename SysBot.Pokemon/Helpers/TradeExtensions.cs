@@ -501,5 +501,21 @@ namespace SysBot.Pokemon.Helpers
                     break;
             }
         }
+
+        public static bool IsEggCheck(string showdownSet)
+        {
+            // Get the first line of the showdown set
+            var firstLine = showdownSet.Split('\n').FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(firstLine))
+            {
+                return false;
+            }
+            var atIndex = firstLine.IndexOf('@');
+            if (atIndex > 0)
+            {
+                return firstLine[..atIndex].Contains("Egg", StringComparison.OrdinalIgnoreCase);
+            }
+            return firstLine.Contains("Egg", StringComparison.OrdinalIgnoreCase);
+        }
     }
 }
