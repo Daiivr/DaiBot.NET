@@ -45,6 +45,7 @@ public class ProfileModule : ModuleBase<SocketCommandContext>
     public async Task ProfileAsync(IUser? user = null)
     {
         var targetUser = user ?? Context.User;
+        var userId = targetUser.Id;
         var avatarUrl = targetUser.GetAvatarUrl(size: 128) ?? targetUser.GetDefaultAvatarUrl();
 
         // Get the relative creation time using a Discord timestamp
@@ -57,6 +58,7 @@ public class ProfileModule : ModuleBase<SocketCommandContext>
         var tradeCount = GetTradeCountForUser(targetUser.Id);
         var badges = GetBadgesForTradeCount(tradeCount);
         var (wins, losses) = GetGameStatsForUser(targetUser.Id.ToString());
+        var (ot, sid, tid) = GetTrainerInfo(userId);
 
         // Get the server icon URL
         var serverIconUrl = Context.Guild.IconUrl;
@@ -68,6 +70,7 @@ public class ProfileModule : ModuleBase<SocketCommandContext>
             .AddField("Cuenta creada:", discordRelativeTimestamp)
             .AddField("Insignias", badges)
             .AddField("Tradeos Completados:", tradeCount.ToString())
+            .AddField("Información de Entrenador", $"**OT**: {ot}\n**SID**: {sid}\n**TID**: {tid}")
             .AddField("Ping Pong", $"Victorias: {wins} | Pérdidas: {losses}")
             .WithFooter(footer =>
             {
@@ -114,5 +117,16 @@ public class ProfileModule : ModuleBase<SocketCommandContext>
         }
 
         return string.IsNullOrEmpty(badges) ? "Aún no hay insignias." : badges;
+    }
+
+    private (string OT, string SID, string TID) GetTrainerInfo(ulong userId)
+    {
+        var tradeStorage = new TradeCodeStorage();
+        var tradeDetails = tradeStorage.GetTradeDetails(userId);
+
+        if (tradeDetails != null)
+            return (tradeDetails.OT ?? "N/A", tradeDetails.SID.ToString(), tradeDetails.TID.ToString());
+
+        return ("N/A", "N/A", "N/A");
     }
 }
