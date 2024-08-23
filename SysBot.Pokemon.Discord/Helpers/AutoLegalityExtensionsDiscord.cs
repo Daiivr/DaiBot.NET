@@ -1,9 +1,11 @@
 using Discord;
 using Discord.WebSocket;
 using PKHeX.Core;
+using PKHeX.Core.AutoMod;
 using SysBot.Base;
 using SysBot.Pokemon.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.Discord;
@@ -24,6 +26,7 @@ public static class AutoLegalityExtensionsDiscord
             var pkm = sav.GetLegal(template, out var result);
             var la = new LegalityAnalysis(pkm);
             var spec = GameInfo.Strings.Species[template.Species];
+
             if (!la.Valid)
             {
                 var reason = result == "Timeout" ? $"Este **{spec}** tomó demasiado tiempo para generarse." :
@@ -57,9 +60,23 @@ public static class AutoLegalityExtensionsDiscord
 
             var speciesName = GameInfo.Strings.Species[template.Species];
             var successMsg = $" Aqui esta tu **{speciesName}** legalizado.";
-            var showdownText = ReusableActions.GetFormattedShowdownText(pkm);
             bool canGmax = pkm is PK8 pk8 && pk8.CanGigantamax;
+
             var speciesImageUrl = TradeExtensions<PK9>.PokeImg(pkm, canGmax, false);
+            // Create RegenTemplate from the legalized PKM
+            var regenTemplate = new RegenTemplate(pkm);
+            var regenText = regenTemplate.Text;
+
+            // Get form name using FormConverter
+            var formNames = FormConverter.GetFormList(pkm.Species, GameInfo.Strings.Types, GameInfo.Strings.forms, new List<string>(), pkm.Context);
+            var formName = pkm.Form > 0 && pkm.Form < formNames.Length ? formNames[pkm.Form] : "";
+
+            // Create species and form string
+            var speciesForm = !string.IsNullOrEmpty(formName) ? $"{spec}-{formName}" : spec;
+            var speciesInfo = $"{speciesForm}\n";
+
+            // Prepend species information to the RegenTemplate
+            regenText = speciesInfo + regenText;
 
             var embed = new EmbedBuilder()
                 .WithDescription(successMsg)
@@ -67,13 +84,14 @@ public static class AutoLegalityExtensionsDiscord
                 .WithAuthor(new EmbedAuthorBuilder
                 {
                     Name = "Legalización Exitosa",
-                    IconUrl = "https://www.opvakantienaar.com/wp-content/themes/yootheme/cache/Yes-Sign-c182f662.png" // Replace with the URL of the success icon
+                    IconUrl = "https://i.imgur.com/U03TTRB.png" // Replace with the URL of the success icon
                 })
                 .WithThumbnailUrl(speciesImageUrl) // Use the Pokémon image URL from pokeImgUrl
                 .AddField("__**Especie**__", spec, true)
                 .AddField("__**Tipo de encuentro**__", la.EncounterOriginal.Name, true)
                 .AddField("__**Resultado**__", result, true)
-                .AddField("__**Detalles**__:", showdownText)
+                .AddField("__**Detalles**__:", $"```{regenText}```")
+                .WithFooter("Copie el texto de la plantilla Regen entre las marcas ``` para usarlo.")
                 .Build();
 
             await channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
