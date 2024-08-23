@@ -683,6 +683,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                     }
                     pk = correctedPk;
                 }
+                // Set correct MetDate for Mightiest Mark
+                TradeExtensions<T>.CheckAndSetUnrivaledDate(pk);
                 if (pk.WasEgg)
                     pk.EggMetDate = pk.MetDate;
                 pk.ResetPartyStats();
@@ -937,7 +939,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                     }
                     pk = correctedPk;
                 }
-
+                // Set correct MetDate for Mightiest Mark
+                TradeExtensions<T>.CheckAndSetUnrivaledDate(pk);
                 if (pk.WasEgg)
                     pk.EggMetDate = pk.MetDate;
                 pk.ResetPartyStats();
@@ -1203,7 +1206,8 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                     await ReplyAsync($"<a:warning:1206483664939126795> El {spec} en el archivo proporcionado no es legal.").ConfigureAwait(false);
                     return;
                 }
-
+                // Set correct MetDate for Mightiest Mark
+                TradeExtensions<T>.CheckAndSetUnrivaledDate(pk);
                 pk.ResetPartyStats();
 
                 var userID = Context.User.Id;
@@ -1351,9 +1355,11 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                         }
                     }
                 }
+                // Set correct MetDate for Mightiest Mark
+                TradeExtensions<T>.CheckAndSetUnrivaledDate(pkm);
                 if (pkm.WasEgg)
                     pkm.EggMetDate = pkm.MetDate;
-                pk.ResetPartyStats();
+                pkm.ResetPartyStats();
 
                 var userID = Context.User.Id;
                 var code = Info.GetRandomTradeCode(userID);
