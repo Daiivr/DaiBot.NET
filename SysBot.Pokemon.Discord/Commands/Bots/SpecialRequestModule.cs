@@ -201,17 +201,18 @@ namespace SysBot.Pokemon.Discord
             };
         }
 
-        private static IOrderedEnumerable<(int Index, string EventInfo)> GetFilteredEvents(MysteryGift[] eventData, string speciesName = "")
+        private static IEnumerable<(int Index, string EventInfo)> GetFilteredEvents(MysteryGift[] eventData, string speciesName = "")
         {
             return eventData
-                .Where(gift =>
-                    gift.IsEntity &&
-                    !gift.IsItem &&
-                    (string.IsNullOrWhiteSpace(speciesName) || GameInfo.Strings.Species[gift.Species].Equals(speciesName, StringComparison.OrdinalIgnoreCase))
-                )
                 .Select((gift, index) =>
                 {
+                    if (!gift.IsEntity || gift.IsItem)
+                        return (Index: -1, EventInfo: string.Empty);
+
                     string species = GameInfo.Strings.Species[gift.Species];
+                    if (!string.IsNullOrWhiteSpace(speciesName) && !species.Equals(speciesName, StringComparison.OrdinalIgnoreCase))
+                        return (Index: -1, EventInfo: string.Empty);
+
                     string levelInfo = $"{gift.Level}";
                     string formName = ShowdownParsing.GetStringFromForm(gift.Form, GameInfo.Strings, gift.Species, gift.Context);
                     formName = !string.IsNullOrEmpty(formName) ? $"-{formName}" : "";
@@ -221,10 +222,10 @@ namespace SysBot.Pokemon.Discord
 
                     return (Index: index + 1, EventInfo: eventDetails);
                 })
-                .OrderBy(x => x.Index);
+                .Where(x => x.Index != -1);
         }
 
-        private static EmbedBuilder BuildEventListEmbed(string generationOrGame, IOrderedEnumerable<(int Index, string EventInfo)> allEvents, int page, int pageCount, string botPrefix)
+        private static EmbedBuilder BuildEventListEmbed(string generationOrGame, IEnumerable<(int Index, string EventInfo)> allEvents, int page, int pageCount, string botPrefix)
         {
             var embed = new EmbedBuilder()
                 .WithTitle($"📝 Eventos Disponibles - {generationOrGame.ToUpperInvariant()}")
