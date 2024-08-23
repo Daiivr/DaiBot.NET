@@ -1985,11 +1985,28 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         try
         {
             await Task.Delay(delaySeconds * 1000);
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-            await sentMessage.DeleteAsync();
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
+            if (sentMessage != null)
+            {
+                try
+                {
+                    await sentMessage.DeleteAsync();
+                }
+                catch (HttpException ex) when (ex.DiscordCode == DiscordErrorCode.UnknownMessage)
+                {
+                    // Ignore Unknown Message exception
+                }
+            }
             if (messageToDelete != null)
-                await messageToDelete.DeleteAsync();
+            {
+                try
+                {
+                    await messageToDelete.DeleteAsync();
+                }
+                catch (HttpException ex) when (ex.DiscordCode == DiscordErrorCode.UnknownMessage)
+                {
+                    // Ignore Unknown Message exception
+                }
+            }
         }
         catch (Exception ex)
         {

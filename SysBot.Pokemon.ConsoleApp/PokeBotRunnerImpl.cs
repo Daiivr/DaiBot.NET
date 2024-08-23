@@ -11,15 +11,12 @@ namespace SysBot.Pokemon.ConsoleApp;
 /// </summary>
 public class PokeBotRunnerImpl<T> : PokeBotRunner<T> where T : PKM, new()
 {
-
     private static TwitchBot<T>? Twitch;
+    private readonly ProgramConfig _config;
 
-    public PokeBotRunnerImpl(PokeTradeHub<T> hub, BotFactory<T> fac) : base(hub, fac)
+    public PokeBotRunnerImpl(PokeTradeHub<T> hub, BotFactory<T> fac, ProgramConfig config) : base(hub, fac)
     {
-    }
-
-    public PokeBotRunnerImpl(PokeTradeHubConfig config, BotFactory<T> fac) : base(config, fac)
-    {
+        _config = config;
     }
 
     protected override void AddIntegrations()
@@ -34,7 +31,7 @@ public class PokeBotRunnerImpl<T> : PokeBotRunner<T> where T : PKM, new()
         if (string.IsNullOrWhiteSpace(token))
             return;
 
-        var bot = new SysCord<T>(this);
+        var bot = new SysCord<T>(this, _config);
         Task.Run(() => bot.MainAsync(token, CancellationToken.None), CancellationToken.None);
     }
 
