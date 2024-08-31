@@ -60,13 +60,10 @@ public class ProfileModule : ModuleBase<SocketCommandContext>
         var (wins, losses) = GetGameStatsForUser(targetUser.Id.ToString());
         var (ot, sid, tid) = GetTrainerInfo(userId);
 
-        // Get the server icon URL
-        var serverIconUrl = Context.Guild.IconUrl;
-
         var embed = new EmbedBuilder()
-            .WithTitle($"Perfil de {targetUser.Username}")
+            .WithTitle($"📝 Perfil de {targetUser.Username}")
             .WithThumbnailUrl(avatarUrl)
-            .WithColor(dominantColor)  // Use the dominant color
+            .WithColor(dominantColor)  // Usar el color dominante
             .AddField("Cuenta creada:", discordRelativeTimestamp)
             .AddField("Insignias", badges)
             .AddField("Tradeos Completados:", tradeCount.ToString())
@@ -75,7 +72,7 @@ public class ProfileModule : ModuleBase<SocketCommandContext>
             .WithFooter(footer =>
             {
                 footer.WithText("Servidor: " + Context.Guild.Name);
-                footer.WithIconUrl(serverIconUrl);  // Set the server icon as the footer image
+                footer.WithIconUrl(Context.Guild.IconUrl);  // Usar el icono del servidor como imagen del pie de página
             })
             .WithCurrentTimestamp();
 

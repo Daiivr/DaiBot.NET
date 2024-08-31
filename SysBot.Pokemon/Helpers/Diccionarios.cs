@@ -1240,3 +1240,29 @@ public static class MovesTranslationDictionary
         { "Malignant Chain", "Cadena Virulenta" },
     };
 }
+
+public static class LegalizationResultTranslations
+{
+    public static readonly Dictionary<string, string> LegalizationTranslations = new Dictionary<string, string>
+    {
+        { "Regenerated", "Regenerado" },
+        { "Failed", "Fallido" },
+        { "Timeout", "Tiempo de espera agotado" },
+        { "VersionMismatch", "Incompatibilidad de versiones" }
+    };
+}
+
+public static class EncounterResultTranslations
+{
+    public static readonly Dictionary<string, string> EncounterTranslations = new Dictionary<string, string>
+    {
+        { "Egg", "Huevo" },
+        { "Static Encounter", "Encuentro Estático" },
+        { "Wild Encounter (SV)", "Encuentro Salvaje (SV)" },
+        { "Wild Encounter (PLA)", "Encuentro Salvaje (PLA)" },
+        { "Wild Encounter (SH)", "Encuentro Salvaje (SH)" },
+        { "Wild Encounter (SW)", "Encuentro Salvaje (SW)" },
+        { "Wild Encounter (SP)", "Encuentro Salvaje (SP)" },
+        { "Wild Encounter (BD)", "Encuentro Salvaje (BD)" },
+    };
+}

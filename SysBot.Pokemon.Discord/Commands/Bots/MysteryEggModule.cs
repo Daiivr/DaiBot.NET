@@ -64,8 +64,6 @@ namespace SysBot.Pokemon.Discord
                     await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, se produjo un error al procesar la solicitud.").ConfigureAwait(false);
                 }
             });
-
-            await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention}, tu solicitud de intercambio de huevos misteriosos se ha puesto en cola. Por favor, espere a que se procese.").ConfigureAwait(false);
         }
 
         private async Task ProcessMysteryEggTradeAsync(int code)

@@ -88,8 +88,8 @@ public static class AutoLegalityExtensionsDiscord
                 })
                 .WithThumbnailUrl(speciesImageUrl) // Use the Pokémon image URL from pokeImgUrl
                 .AddField("__**Especie**__", spec, true)
-                .AddField("__**Tipo de encuentro**__", la.EncounterOriginal.Name, true)
-                .AddField("__**Resultado**__", result, true)
+                .AddField("__**Tipo de encuentro**__", GetEncounterTranslation(la.EncounterOriginal.Name), true)
+                .AddField("__**Resultado**__", GetLegalizationTranslation(result), true)
                 .AddField("__**Detalles**__:", $"```{regenText}```")
                 .WithFooter("Copie el texto de la plantilla Regen entre las marcas ``` para usarlo.")
                 .Build();
@@ -116,6 +116,25 @@ public static class AutoLegalityExtensionsDiscord
             await channel.SendMessageAsync(embed: embedError).ConfigureAwait(false);
         }
     }
+
+    public static string GetLegalizationTranslation(string result)
+    {
+        if (LegalizationResultTranslations.LegalizationTranslations.TryGetValue(result, out var translation))
+        {
+            return translation;
+        }
+        return result; // Retorna el valor original si no se encuentra la traducción
+    }
+
+    public static string GetEncounterTranslation(string encounterName)
+    {
+        if (EncounterResultTranslations.EncounterTranslations.TryGetValue(encounterName, out var translation))
+        {
+            return translation;
+        }
+        return encounterName; // Retorna el valor original si no se encuentra la traducción
+    }
+
 
     public static Task ReplyWithLegalizedSetAsync(this ISocketMessageChannel channel, string content, byte gen)
     {
