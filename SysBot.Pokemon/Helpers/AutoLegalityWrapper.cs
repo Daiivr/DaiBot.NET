@@ -155,6 +155,8 @@ public static class AutoLegalityWrapper
             return TrainerSettings.GetSavedTrainerData(GameVersion.PLA, 8);
         if (typeof(T) == typeof(PK9))
             return TrainerSettings.GetSavedTrainerData(GameVersion.SV, 9);
+        if (typeof(T) == typeof(PB7))
+            return TrainerSettings.GetSavedTrainerData(GameVersion.GE, 7);
 
         throw new ArgumentException("El tipo no tiene un entrenador de búsqueda reconocido.", typeof(T).Name);
     }
