@@ -549,6 +549,7 @@ namespace SysBot.Pokemon.Helpers
             // Generation 7
             [(int)Species.Decidueye] = [(new(2023, 03, 17), new(2023, 03, 19)), (new(2023, 03, 24), new(2023, 03, 26))], // Decidueye
             [(int)Species.Primarina] = [(new(2024, 05, 10), new(2024, 05, 12)), (new(2024, 05, 17), new(2024, 05, 19))], // Primarina
+            [(int)Species.Incineroar] = [(new(2024, 09, 06), new(2024, 09, 08)), (new(2024, 09, 13), new(2024, 09, 15))], // Incineroar
 
             // Generation 8
             [(int)Species.Rillaboom] = [(new(2023, 07, 28), new(2023, 07, 30)), (new(2023, 08, 04), new(2023, 08, 06))], // Rillaboom
