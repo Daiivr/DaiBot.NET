@@ -19,7 +19,7 @@ public static class ReusableActions
     {
         // Announce it in the channel the command was entered only if it's not already an echo channel.
         EchoUtil.Echo(msg);
-        if (!EchoModule.IsEchoChannel(channel))
+        if (!EchoModule.IsEchoChannel(channel) && !EchoModule.IsAbuseEchoChannel(channel))
             await channel.SendMessageAsync(msg).ConfigureAwait(false);
     }
 

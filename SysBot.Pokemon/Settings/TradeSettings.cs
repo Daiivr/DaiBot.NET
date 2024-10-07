@@ -89,6 +89,9 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         [Category(TradeConfig), Description("Activar o desactivar los trades por lotes."), DisplayName("Permitir trades por lotes")]
         public bool AllowBatchTrades { get; set; } = true;
 
+        [Category(TradeConfig), Description("Verifica el apodo y el OT para detectar spam."), DisplayName("Habilitar verificación de spam")]
+        public bool EnableSpamCheck { get; set; } = true;
+
         [Category(TradeConfig), Description("Máximo de pokemons de un solo comercio. El modo por lotes se cerrará si esta configuración es inferior a 1"), DisplayName("Máximo de Pokémon por trades")]
         public int MaxPkmsPerTrade { get; set; } = 1;
 

@@ -95,6 +95,9 @@ public class DiscordSettings
     [Category(Channels), DisplayName("Ajustes de los Anuncios")]
     public AnnouncementSettingsCategory AnnouncementSettings { get; set; } = new();
 
+    [Category(Channels), DisplayName("Canales de Registro de Abusos"), Description("Canales que registrarán los mensajes de abusos.")]
+    public RemoteControlAccessList AbuseLogChannels { get; set; } = new();
+
     [Category(Startup), Description("Alternar para manejar comandos de forma asincrónica o sincrónica.")]
     public bool AsyncCommands { get; set; }
 

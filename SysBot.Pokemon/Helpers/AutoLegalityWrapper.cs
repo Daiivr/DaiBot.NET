@@ -10,6 +10,7 @@ namespace SysBot.Pokemon;
 public static class AutoLegalityWrapper
 {
     private static bool Initialized;
+    private static TradeSettings? TradeConfig;
 
     public static void EnsureInitialized(LegalitySettings cfg)
     {
@@ -17,6 +18,11 @@ public static class AutoLegalityWrapper
             return;
         Initialized = true;
         InitializeAutoLegality(cfg);
+    }
+
+    public static void SetTradeSettings(TradeSettings settings)
+    {
+        TradeConfig = settings;
     }
 
     private static void InitializeAutoLegality(LegalitySettings cfg)
@@ -122,10 +128,14 @@ public static class AutoLegalityWrapper
 
     public static bool CanBeTraded(this PKM pkm)
     {
-        if (pkm.IsNicknamed && StringsUtil.IsSpammyString(pkm.Nickname))
-            return false;
-        if (StringsUtil.IsSpammyString(pkm.OriginalTrainerName) && !IsFixedOT(new LegalityAnalysis(pkm).EncounterOriginal, pkm))
-            return false;
+        if (TradeConfig?.TradeConfiguration.EnableSpamCheck ?? false)
+        {
+            if (pkm.IsNicknamed && StringsUtil.IsSpammyString(pkm.Nickname))
+                return false;
+            if (StringsUtil.IsSpammyString(pkm.OriginalTrainerName) && !IsFixedOT(new LegalityAnalysis(pkm).EncounterOriginal, pkm))
+                return false;
+        }
+
         return !FormInfo.IsFusedForm(pkm.Species, pkm.Form, pkm.Format);
     }
 

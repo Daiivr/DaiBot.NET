@@ -76,8 +76,8 @@ public class RaidBotSWSH(PokeBotState Config, PokeTradeHub<PK8> Hub) : PokeRouti
     // Adds one friend. Timing may need to be adjusted since delays vary with connection.
     private async Task AddFriend(CancellationToken token)
     {
-        await Click(A, 3_500 + Hub.Config.Timings.ExtraTimeAddFriend, token).ConfigureAwait(false);
-        await Click(A, 3_000 + Hub.Config.Timings.ExtraTimeAddFriend, token).ConfigureAwait(false);
+        await Click(A, 3_500 + Hub.Config.Timings.RaidSettings.ExtraTimeAddFriend, token).ConfigureAwait(false);
+        await Click(A, 3_000 + Hub.Config.Timings.RaidSettings.ExtraTimeAddFriend, token).ConfigureAwait(false);
     }
 
     private async Task<bool> ConfirmPlayerReady(uint player, CancellationToken token)
@@ -161,7 +161,7 @@ public class RaidBotSWSH(PokeBotState Config, PokeTradeHub<PK8> Hub) : PokeRouti
 
         // Click "Remove Friend", confirm "Delete", return to next card.
         await Click(A, 1_000, token).ConfigureAwait(false);
-        await Click(A, 5_000 + Hub.Config.Timings.ExtraTimeDeleteFriend, token).ConfigureAwait(false);
+        await Click(A, 5_000 + Hub.Config.Timings.RaidSettings.ExtraTimeDeleteFriend, token).ConfigureAwait(false);
         await Click(A, 1_000, token).ConfigureAwait(false);
     }
 
@@ -182,7 +182,7 @@ public class RaidBotSWSH(PokeBotState Config, PokeTradeHub<PK8> Hub) : PokeRouti
         await EnsureConnectedToYComm(OverworldOffset, Hub.Config, token).ConfigureAwait(false);
 
         // Press A and stall out a bit for the loading
-        await Click(A, 5_000 + Hub.Config.Timings.ExtraTimeLoadRaid, token).ConfigureAwait(false);
+        await Click(A, 5_000 + Hub.Config.Timings.RaidSettings.ExtraTimeLoadRaid, token).ConfigureAwait(false);
 
         if (raidBossSpecies == -1)
         {
@@ -206,7 +206,7 @@ public class RaidBotSWSH(PokeBotState Config, PokeTradeHub<PK8> Hub) : PokeRouti
 
         // Invite others, confirm Pokémon and wait
         Log("Invitando a otros a la redada...");
-        await Click(A, 7_000 + Hub.Config.Timings.ExtraTimeOpenRaid, token).ConfigureAwait(false);
+        await Click(A, 7_000 + Hub.Config.Timings.RaidSettings.ExtraTimeOpenRaid, token).ConfigureAwait(false);
         await Click(DUP, 1_000, token).ConfigureAwait(false);
         await Click(A, 1_000, token).ConfigureAwait(false);
 
@@ -243,7 +243,7 @@ public class RaidBotSWSH(PokeBotState Config, PokeTradeHub<PK8> Hub) : PokeRouti
             PlayerReady[i] = false;
 
         Log("Terminando la rutina de incursión.");
-        await Task.Delay(1_000 + Hub.Config.Timings.ExtraTimeEndRaid, token).ConfigureAwait(false);
+        await Task.Delay(1_000 + Hub.Config.Timings.RaidSettings.ExtraTimeEndRaid, token).ConfigureAwait(false);
     }
 
     // For pointer offsets that don't change per session are accessed frequently, so set these each time we start.
@@ -304,7 +304,7 @@ public class RaidBotSWSH(PokeBotState Config, PokeTradeHub<PK8> Hub) : PokeRouti
     // Navigates to the specified row and column.
     private async Task NavigateFriends(int row, int column, CancellationToken token)
     {
-        int delay = Hub.Config.Timings.KeypressTime;
+        int delay = Hub.Config.Timings.MiscellaneousSettings.KeypressTime;
 
         if (row == 1)
             return;
@@ -320,7 +320,7 @@ public class RaidBotSWSH(PokeBotState Config, PokeTradeHub<PK8> Hub) : PokeRouti
     // Should already be on either "Friend List" or "Add Friend"
     private async Task NavigateFriendsMenu(bool delete, CancellationToken token)
     {
-        int delay = Hub.Config.Timings.KeypressTime;
+        int delay = Hub.Config.Timings.MiscellaneousSettings.KeypressTime;
 
         // Go all the way up, then down 1. Reverse for adding friends.
         if (delete)
@@ -349,7 +349,7 @@ public class RaidBotSWSH(PokeBotState Config, PokeTradeHub<PK8> Hub) : PokeRouti
     // Goes from Home screen hovering over the game to the correct profile
     private async Task NavigateToProfile(CancellationToken token)
     {
-        int delay = Hub.Config.Timings.KeypressTime;
+        int delay = Hub.Config.Timings.MiscellaneousSettings.KeypressTime;
 
         await Click(DUP, delay, token).ConfigureAwait(false);
         for (int i = 1; i < Settings.ProfileNumber; i++)

@@ -36,9 +36,9 @@ public abstract class PokeRoutineExecutor8SWSH(PokeBotState Config) : PokeRoutin
         var timing = config.Timings;
 
         // Close out of the game
-        await Click(HOME, 2_000 + timing.ExtraTimeReturnHome, token).ConfigureAwait(false);
+        await Click(HOME, 2_000 + timing.ClosingGameSettings.ExtraTimeReturnHome, token).ConfigureAwait(false);
         await Click(X, 1_000, token).ConfigureAwait(false);
-        await Click(A, 5_000 + timing.ExtraTimeCloseGame, token).ConfigureAwait(false);
+        await Click(A, 5_000 + timing.ClosingGameSettings.ExtraTimeCloseGame, token).ConfigureAwait(false);
         Log("Cerre el juego!");
     }
 
@@ -208,7 +208,7 @@ public abstract class PokeRoutineExecutor8SWSH(PokeBotState Config) : PokeRoutin
 
         // Press it twice for safety -- sometimes misses it the first time.
         await Click(PLUS, 2_000, token).ConfigureAwait(false);
-        await Click(PLUS, 5_000 + config.Timings.ExtraTimeConnectOnline, token).ConfigureAwait(false);
+        await Click(PLUS, 5_000 + config.Timings.MiscellaneousSettings.ExtraTimeConnectOnline, token).ConfigureAwait(false);
 
         for (int i = 0; i < 5; i++)
         {
@@ -270,20 +270,33 @@ public abstract class PokeRoutineExecutor8SWSH(PokeBotState Config) : PokeRoutin
 
     public async Task StartGame(PokeTradeHubConfig config, CancellationToken token)
     {
-        var timing = config.Timings;
 
         // Open game.
-        await Click(A, 1_000 + timing.ExtraTimeLoadProfile, token).ConfigureAwait(false);
+        var timing = config.Timings;
+        var loadPro = timing.OpeningGameSettings.ProfileSelectionRequired ? timing.OpeningGameSettings.ExtraTimeLoadProfile : 0;
+        await Click(A, 1_000 + loadPro, token).ConfigureAwait(false); // Initial "A" Press to start the Game + a delay if needed for profiles to load
 
         // Menus here can go in the order: Update Prompt -> Profile -> DLC check -> Unable to use DLC.
         //  The user can optionally turn on the setting if they know of a breaking system update incoming.
-        if (timing.AvoidSystemUpdate)
+        if (timing.MiscellaneousSettings.AvoidSystemUpdate)
         {
             await Click(DUP, 0_600, token).ConfigureAwait(false);
-            await Click(A, 1_000 + timing.ExtraTimeLoadProfile, token).ConfigureAwait(false);
+            await Click(A, 1_000 + timing.OpeningGameSettings.ExtraTimeLoadProfile, token).ConfigureAwait(false);
         }
 
-        await Click(A, 1_000 + timing.ExtraTimeCheckDLC, token).ConfigureAwait(false);
+        // Only send extra Presses if we need to
+        if (timing.OpeningGameSettings.ProfileSelectionRequired)
+        {
+            await Click(A, 1_000, token).ConfigureAwait(false); // Now we are on the Profile Screen
+            await Click(A, 1_000, token).ConfigureAwait(false); // Select the profile
+        }
+        // Digital game copies take longer to load
+        if (timing.OpeningGameSettings.CheckGameDelay)
+        {
+            await Task.Delay(2_000 + timing.OpeningGameSettings.ExtraTimeCheckGame, token).ConfigureAwait(false);
+        }
+
+        await Click(A, 1_000 + timing.OpeningGameSettings.ExtraTimeCheckDLC, token).ConfigureAwait(false);
 
         // If they have DLC on the system and can't use it, requires pressing UP + A to start the game.
         // Should be harmless otherwise since they'll be in loading screen.
@@ -293,7 +306,7 @@ public abstract class PokeRoutineExecutor8SWSH(PokeBotState Config) : PokeRoutin
         Log("¡Reiniciando el juego!");
 
         // Switch Logo lag, skip cutscene, game load screen
-        await Task.Delay(10_000 + timing.ExtraTimeLoadGame, token).ConfigureAwait(false);
+        await Task.Delay(10_000 + timing.OpeningGameSettings.ExtraTimeLoadGame, token).ConfigureAwait(false);
 
         for (int i = 0; i < 4; i++)
             await Click(A, 1_000, token).ConfigureAwait(false);
@@ -306,7 +319,7 @@ public abstract class PokeRoutineExecutor8SWSH(PokeBotState Config) : PokeRoutin
 
             // We haven't made it back to overworld after a minute, so press A every 6 seconds hoping to restart the game.
             // Don't risk it if hub is set to avoid updates.
-            if (timer <= 0 && !timing.AvoidSystemUpdate)
+            if (timer <= 0 && !timing.MiscellaneousSettings.AvoidSystemUpdate)
             {
                 Log("¡Aún no estás en el juego, iniciando protocolo de rescate!");
                 while (!await IsOnOverworldTitle(token).ConfigureAwait(false) && !await IsInBattle(token).ConfigureAwait(false))
@@ -333,7 +346,7 @@ public abstract class PokeRoutineExecutor8SWSH(PokeBotState Config) : PokeRoutin
         // Default implementation to just press directional arrows. Can do via Hid keys, but users are slower than bots at even the default code entry.
         foreach (var key in TradeUtil.GetPresses(code))
         {
-            int delay = config.Timings.KeypressTime;
+            int delay = config.Timings.MiscellaneousSettings.KeypressTime;
             await Click(key, delay, token).ConfigureAwait(false);
         }
 

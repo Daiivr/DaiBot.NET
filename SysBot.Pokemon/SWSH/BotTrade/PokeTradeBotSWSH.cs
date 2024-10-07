@@ -120,8 +120,8 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
             {
                 if (e.StackTrace != null)
                     Connection.LogError(e.StackTrace);
-                var attempts = hub.Config.Timings.ReconnectAttempts;
-                var delay = hub.Config.Timings.ExtraReconnectDelay;
+                var attempts = hub.Config.Timings.MiscellaneousSettings.ReconnectAttempts;
+                var delay = hub.Config.Timings.MiscellaneousSettings.ExtraReconnectDelay;
                 var protocol = Config.Connection.Protocol;
                 if (!await TryReconnect(attempts, delay, protocol, token).ConfigureAwait(false))
                     return;
@@ -291,7 +291,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
         // Loading Screen
         if (poke.Type != PokeTradeType.Random)
             hub.Config.Stream.StartEnterCode(this);
-        await Task.Delay(hub.Config.Timings.ExtraTimeOpenCodeEntry, token).ConfigureAwait(false);
+        await Task.Delay(hub.Config.Timings.MiscellaneousSettings.ExtraTimeOpenCodeEntry, token).ConfigureAwait(false);
 
         var code = poke.Code;
         Log($"Ingresando el código de enlace comercial: {code:0000 0000}...");
@@ -336,7 +336,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
 
         // Select Pokémon
         // pkm already injected to b1s1
-        await Task.Delay(5_500 + hub.Config.Timings.ExtraTimeOpenBox, token).ConfigureAwait(false); // necessary delay to get to the box properly
+        await Task.Delay(5_500 + hub.Config.Timings.MiscellaneousSettings.ExtraTimeOpenBox, token).ConfigureAwait(false); // necessary delay to get to the box properly
 
         var trainerName = await GetTradePartnerName(TradeMethod.LinkTrade, token).ConfigureAwait(false);
         var trainerTID = await GetTradePartnerTID7(TradeMethod.LinkTrade, token).ConfigureAwait(false);
@@ -344,6 +344,13 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
         var trainerNID = await GetTradePartnerNID(token).ConfigureAwait(false);
         RecordUtil<PokeTradeBotSWSH>.Record($"Iniciando\t{trainerNID:X16}\t{trainerName}\t{poke.Trainer.TrainerName}\t{poke.Trainer.ID}\t{poke.ID}\t{toSend.EncryptionConstant:X8}");
         Log($"Encontré un entrenador para intercambiar: {trainerName}-{trainerTID} (ID: {trainerNID})");
+
+        var partnerCheck = await CheckPartnerReputation(this, poke, trainerNID, trainerName, AbuseSettings, token);
+        if (partnerCheck != PokeTradeResult.Success)
+        {
+            await ExitSeedCheckTrade(token).ConfigureAwait(false);
+            return partnerCheck;
+        }
 
         var tradeCodeStorage = new TradeCodeStorage();
         var existingTradeDetails = tradeCodeStorage.GetTradeDetails(poke.Trainer.ID);
@@ -359,13 +366,6 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
             tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, shouldUpdateOT ? trainerName : existingTradeDetails.OT, shouldUpdateTID ? int.Parse(trainerTID) : existingTradeDetails.TID, shouldUpdateSID ? int.Parse(trainerSID) : existingTradeDetails.SID);
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 #pragma warning restore CS8604 // Possible null reference argument.
-        }
-
-        var partnerCheck = CheckPartnerReputation(this, poke, trainerNID, trainerName, AbuseSettings, token);
-        if (partnerCheck != PokeTradeResult.Success)
-        {
-            await ExitSeedCheckTrade(token).ConfigureAwait(false);
-            return partnerCheck;
         }
 
         if (!await IsInBox(token).ConfigureAwait(false))
@@ -440,7 +440,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
         }
 
         // As long as we got rid of our inject in b1s1, assume the trade went through.
-        Log($"Operación completada. Se recibió {received.Species} del usuario y se envió {toSend.Species}.");
+        Log($"Operación completada. Se recibió {GameInfo.GetStrings(1).Species[received.Species]} del usuario y se envió {GameInfo.GetStrings(1).Species[toSend.Species]}.");
         poke.TradeFinished(this, received);
 
         RecordUtil<PokeTradeBotSWSH>.Record($"Finalizado\t{trainerNID:X16}\t{trainerName}\t{poke.Trainer.TrainerName}\t{poke.ID}\t{toSend.Species}\t{toSend.EncryptionConstant:X8}\t{received.Species}\t{received.EncryptionConstant:X8}");
