@@ -98,9 +98,6 @@ public class DiscordSettings
     [Category(Channels), DisplayName("Canales de Registro de Abusos"), Description("Canales que registrarán los mensajes de abusos.")]
     public RemoteControlAccessList AbuseLogChannels { get; set; } = new();
 
-    [Category(Startup), Description("Alternar para manejar comandos de forma asincrónica o sincrónica.")]
-    public bool AsyncCommands { get; set; }
-
     [Category(Startup), Description("Indica el color del estado de presencia de Discord solo considerando los bots que son de tipo Trade.")]
     public bool BotColorStatusTradeOnly { get; set; } = true;
 

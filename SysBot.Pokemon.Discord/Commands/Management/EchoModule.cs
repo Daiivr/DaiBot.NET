@@ -102,7 +102,9 @@ namespace SysBot.Pokemon.Discord
         {
             async void l(string msg) => await SendMessageWithRetry(c, msg).ConfigureAwait(false);
             EchoUtil.AbuseForwarders.Add(l);
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             var entry = new EchoChannel(cid, c.Name, l, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
             AbuseChannels.Add(cid, entry);
         }
         public static bool IsAbuseEchoChannel(ISocketMessageChannel c)

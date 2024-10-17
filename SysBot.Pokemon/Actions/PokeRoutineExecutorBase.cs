@@ -8,7 +8,7 @@ namespace SysBot.Pokemon;
 public abstract class PokeRoutineExecutorBase(IConsoleBotManaged<IConsoleConnection, IConsoleConnectionAsync> Config)
     : SwitchRoutineExecutor<PokeBotState>(Config)
 {
-    public const decimal BotbaseVersion = 2.3m;
+    public const decimal BotbaseVersion = 2.4m;
 
     public static readonly TrackedUserLog PreviousUsers = new();
 

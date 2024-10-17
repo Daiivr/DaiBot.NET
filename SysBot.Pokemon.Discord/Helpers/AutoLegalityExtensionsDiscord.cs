@@ -24,6 +24,13 @@ public static class AutoLegalityExtensionsDiscord
         {
             var template = AutoLegalityWrapper.GetTemplate(set);
             var pkm = sav.GetLegal(template, out var result);
+            if (pkm is PK8 && pkm.Nickname.ToLower() == "egg" && Breeding.CanHatchAsEgg(pkm.Species))
+                TradeExtensions<PK8>.EggTrade(pkm, template);
+            else if (pkm is PB8 && pkm.Nickname.ToLower() == "egg" && Breeding.CanHatchAsEgg(pkm.Species))
+                TradeExtensions<PB8>.EggTrade(pkm, template);
+            else if (pkm is PK9 && pkm.Nickname.ToLower() == "egg" && Breeding.CanHatchAsEgg(pkm.Species))
+                TradeExtensions<PK9>.EggTrade(pkm, template);
+
             var la = new LegalityAnalysis(pkm);
             var spec = GameInfo.Strings.Species[template.Species];
 
@@ -62,7 +69,7 @@ public static class AutoLegalityExtensionsDiscord
             var successMsg = $" Aqui esta tu **{speciesName}** legalizado.";
             bool canGmax = pkm is PK8 pk8 && pk8.CanGigantamax;
 
-            var speciesImageUrl = TradeExtensions<PK9>.PokeImg(pkm, canGmax, false);
+            var speciesImageUrl = Helpers.TradeExtensions<PK9>.PokeImg(pkm, canGmax, false);
             // Create RegenTemplate from the legalized PKM
             var regenTemplate = new RegenTemplate(pkm);
             var regenText = regenTemplate.Text;
@@ -166,19 +173,19 @@ public static class AutoLegalityExtensionsDiscord
 
         if (pkm is PK8 pk8)
         {
-            pokeImgUrl = TradeExtensions<PK8>.PokeImg(pk8, false, false);
+            pokeImgUrl = Helpers.TradeExtensions<PK8>.PokeImg(pk8, false, false);
         }
         else if (pkm is PK9 pk9)
         {
-            pokeImgUrl = TradeExtensions<PK9>.PokeImg(pk9, false, false);
+            pokeImgUrl = Helpers.TradeExtensions<PK9>.PokeImg(pk9, false, false);
         }
         else if (pkm is PB8 pb8)
         {
-            pokeImgUrl = TradeExtensions<PB8>.PokeImg(pb8, false, false);
+            pokeImgUrl = Helpers.TradeExtensions<PB8>.PokeImg(pb8, false, false);
         }
         else if (pkm is PA8 pa8)
         {
-            pokeImgUrl = TradeExtensions<PB8>.PokeImg(pa8, false, false);
+            pokeImgUrl = Helpers.TradeExtensions<PB8>.PokeImg(pa8, false, false);
         }
 
         if (pokeImgUrl == null)
