@@ -208,7 +208,7 @@ public static class QueueHelper<T> where T : PKM, new()
                 {
                     // Both Non-Native and has Home Tracker
                     embedBuilder.Footer.IconUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/exclamation.gif";
-                    embedBuilder.AddField("__**Aviso**__: **Este Pokémon no es nativo y tiene rastreador de Home.**", "*No podra entrar a HOME y AutoOT no fue aplicado.*");
+                    embedBuilder.AddField("__**Aviso**__: **Este Pokémon no es nativo y tiene rastreador de Home.**", "*AutoOT no fue aplicado.*");
                 }
                 else if (homeTrack.HasTracker)
                 {
