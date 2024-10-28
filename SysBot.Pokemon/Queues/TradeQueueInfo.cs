@@ -204,18 +204,13 @@ public sealed record TradeQueueInfo<T>(PokeTradeHub<T> Hub)
             if (Hub.Config.Legality.ResetHOMETracker && trade.Trade.TradeData is IHomeTrack t)
                 t.Tracker = 0;
 
-            var basePriority = sudo ? PokeTradePriorities.Tier1 :
-                               trade.Trade.IsFavored ? PokeTradePriorities.Tier2 :
-                               PokeTradePriorities.TierFree;
-            int adjustedPriority = (int)basePriority;
-            if (trade.Trade.Type == PokeTradeType.Batch)
-            {
-                adjustedPriority = (int)(basePriority * 1000 - trade.Trade.BatchTradeNumber);
-            }
+            var priority = sudo ? PokeTradePriorities.Tier1 :
+                           trade.Trade.IsFavored ? PokeTradePriorities.Tier2 :
+                           PokeTradePriorities.TierFree;
 
             var queue = Hub.Queues.GetQueue(trade.Type);
 
-            queue.Enqueue(trade.Trade, (uint)adjustedPriority);
+            queue.Enqueue(trade.Trade, priority);
             UsersInQueue.Add(trade);
 
             trade.Trade.Notifier.OnFinish = _ => Remove(trade);
