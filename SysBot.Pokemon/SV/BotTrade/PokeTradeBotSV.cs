@@ -140,10 +140,24 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
 
     protected virtual (PokeTradeDetail<PK9>? detail, uint priority) GetTradeData(PokeRoutineType type)
     {
-        if (Hub.Queues.TryDequeue(type, out var detail, out var priority))
+        string botName = Connection.Name;
+        // First check the specific type's queue
+        if (Hub.Queues.TryDequeue(type, out var detail, out var priority, botName))
+        {
             return (detail, priority);
+        }
+        // If we're doing FlexTrade, also check the Batch queue
+        if (type == PokeRoutineType.FlexTrade)
+        {
+            if (Hub.Queues.TryDequeue(PokeRoutineType.Batch, out detail, out priority, botName))
+            {
+                return (detail, priority);
+            }
+        }
         if (Hub.Queues.TryDequeueLedy(out detail))
+        {
             return (detail, PokeTradePriorities.TierFree);
+        }
         return (null, PokeTradePriorities.TierFree);
     }
 
@@ -752,11 +766,39 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         ConnectionSuccess?.Invoke(this, EventArgs.Empty);
     }
 
+    private bool GetNextBatchTrade(PokeTradeDetail<PK9> currentTrade, out PokeTradeDetail<PK9>? nextDetail)
+    {
+        var routineType = GetRoutineType(currentTrade.Type);
+        string botName = Connection.Name;
+        // look in the Batch queue
+        if (Hub.Queues.TryDequeue(PokeRoutineType.Batch, out nextDetail, out _, botName))
+        {
+            // Verify this is the next trade in the sequence for the trader
+            if (nextDetail.Trainer.ID == currentTrade.Trainer.ID &&
+                nextDetail.BatchTradeNumber == currentTrade.BatchTradeNumber + 1)
+            {
+                return true;
+            }
+            else
+            {
+                // If this isn't the next trade in sequence, put it back
+                Hub.Queues.Enqueue(PokeRoutineType.Batch, nextDetail, PokeTradePriorities.TierFree);
+                nextDetail = null;
+                return false;
+            }
+        }
+        nextDetail = null;
+        return false;
+    }
+
     private async Task<PokeTradeResult> PerformBatchTrade(SAV9SV sav, PokeTradeDetail<PK9> poke, CancellationToken token)
     {
         int completedTrades = 0;
-        while (completedTrades < poke.TotalBatchTrades)
+        var startingDetail = poke;
+        while (completedTrades < startingDetail.TotalBatchTrades)
         {
+            LogUtil.LogInfo($"[Batch] Procesando trade: {completedTrades + 1}/{startingDetail.TotalBatchTrades}", nameof(PokeTradeBotSV));
+
             var toSend = poke.TradeData;
             if (toSend.Species != 0)
                 await SetBoxPokemonAbsolute(BoxStartOffset, toSend, token, sav).ConfigureAwait(false);
@@ -777,9 +819,8 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             WaitAtBarrierIfApplicable(token);
             await Click(A, 1_000, token).ConfigureAwait(false);
 
-            poke.TradeSearching(this);
-
             // Wait for a Trainer...
+            poke.TradeSearching(this);
             var partnerFound = await WaitForTradePartner(token).ConfigureAwait(false);
 
             if (token.IsCancellationRequested)
@@ -791,6 +832,11 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             }
             if (!partnerFound)
             {
+                // Fast-path for no trainer found - handle immediately
+                poke.IsProcessing = false;
+                poke.SendNotification(this, "No se encontró ningún socio comercial. Se cancelará la operación.");
+                poke.TradeCanceled(this, PokeTradeResult.NoTrainerFound);
+
                 if (!await RecoverToPortal(token).ConfigureAwait(false))
                 {
                     Log("No se pudo recuperar el portal.");
@@ -817,7 +863,7 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
                     return PokeTradeResult.RecoverOpenBox;
                 }
             }
-            await Task.Delay(3_000 + Hub.Config.Timings.MiscellaneousSettings.ExtraTimeOpenBox, token).ConfigureAwait(false);
+            await Task.Delay(3_000, token).ConfigureAwait(false);
 
             var tradePartnerFullInfo = await GetTradePartnerFullInfo(token).ConfigureAwait(false);
             var tradePartner = new TradePartnerSV(tradePartnerFullInfo);
@@ -922,29 +968,32 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             Log($"El usuario completó el intercambio.");
             poke.TradeFinished(this, received);
 
-            // Only log if we completed the trade.
             UpdateCountsAndExport(poke, received, toSend);
-
-            // Log for Trade Abuse tracking.
             LogSuccessfulTrades(poke, trainerNID, tradePartner.TrainerName);
-
             completedTrades++;
 
-            if (completedTrades < poke.TotalBatchTrades)
+            // Check if we have more trades in the batch
+            if (completedTrades < startingDetail.TotalBatchTrades)
             {
-                var routineType = GetRoutineType(poke.Type);
-                if (Hub.Queues.TryDequeue(routineType, out var nextDetail, out _) && nextDetail.Trainer.ID == poke.Trainer.ID)
+                if (GetNextBatchTrade(poke, out var nextDetail) && nextDetail != null)
                 {
                     poke = nextDetail;
+
+                    // Important: Don't exit the trade portal here
+                    // Instead, we'll loop back to the start and prepare the next Pokémon
+                    lastOffered = await SwitchConnection.ReadBytesAbsoluteAsync(TradePartnerOfferedOffset, 8, token).ConfigureAwait(false);
+                    await Click(A, 1_000, token).ConfigureAwait(false);
+                    continue;
                 }
                 else
                 {
                     break;
                 }
             }
-        }
 
-        await ExitTradeToPortal(false, token).ConfigureAwait(false);
+            // Only exit portal after completing all trades or if the batch is broken
+            await ExitTradeToPortal(false, token).ConfigureAwait(false);
+        }
         return PokeTradeResult.Success;
     }
 
@@ -1217,7 +1266,10 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         {
             result = await PerformLinkCodeTrade(sav, detail, token).ConfigureAwait(false);
             if (result == PokeTradeResult.Success)
+            {
+                Hub.Queues.CompleteTrade(this, detail);
                 return;
+            }
         }
         catch (SocketException socket)
         {

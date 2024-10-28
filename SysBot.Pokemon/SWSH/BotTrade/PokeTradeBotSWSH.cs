@@ -186,7 +186,8 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
 
     protected virtual (PokeTradeDetail<PK8>? detail, uint priority) GetTradeData(PokeRoutineType type)
     {
-        if (hub.Queues.TryDequeue(type, out var detail, out var priority))
+        string botName = Connection.Name;
+        if (Hub.Queues.TryDequeue(type, out var detail, out var priority, botName))
             return (detail, priority);
         if (hub.Queues.TryDequeueLedy(out detail))
             return (detail, PokeTradePriorities.TierFree);

@@ -1,36 +1,34 @@
 using PKHeX.Core;
+using SysBot.Base;
 using System;
 using System.Collections.Generic;
 
 namespace SysBot.Pokemon;
 
+/// <summary>
+/// Manages multiple trade queues and handles trade distribution logic.
+/// </summary>
 public class TradeQueueManager<T> where T : PKM, new()
 {
     public readonly PokeTradeQueue<T>[] AllQueues;
-
-    // hook in here if you want to forward the message elsewhere???
     public readonly List<Action<PokeRoutineExecutorBase, PokeTradeDetail<T>>> Forwarders = [];
-
     public readonly TradeQueueInfo<T> Info;
 
-    private readonly PokeTradeQueue<T> Batch = new(PokeTradeType.Batch);
-
-    private readonly PokeTradeQueue<T> Clone = new(PokeTradeType.Clone);
-
-    private readonly PokeTradeQueue<T> Dump = new(PokeTradeType.Dump);
-
-    private readonly PokeTradeQueue<T> FixOT = new(PokeTradeType.FixOT);
-
+    private readonly BatchTradeTracker<T> _batchTracker = new();
     private readonly PokeTradeHub<T> Hub;
 
+    // Individual queues for different trade types
+    private readonly PokeTradeQueue<T> Batch = new(PokeTradeType.Batch);
+    private readonly PokeTradeQueue<T> Clone = new(PokeTradeType.Clone);
+    private readonly PokeTradeQueue<T> Dump = new(PokeTradeType.Dump);
+    private readonly PokeTradeQueue<T> FixOT = new(PokeTradeType.FixOT);
     private readonly PokeTradeQueue<T> Seed = new(PokeTradeType.Seed);
-
     private readonly PokeTradeQueue<T> Trade = new(PokeTradeType.Specific);
 
     public TradeQueueManager(PokeTradeHub<T> hub)
     {
         Hub = hub;
-        Info = new TradeQueueInfo<T>(hub);
+        Info = new(hub);
         AllQueues = [Seed, Dump, Clone, FixOT, Trade, Batch];
 
         foreach (var q in AllQueues)
@@ -43,11 +41,8 @@ public class TradeQueueManager<T> where T : PKM, new()
             q.Clear();
     }
 
-    public void Enqueue(PokeRoutineType type, PokeTradeDetail<T> detail, uint priority)
-    {
-        var queue = GetQueue(type);
-        queue.Enqueue(detail, priority);
-    }
+    public void Enqueue(PokeRoutineType type, PokeTradeDetail<T> detail, uint priority) =>
+            GetQueue(type).Enqueue(detail, priority);
 
     public PokeTradeQueue<T> GetQueue(PokeRoutineType type) => type switch
     {
@@ -65,103 +60,48 @@ public class TradeQueueManager<T> where T : PKM, new()
             f.Invoke(b, detail);
     }
 
-    public bool TryDequeue(PokeRoutineType type, out PokeTradeDetail<T> detail, out uint priority)
-    {
-        if (type == PokeRoutineType.FlexTrade)
-            return GetFlexDequeue(out detail, out priority);
+    public void CompleteTrade(PokeRoutineExecutorBase b, PokeTradeDetail<T> detail) =>
+            _batchTracker.CompleteBatchTrade(detail);
 
-        return TryDequeueInternal(type, out detail, out priority);
+    public bool TryDequeue(PokeRoutineType type, out PokeTradeDetail<T> detail, out uint priority, string botName)
+    {
+        detail = default!;
+        priority = default;
+        var queue = GetQueue(type);
+        if (!queue.TryPeek(out detail, out priority))
+            return false;
+
+        if (detail.TotalBatchTrades > 1 && !_batchTracker.CanProcessBatchTrade(detail))
+            return false;
+
+        if (!queue.TryDequeue(out detail, out priority))
+            return false;
+
+        if (detail.TotalBatchTrades > 1 && !_batchTracker.TryClaimBatchTrade(detail, botName))
+        {
+            queue.Enqueue(detail, priority);
+            return false;
+        }
+
+        return true;
     }
 
     public bool TryDequeueLedy(out PokeTradeDetail<T> detail, bool force = false)
     {
         detail = default!;
         var cfg = Hub.Config.Distribution;
-        if (!cfg.DistributeWhileIdle && !force)
-            return false;
 
-        if (Hub.Ledy.Pool.Count == 0)
+        if ((!cfg.DistributeWhileIdle && !force) || Hub.Ledy.Pool.Count == 0)
             return false;
-
         var random = Hub.Ledy.Pool.GetRandomPoke();
         var code = cfg.RandomCode ? Hub.Config.Trade.GetRandomTradeCode() : cfg.TradeCode;
+        var lgcode = GetDefaultLGCode();
 
-        var lgcode = TradeSettings.GetRandomLGTradeCode(true);
-        if (lgcode == null || lgcode.Count == 0)
-        {
-            lgcode = new List<Pictocodes> { Pictocodes.Pikachu, Pictocodes.Pikachu, Pictocodes.Pikachu };
-        }
         var trainer = new PokeTradeTrainerInfo("Random Distribution");
-
-        // Include lgcode in the creation of PokeTradeDetail
-        detail = new PokeTradeDetail<T>(random, trainer, PokeTradeHub<T>.LogNotifier, PokeTradeType.Random, code, false, lgcode);
+        detail = new(random, trainer, PokeTradeHub<T>.LogNotifier, PokeTradeType.Random, code, false, lgcode);
         return true;
     }
 
-    private bool GetFlexDequeue(out PokeTradeDetail<T> detail, out uint priority)
-    {
-        var cfg = Hub.Config.Queues;
-        if (cfg.FlexMode == FlexYieldMode.LessCheatyFirst)
-            return GetFlexDequeueOld(out detail, out priority);
-        return GetFlexDequeueWeighted(cfg, out detail, out priority);
-    }
-
-    private bool GetFlexDequeueOld(out PokeTradeDetail<T> detail, out uint priority)
-    {
-        if (TryDequeueInternal(PokeRoutineType.SeedCheck, out detail, out priority))
-            return true;
-        if (TryDequeueInternal(PokeRoutineType.Clone, out detail, out priority))
-            return true;
-        if (TryDequeueInternal(PokeRoutineType.Dump, out detail, out priority))
-            return true;
-        if (TryDequeueInternal(PokeRoutineType.FixOT, out detail, out priority))
-            return true;
-        if (TryDequeueInternal(PokeRoutineType.LinkTrade, out detail, out priority))
-            return true;
-        return false;
-    }
-
-    private bool GetFlexDequeueWeighted(QueueSettings cfg, out PokeTradeDetail<T> detail, out uint priority)
-    {
-        PokeTradeQueue<T>? preferredQueue = null;
-        long bestWeight = 0; // prefer higher weights
-        uint bestPriority = uint.MaxValue; // prefer smaller
-        foreach (var q in AllQueues)
-        {
-            var peek = q.TryPeek(out detail, out priority);
-            if (!peek)
-                continue;
-
-            // priority queue is a min-queue, so prefer smaller priorities
-            if (priority > bestPriority)
-                continue;
-
-            var count = q.Count;
-            var time = detail.Time;
-            var weight = cfg.GetWeight(count, time, q.Type);
-
-            if (priority >= bestPriority && weight <= bestWeight)
-                continue; // not good enough to be preferred over the other.
-
-            // this queue has the most preferable priority/weight so far!
-            bestWeight = weight;
-            bestPriority = priority;
-            preferredQueue = q;
-        }
-
-        if (preferredQueue == null)
-        {
-            detail = default!;
-            priority = default;
-            return false;
-        }
-
-        return preferredQueue.TryDequeue(out detail, out priority);
-    }
-
-    private bool TryDequeueInternal(PokeRoutineType type, out PokeTradeDetail<T> detail, out uint priority)
-    {
-        var queue = GetQueue(type);
-        return queue.TryDequeue(out detail, out priority);
-    }
+    private static List<Pictocodes> GetDefaultLGCode() =>
+        [Pictocodes.Pikachu, Pictocodes.Pikachu, Pictocodes.Pikachu];
 }

@@ -191,7 +191,8 @@ public class PokeTradeBotLA(PokeTradeHub<PA8> Hub, PokeBotState Config) : PokeRo
 
     protected virtual (PokeTradeDetail<PA8>? detail, uint priority) GetTradeData(PokeRoutineType type)
     {
-        if (Hub.Queues.TryDequeue(type, out var detail, out var priority))
+        string botName = Connection.Name;
+        if (Hub.Queues.TryDequeue(type, out var detail, out var priority, botName))
             return (detail, priority);
         if (Hub.Queues.TryDequeueLedy(out detail))
             return (detail, PokeTradePriorities.TierFree);

@@ -182,7 +182,8 @@ public class PokeTradeBotLGPE(PokeTradeHub<PB7> Hub, PokeBotState Config) : Poke
 
     protected virtual (PokeTradeDetail<PB7>? detail, uint priority) GetTradeData(PokeRoutineType type)
     {
-        if (Hub.Queues.TryDequeue(type, out var detail, out var priority))
+        string botName = Connection.Name;
+        if (Hub.Queues.TryDequeue(type, out var detail, out var priority, botName))
             return (detail, priority);
         if (Hub.Queues.TryDequeueLedy(out detail))
             return (detail, PokeTradePriorities.TierFree);
