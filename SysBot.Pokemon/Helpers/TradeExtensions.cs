@@ -279,7 +279,7 @@ namespace SysBot.Pokemon.Helpers
 
         public static bool HasAdName(T pk, out string ad)
         {
-            const string pattern = @"(YT$)|(YT\w*$)|(Lab$)|(\.[a-zA-Z]{2,})|(TV$)|(PKHeX)|(FB:)|(AuSLove)|(ShinyMart)|(Blainette)|( com)|( org)|( net)|(gg)|(2DOS3)|(PPorg)|(Tik\w*ok$)|(YouTube)|(IG:)|(TTV )|(Tools)|(JokersWrath)|(bot$)|(PKMGen)|(TheHighTable)";
+            const string pattern = @"(YT$)|(YT\w*$)|(Lab$)|(\.[a-zA-Z]{2,})|(TV$)|(PKHeX)|(FB:)|(AuSLove)|(ShinyMart)|(Blainette)|( com)|( org)|( net)|(\.gg\b)|(2DOS3)|(PPorg)|(Tik\w*ok$)|(YouTube)|(IG:)|(TTV )|(Tools)|(JokersWrath)|(bot$)|(PKMGen)|(TheHighTable)";
             bool ot = Regex.IsMatch(pk.OriginalTrainerName, pattern, RegexOptions.IgnoreCase);
             bool nick = Regex.IsMatch(pk.Nickname, pattern, RegexOptions.IgnoreCase);
             ad = ot ? pk.OriginalTrainerName : nick ? pk.Nickname : "";
@@ -511,12 +511,19 @@ namespace SysBot.Pokemon.Helpers
             {
                 return false;
             }
+
+            // Remove any text after '@' if present
             var atIndex = firstLine.IndexOf('@');
             if (atIndex > 0)
             {
-                return firstLine[..atIndex].Contains("Egg", StringComparison.OrdinalIgnoreCase);
+                firstLine = firstLine[..atIndex].Trim();
             }
-            return firstLine.Contains("Egg", StringComparison.OrdinalIgnoreCase);
+
+            // Split the remaining text into words
+            var words = firstLine.Split(new[] { ' ', '(' }, StringSplitOptions.RemoveEmptyEntries);
+
+            // Check if any word is exactly "Egg" (case-insensitive)
+            return words.Any(word => string.Equals(word, "Egg", StringComparison.OrdinalIgnoreCase));
         }
 
         // Correct Met Dates for 7 Star Raids w/ Mightiest Mark
