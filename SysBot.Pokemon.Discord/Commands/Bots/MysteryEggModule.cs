@@ -51,7 +51,6 @@ namespace SysBot.Pokemon.Discord
             }
             var code = Info.GetRandomTradeCode(userID);
 
-            // Start the long-running task without awaiting it
             _ = Task.Run(async () =>
             {
                 try
@@ -66,12 +65,13 @@ namespace SysBot.Pokemon.Discord
             });
         }
 
-        private async Task ProcessMysteryEggTradeAsync(int code)
+        public static T? GenerateLegalMysteryEgg(int maxAttempts = 5)
         {
             var gameVersion = GetGameVersion();
             var speciesList = GetBreedableSpecies(gameVersion, "en");
             int attempts = 0;
-            while (attempts < 5)
+
+            while (attempts < maxAttempts)
             {
                 var randomIndex = new Random().Next(speciesList.Count);
                 ushort speciesId = speciesList[randomIndex];
@@ -79,7 +79,7 @@ namespace SysBot.Pokemon.Discord
                 var showdownSet = new ShowdownSet(speciesName);
                 var template = AutoLegalityWrapper.GetTemplate(showdownSet);
                 var sav = AutoLegalityWrapper.GetTrainerInfo<T>();
-                var pk = sav.GetLegal(template, out var result);
+                var pk = sav.GetLegal(template, out _);
                 if (pk != null)
                 {
                     pk = EntityConverter.ConvertToType(pk, typeof(T), out _) ?? pk;
@@ -90,21 +90,35 @@ namespace SysBot.Pokemon.Discord
                         {
                             TradeExtensions<T>.EggTrade(validPk, template);
                             SetHaX(validPk);
-                            var sig = Context.User.GetFavor();
-                            await AddTradeToQueueAsync(code, Context.User.Username, validPk, sig, Context.User, isMysteryEgg: true, skipLegalityCheck: true).ConfigureAwait(false);
-
-                            if (Context.Message is IUserMessage userMessage)
+                            la = new LegalityAnalysis(validPk);
+                            if (!la.Valid)
                             {
-                                await DeleteMessageAfterDelay(userMessage, 2000).ConfigureAwait(false);
+                                attempts++;
+                                continue;
                             }
 
-                            return;
+                            return validPk;
                         }
                     }
                 }
                 attempts++;
             }
-            await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, no se pudo generar un huevo misterioso legal después de 5 intentos. Por favor, inténtelo de nuevo más tarde.").ConfigureAwait(false);
+            return null;
+        }
+        private async Task ProcessMysteryEggTradeAsync(int code)
+        {
+            var mysteryEgg = GenerateLegalMysteryEgg(5);
+            if (mysteryEgg == null)
+            {
+                await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, no se pudo generar un huevo misterioso legal después de 5 intentos. Por favor, inténtelo de nuevo más tarde.").ConfigureAwait(false);
+                return;
+            }
+            var sig = Context.User.GetFavor();
+            await AddTradeToQueueAsync(code, Context.User.Username, mysteryEgg, sig, Context.User, isMysteryEgg: true).ConfigureAwait(false);
+            if (Context.Message is IUserMessage userMessage)
+            {
+                await DeleteMessageAfterDelay(userMessage, 2000).ConfigureAwait(false);
+            }
         }
 
         private static async Task DeleteMessageAfterDelay(IUserMessage message, int delayMilliseconds)
@@ -113,16 +127,16 @@ namespace SysBot.Pokemon.Discord
             await message.DeleteAsync().ConfigureAwait(false);
         }
 
-        private static void SetHaX(PKM pk)
+        public static void SetHaX(PKM pk)
         {
-            pk.IVs = [31, 31, 31, 31, 31, 31];
+            pk.IVs = new[] { 31, 31, 31, 31, 31, 31 };
             pk.SetShiny();
             pk.RefreshAbility(2);
             pk.MaximizeFriendship();
             pk.RefreshChecksum();
         }
 
-        private static GameVersion GetGameVersion()
+        public static GameVersion GetGameVersion()
         {
             if (typeof(T) == typeof(PK8))
                 return GameVersion.SWSH;
@@ -141,7 +155,7 @@ namespace SysBot.Pokemon.Discord
             var gameStrings = GameInfo.GetStrings(language);
             var availableSpeciesList = gameStrings.specieslist
                 .Select((name, index) => (Name: name, Index: index))
-                .Where(item => item.Name != string.Empty)
+                .Where(item => !string.IsNullOrEmpty(item.Name))
                 .ToList();
 
             var breedableSpecies = new List<ushort>();
@@ -149,14 +163,12 @@ namespace SysBot.Pokemon.Discord
             foreach (var species in availableSpeciesList)
             {
                 var speciesId = (ushort)species.Index;
-                var speciesName = species.Name;
                 var pi = GetFormEntry(pt, speciesId, 0);
                 if (IsBreedable(pi) && pi.EvoStage == 1)
                 {
                     breedableSpecies.Add(speciesId);
                 }
             }
-
             return breedableSpecies;
         }
 
@@ -189,60 +201,55 @@ namespace SysBot.Pokemon.Discord
             };
         }
 
-        private async Task AddTradeToQueueAsync(int code, string trainerName, T? pk, RequestSignificance sig, SocketUser usr, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, PokeTradeType tradeType = PokeTradeType.Specific, bool ignoreAutoOT = false, bool skipLegalityCheck = false)
+        private async Task AddTradeToQueueAsync(
+           int code,
+           string trainerName,
+           T pk,
+           RequestSignificance sig,
+           SocketUser usr,
+           bool isBatchTrade = false,
+           int batchTradeNumber = 1,
+           int totalBatchTrades = 1,
+           bool isHiddenTrade = false,
+           bool isMysteryEgg = false,
+           List<Pictocodes>? lgcode = null,
+           PokeTradeType tradeType = PokeTradeType.Specific,
+           bool ignoreAutoOT = false)
         {
             lgcode ??= GenerateRandomPictocodes(3);
-            LegalityAnalysis la;
-
-            if (!skipLegalityCheck)
+            var la = new LegalityAnalysis(pk);
+            if (!la.Valid)
             {
-#pragma warning disable CS8604 // Possible null reference argument.
-                la = new LegalityAnalysis(pk);
-#pragma warning restore CS8604 // Possible null reference argument.
-                if (!la.Valid)
-                {
-                    string responseMessage;
-                    string speciesName = GameInfo.GetStrings("en").specieslist[pk.Species];
-                    responseMessage = $"<a:warning:1206483664939126795> Conjunto de enfrentamiento no válido para un huevo de {speciesName}. Por favor revisa tu información y vuelve a intentarlo..";
-
-                    var reply = await ReplyAsync(responseMessage).ConfigureAwait(false);
-                    await Task.Delay(6000);
-                    await reply.DeleteAsync().ConfigureAwait(false);
-                    return;
-                }
-            }
-            else
-            {
-                // If we're skipping the initial check, we still need to create a LegalityAnalysis object
-#pragma warning disable CS8604 // Possible null reference argument.
-                la = new LegalityAnalysis(pk);
-#pragma warning restore CS8604 // Possible null reference argument.
+                string responseMessage = "⚠️ Se ha producido un error inesperado. Por favor, inténtelo de nuevo.";
+                var reply = await ReplyAsync(responseMessage).ConfigureAwait(false);
+                await Task.Delay(6000).ConfigureAwait(false);
+                await reply.DeleteAsync().ConfigureAwait(false);
+                return;
             }
 
-            if (!la.Valid && la.Results.Any(m => m.Identifier is CheckIdentifier.Memory))
-            {
-                var clone = (T)pk.Clone();
-
-                clone.HandlingTrainerName = pk.OriginalTrainerName;
-                clone.HandlingTrainerGender = pk.OriginalTrainerGender;
-
-                if (clone is PK8 or PA8 or PB8 or PK9)
-                    ((dynamic)clone).HandlingTrainerLanguage = (byte)pk.Language;
-
-                clone.CurrentHandler = 1;
-
-                la = new LegalityAnalysis(clone);
-
-                if (la.Valid) pk = clone;
-            }
-
-            await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, false, isMysteryEgg, lgcode, ignoreAutoOT).ConfigureAwait(false);
+            await QueueHelper<T>.AddToQueueAsync(
+                Context,
+                code,
+                trainerName,
+                sig,
+                pk,
+                PokeRoutineType.LinkTrade,
+                tradeType,
+                usr,
+                isBatchTrade,
+                batchTradeNumber,
+                totalBatchTrades,
+                isHiddenTrade,
+                false,
+                isMysteryEgg,
+                lgcode: lgcode,
+                ignoreAutoOT: ignoreAutoOT).ConfigureAwait(false);
         }
 
         private static List<Pictocodes> GenerateRandomPictocodes(int count)
         {
             Random rnd = new();
-            List<Pictocodes> randomPictocodes = [];
+            List<Pictocodes> randomPictocodes = new();
             Array pictocodeValues = Enum.GetValues(typeof(Pictocodes));
 
             for (int i = 0; i < count; i++)
