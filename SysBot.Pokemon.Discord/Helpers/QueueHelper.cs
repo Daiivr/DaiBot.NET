@@ -201,8 +201,31 @@ public static class QueueHelper<T> where T : PKM, new()
                 embedBuilder.Footer.IconUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/setedited.png";
                 embedBuilder.AddField("__**Aviso**__: **Tu conjunto de showdown no era válido.**", $"{AutocorrectText}");
             }
-            if (isNonNative)
+            // Check if the Pokemon is Non-Native and/or has a Home Tracker
+            if (pk is IHomeTrack homeTrack)
             {
+                if (homeTrack.HasTracker && isNonNative)
+                {
+                    // Both Non-Native and has Home Tracker
+                    embedBuilder.Footer.IconUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/exclamation.gif";
+                    embedBuilder.AddField("__**Aviso**__: **Este Pokémon no es nativo y tiene rastreador de Home.**", "*No podra entrar a HOME y AutoOT no fue aplicado.*");
+                }
+                else if (homeTrack.HasTracker)
+                {
+                    // Only has Home Tracker
+                    embedBuilder.Footer.IconUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/exclamation.gif";
+                    embedBuilder.AddField("__**Aviso**__: **Rastreador de HOME detectado.**", "*AutoOT no fue aplicado.*");
+                }
+                else if (isNonNative)
+                {
+                    // Only Non-Native
+                    embedBuilder.Footer.IconUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/exclamation.gif";
+                    embedBuilder.AddField("__**Aviso**__: **Este Pokémon no es nativo.**", $"{NonNative}");
+                }
+            }
+            else if (isNonNative)
+            {
+                // Fallback for Non-Native Pokemon that don't implement IHomeTrack
                 embedBuilder.Footer.IconUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/exclamation.gif";
                 embedBuilder.AddField("__**Aviso**__: **Este Pokémon no es nativo.**", $"{NonNative}");
             }

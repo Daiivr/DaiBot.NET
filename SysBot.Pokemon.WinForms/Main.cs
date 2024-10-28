@@ -406,14 +406,23 @@ public sealed partial class Main : Form
     private async void Updater_Click(object sender, EventArgs e)
     {
         var (updateAvailable, updateRequired, newVersion) = await UpdateChecker.CheckForUpdatesAsync();
-        if (updateAvailable)
+        if (!updateAvailable)
         {
-            UpdateForm updateForm = new UpdateForm(updateRequired, newVersion);
-            updateForm.ShowDialog();
+            var result = MessageBox.Show(
+                "Está en la última versión. ¿Desea volver a descargar la versión actual?",
+                "Comprobación de actualización",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+            if (result == DialogResult.Yes)
+            {
+                UpdateForm updateForm = new UpdateForm(updateRequired, newVersion, updateAvailable: false);
+                updateForm.ShowDialog();
+            }
         }
         else
         {
-            MessageBox.Show("No hay actualizaciones disponibles.", "Comprobación de actualización", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            UpdateForm updateForm = new UpdateForm(updateRequired, newVersion, updateAvailable: true);
+            updateForm.ShowDialog();
         }
     }
 

@@ -11,58 +11,44 @@ namespace SysBot.Pokemon.WinForms
     public class UpdateChecker
     {
         private const string RepositoryOwner = "Daiivr";
+
         private const string RepositoryName = "DaiBot.NET";
 
-        public static async Task<(bool UpdateAvailable, bool UpdateRequired, string NewVersion)> CheckForUpdatesAsync(bool showUpdateForm = false)
+        public static async Task<(bool UpdateAvailable, bool UpdateRequired, string NewVersion)> CheckForUpdatesAsync(bool showUpdateForm = false, bool forceShow = false)
         {
             ReleaseInfo? latestRelease = await FetchLatestReleaseAsync();
 
             bool updateAvailable = latestRelease != null && latestRelease.TagName != TradeBot.Version;
 #pragma warning disable CS8604 // Possible null reference argument.
-            bool updateRequired = latestRelease?.Prerelease == false && IsUpdateRequired(latestRelease.Body);
+            bool updateRequired = latestRelease?.Prerelease == false && IsUpdateRequired(latestRelease?.Body);
 #pragma warning restore CS8604 // Possible null reference argument.
             string? newVersion = latestRelease?.TagName;
 
-            if (updateAvailable && showUpdateForm)
+            if (updateAvailable && showUpdateForm || forceShow)
             {
-#pragma warning disable CS8604 // Possible null reference argument.
-                UpdateForm updateForm = new(updateRequired, newVersion);
-#pragma warning restore CS8604 // Possible null reference argument.
+                var updateForm = new UpdateForm(updateRequired, newVersion ?? "", updateAvailable);
                 updateForm.ShowDialog();
             }
 
-#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
-            return (updateAvailable, updateRequired, newVersion);
-#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+            return (updateAvailable, updateRequired, newVersion ?? string.Empty);
         }
 
 
         public static async Task<string> FetchChangelogAsync()
         {
             ReleaseInfo? latestRelease = await FetchLatestReleaseAsync();
-
-            if (latestRelease == null)
-                return "No se pudo recuperar la información de la versión más reciente.";
-
-#pragma warning disable CS8603 // Possible null reference return.
-            return latestRelease.Body;
-#pragma warning restore CS8603 // Possible null reference return.
+            return latestRelease?.Body ?? "No se pudo obtener la información de la última versión.";
         }
 
         public static async Task<string?> FetchDownloadUrlAsync()
         {
             ReleaseInfo? latestRelease = await FetchLatestReleaseAsync();
-
-            if (latestRelease == null)
+            if (latestRelease?.Assets == null)
                 return null;
 
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-#pragma warning disable CS8604 // Possible null reference argument.
-            string? downloadUrl = latestRelease.Assets.FirstOrDefault(a => a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))?.BrowserDownloadUrl;
-#pragma warning restore CS8604 // Possible null reference argument.
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
-
-            return downloadUrl;
+            return latestRelease.Assets
+                            .FirstOrDefault(a => a.Name?.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) == true)
+                            ?.BrowserDownloadUrl;
         }
 
         private static async Task<ReleaseInfo?> FetchLatestReleaseAsync()
@@ -70,29 +56,29 @@ namespace SysBot.Pokemon.WinForms
             using var client = new HttpClient();
             try
             {
-                // Add a custom header to identify the request
                 client.DefaultRequestHeaders.Add("User-Agent", "DaiBot.NET");
 
-                string releasesUrl = $"http://api.github.com/repos/{RepositoryOwner}/{RepositoryName}/releases/latest";
+                string releasesUrl = $"https://api.github.com/repos/{RepositoryOwner}/{RepositoryName}/releases/latest";
                 HttpResponseMessage response = await client.GetAsync(releasesUrl);
 
                 if (!response.IsSuccessStatusCode)
                 {
+                    string errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"GitHub API Error: {response.StatusCode} - {errorContent}");
                     return null;
                 }
 
                 string jsonContent = await response.Content.ReadAsStringAsync();
-                ReleaseInfo? release = JsonConvert.DeserializeObject<ReleaseInfo>(jsonContent);
-
-                return release;
+                return JsonConvert.DeserializeObject<ReleaseInfo>(jsonContent);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Error al obtener la información de la versión: {ex.Message}");
                 return null;
             }
         }
 
-        private static bool IsUpdateRequired(string changelogBody)
+        private static bool IsUpdateRequired(string? changelogBody)
         {
             return !string.IsNullOrWhiteSpace(changelogBody) &&
                    changelogBody.Contains("Required = Yes", StringComparison.OrdinalIgnoreCase);
