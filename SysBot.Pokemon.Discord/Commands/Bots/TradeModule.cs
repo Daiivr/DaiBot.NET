@@ -256,6 +256,17 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
 
         pk.ResetPartyStats();
+
+        // Ad Name Check
+        if (Info.Hub.Config.Trade.TradeConfiguration.EnableSpamCheck)
+        {
+            if (TradeExtensions<T>.HasAdName(pk, out string ad))
+            {
+                await ReplyAndDeleteAsync("❌ Nombre de anuncio detectado en el nombre del Pokémon o en el nombre del entrenador, lo cual no está permitido.", 5);
+                return;
+            }
+        }
+
         var sig = Context.User.GetFavor();
         await QueueHelper<T>.AddToQueueAsync(Context, code, Context.User.Username, sig, pk, PokeRoutineType.LinkTrade, PokeTradeType.Specific).ConfigureAwait(false);
         if (Context.Message is IUserMessage userMessage)
@@ -689,6 +700,16 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                     pk.EggMetDate = pk.MetDate;
                 pk.ResetPartyStats();
 
+                // Ad Name Check
+                if (Info.Hub.Config.Trade.TradeConfiguration.EnableSpamCheck)
+                {
+                    if (TradeExtensions<T>.HasAdName(pk, out string ad))
+                    {
+                        await ReplyAndDeleteAsync("❌ Nombre de anuncio detectado en el nombre del Pokémon o en el nombre del entrenador, lo cual no está permitido.", 5);
+                        return;
+                    }
+                }
+
                 var sig = Context.User.GetFavor();
                 await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isBatchTrade: false, batchTradeNumber: 1, totalBatchTrades: 1, true, false, lgcode: lgcode, ignoreAutoOT: ignoreAutoOT, setEdited: setEdited).ConfigureAwait(false);
             }
@@ -944,6 +965,16 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 if (pk.WasEgg)
                     pk.EggMetDate = pk.MetDate;
                 pk.ResetPartyStats();
+
+                // Ad Name Check
+                if (Info.Hub.Config.Trade.TradeConfiguration.EnableSpamCheck)
+                {
+                    if (TradeExtensions<T>.HasAdName(pk, out string ad))
+                    {
+                        await ReplyAndDeleteAsync("❌ Nombre de anuncio detectado en el nombre del Pokémon o en el nombre del entrenador, lo cual no está permitido.", 5);
+                        return;
+                    }
+                }
 
                 var sig = Context.User.GetFavor();
                 await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, isBatchTrade: false, batchTradeNumber: 1, totalBatchTrades: 1, lgcode: lgcode, ignoreAutoOT: ignoreAutoOT, setEdited: setEdited).ConfigureAwait(false);
@@ -1214,6 +1245,16 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 var code = Info.GetRandomTradeCode(userID);
                 var lgcode = Info.GetRandomLGTradeCode();
 
+                // Ad Name Check
+                if (Info.Hub.Config.Trade.TradeConfiguration.EnableSpamCheck)
+                {
+                    if (TradeExtensions<T>.HasAdName(pk, out string ad))
+                    {
+                        await ReplyAndDeleteAsync("❌ Nombre de anuncio detectado en el nombre del Pokémon o en el nombre del entrenador, lo cual no está permitido.", 5);
+                        return;
+                    }
+                }
+
                 // Add the trade to the queue
                 var sig = Context.User.GetFavor();
                 await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode, tradeType: PokeTradeType.Batch).ConfigureAwait(false);
@@ -1368,6 +1409,17 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                 {
                     lgcode = TradeModule<T>.GenerateRandomPictocodes(3);
                 }
+
+                // Ad Name Check
+                if (Info.Hub.Config.Trade.TradeConfiguration.EnableSpamCheck)
+                {
+                    if (TradeExtensions<T>.HasAdName(pk, out string ad))
+                    {
+                        await ReplyAndDeleteAsync("❌ Nombre de anuncio detectado en el nombre del Pokémon o en el nombre del entrenador, lo cual no está permitido.", 5);
+                        return;
+                    }
+                }
+
                 var sig = Context.User.GetFavor();
                 await AddTradeToQueueAsync(batchTradeCode, Context.User.Username, pk, sig, Context.User, isBatchTrade, batchTradeNumber, totalBatchTrades, lgcode: lgcode, tradeType: PokeTradeType.Batch, ignoreAutoOT: ignoreAutoOT, setEdited: setEdited).ConfigureAwait(false);
             }
