@@ -290,37 +290,61 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
     {
         nextDetail = null;
         var batchQueue = Hub.Queues.GetQueue(PokeRoutineType.Batch);
-        Log($"Buscando el próximo intercambio después de: {currentTrade.BatchTradeNumber}/{currentTrade.TotalBatchTrades} (ID: {currentTrade.UniqueTradeID})");
-        // Get a snapshot of all trades without dequeuing
-        var allTrades = batchQueue.Queue.GetSnapshot();
-        // Log the trades in the queue
-        foreach (var kvp in allTrades)
+        Log($"Buscando el próximo intercambio después de: {currentTrade.BatchTradeNumber}/{currentTrade.TotalBatchTrades}");
+
+        // Get all trades for this user
+        var userTrades = batchQueue.Queue.GetSnapshot()
+            .Select(x => x.Value)
+            .Where(x => x.Trainer.ID == currentTrade.Trainer.ID)
+            .OrderBy(x => x.BatchTradeNumber)
+            .ToList();
+
+        // Log what we found
+        foreach (var trade in userTrades)
         {
-            var trade = kvp.Value;
-            Log($"Encontré un intercambio en la cola: #{trade.BatchTradeNumber}/{trade.TotalBatchTrades} (ID: {trade.UniqueTradeID}) Para entrenador: {trade.Trainer.TrainerName}");
+            Log($"Encontré un intercambio en la cola: #{trade.BatchTradeNumber}/{trade.TotalBatchTrades} para el entrenador: {trade.Trainer.TrainerName}");
         }
-        // Find the next trade that matches our UniqueTradeID
-        var nextTrade = allTrades
-            .Where(x => x.Value.UniqueTradeID == currentTrade.UniqueTradeID && x.Value.BatchTradeNumber > currentTrade.BatchTradeNumber)
-            .OrderBy(x => x.Value.BatchTradeNumber)
-            .FirstOrDefault();
-        if (nextTrade.Value != null)
+
+        // Get the next sequential trade
+        nextDetail = userTrades.FirstOrDefault(x => x.BatchTradeNumber == currentTrade.BatchTradeNumber + 1);
+
+        if (nextDetail != null)
         {
-            Log($"Encontrado el próximo intercambio: {nextTrade.Value.BatchTradeNumber}/{nextTrade.Value.TotalBatchTrades}");
-            nextDetail = nextTrade.Value;
+            Log($"Seleccionando el próximo intercambio: {nextDetail.BatchTradeNumber}/{nextDetail.TotalBatchTrades}");
             return true;
         }
-        Log($"⚠️ No se encontraron más intercambios para el ID de lote: {currentTrade.UniqueTradeID}");
+        Log($"⚠️ No se encontraron más intercambios para este usuario");
         return false;
     }
-    
+
+    private void CleanupAllBatchTradesFromQueue(PokeTradeDetail<PB8> detail)
+    {
+        var result = Hub.Queues.Info.ClearTrade(detail.Trainer.ID);
+        var batchQueue = Hub.Queues.GetQueue(PokeRoutineType.Batch);
+        // Clear any remaining trades for this batch from the queue
+        var remainingTrades = batchQueue.Queue.GetSnapshot()
+            .Where(x => x.Value.Trainer.ID == detail.Trainer.ID &&
+                        x.Value.UniqueTradeID == detail.UniqueTradeID)
+            .ToList();
+        foreach (var trade in remainingTrades)
+        {
+            batchQueue.Queue.Remove(trade.Value);
+        }
+        Log($"✅ Se han limpiado los intercambios por lotes para TrainerID: {detail.Trainer.ID}, UniqueTradeID: {detail.UniqueTradeID}");
+    }
+
     private async Task HandleAbortedBatchTrade(PokeTradeDetail<PB8> detail, PokeRoutineType type, uint priority, PokeTradeResult result, CancellationToken token)
     {
         if (detail.TotalBatchTrades > 1)
         {
+            // Send notification once before cleanup
             detail.SendNotification(this, $"El trade {detail.BatchTradeNumber}/{detail.TotalBatchTrades} falló. Se cancelarán las operaciones restantes del lote.");
-            Hub.Queues.Info.ClearTrade(detail.Trainer.ID);
+
+            CleanupAllBatchTradesFromQueue(detail);
+            // Mark this specific trade as canceled
+
             detail.TradeCanceled(this, result);
+
             await EnsureOutsideOfUnionRoom(token).ConfigureAwait(false);
         }
         else
@@ -1111,41 +1135,64 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
             var received = await ReadPokemon(BoxStartOffset, BoxFormatSlotSize, token).ConfigureAwait(false);
             if (SearchUtil.HashByDetails(received) == SearchUtil.HashByDetails(toSend) && received.Checksum == toSend.Checksum)
             {
-                if (completedTrades > 0)
-                    poke.SendNotification(this, "⚠️ La operación no se ha completado. Se cancelaron los intercambios por lote restantes.");
+                poke.SendNotification(this, "⚠️ La operación no se completó correctamente.");
                 await EnsureOutsideOfUnionRoom(token).ConfigureAwait(false);
                 return PokeTradeResult.TrainerTooSlow;
             }
-            completedTrades++;
+
             UpdateCountsAndExport(poke, received, toSend);
+            LogSuccessfulTrades(poke, trainerNID, tradePartner.TrainerName);
+            completedTrades++;
 
-            // Complete this individual trade
-            poke.TradeFinished(this, received);
-            Hub.Queues.CompleteTrade(this, poke);
+            // Store received Pokemon
+            _batchTracker.AddReceivedPokemon(poke.Trainer.ID, received);
 
-            if (completedTrades < startingDetail.TotalBatchTrades)
+            if (completedTrades == startingDetail.TotalBatchTrades)
             {
-                // Get next trade in batch
-                if (GetNextBatchTrade(poke, out var nextDetail))
+                // Get all collected Pokemon before cleaning anything up
+                var allReceived = _batchTracker.GetReceivedPokemon(poke.Trainer.ID);
+
+                // First send notification that trades are complete
+                poke.SendNotification(this, "✅ ¡Todos los intercambios por lotes completados! ¡Gracias por tradear!");
+
+                // Then finish each trade with the corresponding received Pokemon
+                if (Hub.Config.Discord.ReturnPKMs)
                 {
-                    if (nextDetail == null)
+                    foreach (var pokemon in allReceived)
                     {
-                        poke.SendNotification(this, "⚠️ Error en la secuencia de lotes. Terminando operaciones.");
-                        await EnsureOutsideOfUnionRoom(token).ConfigureAwait(false);
-                        return PokeTradeResult.Success;
+                        poke.TradeFinished(this, pokemon);  // This sends each Pokemon back to the user
                     }
-                    // Setup next trade
-                    poke = nextDetail;
-                    poke.SendNotification(this, $"✅ Intercambio {completedTrades} completado! Preparando el siguiente Pokémon: ({nextDetail.BatchTradeNumber}/{nextDetail.TotalBatchTrades}). Por favor, espera en la pantalla de intercambio!");
-                    await Task.Delay(3_000, token).ConfigureAwait(false);
-                    continue;
                 }
+                // Finally do cleanup
+                Hub.Queues.CompleteTrade(this, poke);
+                CleanupAllBatchTradesFromQueue(poke);
+                _batchTracker.ClearReceivedPokemon(poke.Trainer.ID);
+                break;
             }
-            Hub.Queues.Info.ClearTrade(poke.Trainer.ID);
-            poke.SendNotification(this, "✅ ¡Todos los intercambios por lotes completados! ¡Gracias por tradear!");
-            await Task.Delay(3_000, token).ConfigureAwait(false);
+            if (GetNextBatchTrade(poke, out var nextDetail))
+            {
+                if (nextDetail == null)
+                {
+                    poke.SendNotification(this, "⚠️ Error en la secuencia de lotes. Terminando operaciones.");
+                    await EnsureOutsideOfUnionRoom(token).ConfigureAwait(false);
+                    return PokeTradeResult.Success;
+                }
+
+                poke.SendNotification(this, $"✅ Intercambio {completedTrades} completado! Preparando el siguiente Pokémon: ({nextDetail.BatchTradeNumber}/{nextDetail.TotalBatchTrades}). Por favor, espera en la pantalla de intercambio!");
+                poke = nextDetail;
+                await Click(A, 1_000, token).ConfigureAwait(false);
+                if (poke.TradeData.Species != 0)
+                {
+                    await SetBoxPokemonAbsolute(BoxStartOffset, poke.TradeData, token, sav).ConfigureAwait(false);
+                }
+                continue;
+            }
+            poke.SendNotification(this, "⚠️ No puedo encontrar el próximo intercambio en secuencia. El intercambio en lote se cancelará.");
             await EnsureOutsideOfUnionRoom(token).ConfigureAwait(false);
+            return PokeTradeResult.Success;
         }
+
+        await EnsureOutsideOfUnionRoom(token).ConfigureAwait(false);
         return PokeTradeResult.Success;
     }
     private async Task PerformTrade(SAV8BS sav, PokeTradeDetail<PB8> detail, PokeRoutineType type, uint priority, CancellationToken token)
@@ -1153,8 +1200,6 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
         PokeTradeResult result;
         try
         {
-            // Keep track of the first trade in batch for cleanup purposes
-            bool isFirstInBatch = detail.BatchTradeNumber == 1;
             if (detail.Type == PokeTradeType.Batch)
                 result = await PerformBatchTrade(sav, detail, token).ConfigureAwait(false);
             else
@@ -1163,14 +1208,6 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
             if (result == PokeTradeResult.Success)
             {
                 PB8? receivedPokemon = await ReadPokemon(BoxStartOffset, BoxFormatSlotSize, token).ConfigureAwait(false);
-                // Complete every trade individually
-                detail.TradeFinished(this, receivedPokemon);
-                Hub.Queues.CompleteTrade(this, detail);
-                // Only send completion notification on last trade
-                if (detail.BatchTradeNumber == detail.TotalBatchTrades)
-                {
-                    detail.SendNotification(this, "✅ ¡Todas las operaciones por lotes se completaron con éxito!");
-                }
                 return;
             }
             // Handle failed trades

@@ -7,6 +7,7 @@ using System.IO;
 using static SysBot.Base.SwitchButton;
 using System.Threading;
 using System.Threading.Tasks;
+using SysBot.Pokemon.Helpers;
 
 namespace SysBot.Pokemon;
 
@@ -15,6 +16,7 @@ public abstract class PokeRoutineExecutor<T>(IConsoleBotManaged<IConsoleConnecti
     where T : PKM, new()
 {
     private const ulong dmntID = 0x010000000000000d;
+    public readonly BatchTradeTracker<T> _batchTracker = new();
 
     // Check if either Tesla or dmnt are active if the sanity check for Trainer Data fails, as these are common culprits.
     private const ulong ovlloaderID = 0x420000000007e51a;
