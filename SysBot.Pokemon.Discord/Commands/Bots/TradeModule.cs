@@ -542,7 +542,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         }
         var ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
         content = ReusableActions.StripCodeBlock(content);
-        content = TradeExtensions<T>.ConvertBalls(content);
 
         // Check if the showdown set contains "Egg"
         bool isEgg = TradeExtensions<T>.IsEggCheck(content);
@@ -811,7 +810,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         var ignoreAutoOT = content.Contains("OT:") || content.Contains("TID:") || content.Contains("SID:");
         content = ReusableActions.StripCodeBlock(content);
-        content = TradeExtensions<T>.ConvertBalls(content);
 
         // Check if the showdown set contains "Egg"
         bool isEgg = TradeExtensions<T>.IsEggCheck(content);
