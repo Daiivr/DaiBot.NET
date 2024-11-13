@@ -159,7 +159,7 @@ public class PokeTradeBotBS(PokeTradeHub<PB8> Hub, PokeBotState Config) : PokeRo
     {
         if (toSend is IHomeTrack pk && pk.HasTracker)
         {
-            Log("Rastreador HOME detectado.  No se puede aplicar Auto OT.");
+            Log("Rastreador HOME detectado. No se puede aplicar Auto OT.");
             return toSend;
         }
         // Current handler cannot be past gen OT

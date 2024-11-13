@@ -8,6 +8,7 @@ using PKHeX.Drawing.PokeSprite;
 using SysBot.Pokemon.Discord.Commands.Bots;
 using SysBot.Pokemon.Helpers;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -27,6 +28,18 @@ public static class QueueHelper<T> where T : PKM, new()
     private static readonly Dictionary<int, List<string>> batchTradeFiles = [];
 
     private static readonly Dictionary<ulong, int> userBatchTradeMaxDetailId = [];
+
+    private static readonly ConcurrentDictionary<ulong, int> ActiveBatchIds = new();
+    private static int GetOrCreateBatchId(ulong userId, int batchTradeNumber)
+    {
+        if (batchTradeNumber == 1)
+        {
+            var newId = GenerateUniqueTradeID();
+            ActiveBatchIds[userId] = newId;
+            return newId;
+        }
+        return ActiveBatchIds.TryGetValue(userId, out var existingId) ? existingId : GenerateUniqueTradeID();
+    }
 
     public static async Task AddToQueueAsync(SocketCommandContext context, int code, string trainer, RequestSignificance sig, T trade, PokeRoutineType routine, PokeTradeType type, SocketUser trader, bool isBatchTrade = false, int batchTradeNumber = 1, int totalBatchTrades = 1, bool isHiddenTrade = false, bool isMysteryTrade = false, bool isMysteryEgg = false, List<Pictocodes>? lgcode = null, bool ignoreAutoOT = false, bool setEdited = false, bool isNonNative = false)
     {
@@ -76,7 +89,9 @@ public static class QueueHelper<T> where T : PKM, new()
 #pragma warning disable CS8604 // Possible null reference argument.
         var notifier = new DiscordTradeNotifier<T>(pk, trainer, code, trader, batchTradeNumber, totalBatchTrades, isMysteryTrade, isMysteryEgg, lgcode: lgcode);
 #pragma warning restore CS8604 // Possible null reference argument.
-        var uniqueTradeID = GenerateUniqueTradeID();
+        int uniqueTradeID = isBatchTrade
+            ? GetOrCreateBatchId(userID, batchTradeNumber)
+            : GenerateUniqueTradeID();
         var detail = new PokeTradeDetail<T>(pk, trainer, notifier, t, code, sig == RequestSignificance.Favored, lgcode, batchTradeNumber, totalBatchTrades, isMysteryTrade, isMysteryEgg, uniqueTradeID, ignoreAutoOT, setEdited);
         var trade = new TradeEntry<T>(detail, userID, PokeRoutineType.LinkTrade, name, uniqueTradeID);
         var hub = SysCord<T>.Runner.Hub;
@@ -84,7 +99,10 @@ public static class QueueHelper<T> where T : PKM, new()
         var allowMultiple = isBatchTrade;
         var isSudo = sig == RequestSignificance.Owner;
         var added = Info.AddToTradeQueue(trade, userID, allowMultiple, isSudo);
-
+        if (isBatchTrade && batchTradeNumber == totalBatchTrades)
+        {
+            ActiveBatchIds.TryRemove(userID, out _);
+        }
         int totalTradeCount = 0;
         TradeCodeStorage.TradeCodeDetails? tradeDetails = null;
         if (SysCord<T>.Runner.Config.Trade.TradeConfiguration.StoreTradeCodes)
@@ -283,8 +301,8 @@ public static class QueueHelper<T> where T : PKM, new()
     private static int GenerateUniqueTradeID()
     {
         long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        int randomValue = new Random().Next(1000);
-        return ((int)(timestamp % int.MaxValue) * 1000) + randomValue;
+        int randomValue = Random.Shared.Next(1000);
+        return (int)((timestamp % int.MaxValue) * 1000 + randomValue);
     }
 
     private static string GetImageFolderPath()

@@ -83,6 +83,15 @@ public sealed class FavoredCPQ<TKey, TValue> : ConcurrentPriorityQueue<TKey, TVa
         }
     }
 
+    public List<KeyValuePair<TKey, TValue>> GetSnapshot()
+    {
+        lock (_syncLock)
+        {
+            var items = Queue.Items;
+            return new List<KeyValuePair<TKey, TValue>>(items);
+        }
+    }
+
     private static int GetInsertPosition(int total, int favored, IFavoredCPQSetting s)
     {
         int unfavored = total - favored;

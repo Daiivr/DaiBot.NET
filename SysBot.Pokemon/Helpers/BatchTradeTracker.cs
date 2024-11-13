@@ -1,73 +1,50 @@
-using System;
-using System.Collections.Concurrent;
-using System.Linq;
 using PKHeX.Core;
-using SysBot.Base;
+using System.Collections.Concurrent;
+using System;
+using System.Linq;
 
-namespace SysBot.Pokemon
+namespace SysBot.Pokemon.Helpers
 {
     public class BatchTradeTracker<T> where T : PKM, new()
     {
-        private readonly ConcurrentDictionary<ulong, (string BotName, int LastBatchNumber, int TotalBatchTrades)> _activeTrainersByBot = new();
-        private readonly ConcurrentDictionary<ulong, DateTime> _lastTradeTime = new();
+        // Just track which bot is handling which batch
+        private readonly ConcurrentDictionary<(ulong TrainerId, int UniqueTradeID), string> _activeBatches = new();
         private readonly TimeSpan _tradeTimeout = TimeSpan.FromMinutes(5);
+        private readonly ConcurrentDictionary<(ulong TrainerId, int UniqueTradeID), DateTime> _lastTradeTime = new();
 
         public bool CanProcessBatchTrade(PokeTradeDetail<T> trade)
         {
             if (trade.TotalBatchTrades <= 1)
-                return true; // Not a batch trade
+                return true;
 
             CleanupStaleEntries();
+            var key = (trade.Trainer.ID, trade.UniqueTradeID);
 
-            // Check if this trainer is already being served by a bot
-            if (_activeTrainersByBot.TryGetValue(trade.Trainer.ID, out var existing))
-            {
-                // Verify the sequence
-                bool isNextInSequence = trade.BatchTradeNumber == existing.LastBatchNumber + 1;
-                bool isSameTotalTrades = trade.TotalBatchTrades == existing.TotalBatchTrades;
+            // If _nobodyishome is handling this batch yet, allow it
+            if (!_activeBatches.ContainsKey(key))
+                return true;
 
-                return isNextInSequence && isSameTotalTrades;
-            }
-
-            // Only allow starting from the first trade in a batch
-            bool canStart = trade.BatchTradeNumber == 1;
-            return canStart;
+            return true; // Allow all trades from this batch
         }
 
         public bool TryClaimBatchTrade(PokeTradeDetail<T> trade, string botName)
         {
             if (trade.TotalBatchTrades <= 1)
-                return true; // Not a batch trade
+                return true;
 
-            CleanupStaleEntries();
+            var key = (trade.Trainer.ID, trade.UniqueTradeID);
 
-            // Check if this trainer is already being served by a bot
-            if (_activeTrainersByBot.TryGetValue(trade.Trainer.ID, out var existing))
+            // If we already have this batch, make sure it's the same bot
+            if (_activeBatches.TryGetValue(key, out var existingBot))
             {
-                // If this is from the same batch sequence
-                if (trade.BatchTradeNumber == existing.LastBatchNumber + 1 &&
-                    trade.TotalBatchTrades == existing.TotalBatchTrades)
-                {
-                    if (existing.BotName != botName)
-                        return false;
-
-                    // Update the last batch number
-                    return _activeTrainersByBot.TryUpdate(
-                        trade.Trainer.ID,
-                        (botName, trade.BatchTradeNumber, trade.TotalBatchTrades),
-                        existing);
-                }
-                return false;
+                _lastTradeTime[key] = DateTime.Now;
+                return botName == existingBot;
             }
 
-            // Only allow claiming from the first trade
-            if (trade.BatchTradeNumber != 1)
-                return false;
-
-            // Try to claim this trainer for this bot
-            if (_activeTrainersByBot.TryAdd(trade.Trainer.ID, (botName, trade.BatchTradeNumber, trade.TotalBatchTrades)))
+            // claim this batch
+            if (_activeBatches.TryAdd(key, botName))
             {
-                _lastTradeTime[trade.Trainer.ID] = DateTime.Now;
+                _lastTradeTime[key] = DateTime.Now;
                 return true;
             }
 
@@ -79,36 +56,29 @@ namespace SysBot.Pokemon
             if (trade.TotalBatchTrades <= 1)
                 return;
 
-            _lastTradeTime[trade.Trainer.ID] = DateTime.Now;
+            var key = (trade.Trainer.ID, trade.UniqueTradeID);
+            _lastTradeTime[key] = DateTime.Now;
 
+            // Only remove tracking when it's the last trade
             if (trade.BatchTradeNumber == trade.TotalBatchTrades)
             {
-                // Last trade in batch - remove all tracking for this trainer
-                _activeTrainersByBot.TryRemove(trade.Trainer.ID, out _);
-                _lastTradeTime.TryRemove(trade.Trainer.ID, out _);
-            }
-            else if (_activeTrainersByBot.TryGetValue(trade.Trainer.ID, out var existing))
-            {
-                // Update the last batch number after completing a trade
-                _activeTrainersByBot.TryUpdate(
-                    trade.Trainer.ID,
-                    (existing.BotName, trade.BatchTradeNumber, trade.TotalBatchTrades),
-                    existing);
+                _activeBatches.TryRemove(key, out _);
+                _lastTradeTime.TryRemove(key, out _);
             }
         }
 
         private void CleanupStaleEntries()
         {
             var now = DateTime.Now;
-            var staleTrainers = _lastTradeTime
+            var staleKeys = _lastTradeTime
                 .Where(x => now - x.Value > _tradeTimeout)
                 .Select(x => x.Key)
                 .ToList();
 
-            foreach (var trainerId in staleTrainers)
+            foreach (var key in staleKeys)
             {
-                _lastTradeTime.TryRemove(trainerId, out _);
-                _activeTrainersByBot.TryRemove(trainerId, out _);
+                _activeBatches.TryRemove(key, out _);
+                _lastTradeTime.TryRemove(key, out _);
             }
         }
     }
