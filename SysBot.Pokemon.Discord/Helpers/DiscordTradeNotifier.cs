@@ -113,29 +113,36 @@ public class DiscordTradeNotifier<T> : IPokeTradeNotifier<T>
     {
         OnFinish?.Invoke(routine);
         var tradedToUser = Data.Species;
+        string tradedSpeciesName = result.Species != 0 ? Enum.GetName(typeof(Species), result.Species) ?? "Unknown" : "";
+
         if (info.TotalBatchTrades > 1)
         {
-            // For batch trades, just send each Pokemon
-            if (Hub.Config.Discord.ReturnPKMs && result.Species != 0)
-                Trader.SendPKMAsync(result, "▼ Aqui esta lo que me enviaste! ▼").ConfigureAwait(false);
-            // Only send completion message on last trade
-            if (info.BatchTradeNumber == info.TotalBatchTrades)
+            // Send the embed only on the first trade of the batch
+            if (info.BatchTradeNumber == 1)
             {
                 var message = tradedToUser != 0 ?
-                    (info.IsMysteryTrade ? "<a:yes:1206485105674166292> Trade finalizado. ¡Has recibido un **Pokemon Misterioso**!" : (info.IsMysteryEgg ? "<a:yes:1206485105674166292> Trade finalizado. ¡Disfruta de tu **Huevo Misterioso**!" : $"<a:yes:1206485105674166292> Trade finalizado. Disfruta de tu **{(Species)tradedToUser}**!")) :
+                    (info.IsMysteryTrade ? "<a:yes:1206485105674166292> Trade finalizado. ¡Has recibido un **Pokemon Misterioso**!" :
+                     info.IsMysteryEgg ? "<a:yes:1206485105674166292> Trade finalizado. ¡Disfruta de tu **Huevo Misterioso**!" :
+                     $"<a:yes:1206485105674166292> Trade finalizado. Disfruta de tu **{(Species)tradedToUser}**!") :
                     "<a:yes:1206485105674166292> Trade por lotes finalizado!";
                 EmbedHelper.SendTradeFinishedEmbedAsync(Trader, message, Data, info.IsMysteryTrade, info.IsMysteryEgg).ConfigureAwait(false);
             }
+
+            // send each Pokemon file as they come in
+            if (Hub.Config.Discord.ReturnPKMs && result.Species != 0)
+                Trader.SendPKMAsync(result, $"▼ Aqui esta el {tradedSpeciesName} que me enviaste! ▼").ConfigureAwait(false);
         }
         else
         {
             // Original single trade logic
             var message = tradedToUser != 0 ?
-                (info.IsMysteryTrade ? "<a:yes:1206485105674166292> Trade finalizado. ¡Has recibido un **Pokemon Misterioso**!" : (info.IsMysteryEgg ? "<a:yes:1206485105674166292> Trade finalizado. ¡Disfruta de tu **Huevo Misterioso**!" : $"<a:yes:1206485105674166292> Trade finalizado. Disfruta de tu **{(Species)tradedToUser}**!")) :
+                (info.IsMysteryTrade ? "<a:yes:1206485105674166292> Trade finalizado. ¡Has recibido un **Pokemon Misterioso**!" :
+                 info.IsMysteryEgg ? "<a:yes:1206485105674166292> Trade finalizado. ¡Disfruta de tu **Huevo Misterioso**!" :
+                 $"<a:yes:1206485105674166292> Trade finalizado. Disfruta de tu **{(Species)tradedToUser}**!") :
                 "<a:yes:1206485105674166292> Trade finalizado!";
             EmbedHelper.SendTradeFinishedEmbedAsync(Trader, message, Data, info.IsMysteryTrade, info.IsMysteryEgg).ConfigureAwait(false);
             if (result.Species != 0 && Hub.Config.Discord.ReturnPKMs)
-                Trader.SendPKMAsync(result, "▼ Aqui esta lo que me enviaste! ▼").ConfigureAwait(false);
+                Trader.SendPKMAsync(result, $"▼ Aqui esta el {tradedSpeciesName} que me enviaste! ▼").ConfigureAwait(false);
         }
     }
 
