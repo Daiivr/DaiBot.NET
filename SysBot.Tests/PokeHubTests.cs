@@ -19,7 +19,9 @@ public class PokeHubTests
         var a = new T { Species = 5 };
         pool.Add(a);
 
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
         var trade = hub.Queues.TryDequeue(PokeRoutineType.FlexTrade, out _, out _, null);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         trade.Should().BeFalse();
 
         var ledy = hub.Queues.TryDequeueLedy(out var detail);
