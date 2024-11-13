@@ -313,32 +313,13 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
         Log($"⚠️ No se encontraron más intercambios para el ID de lote: {currentTrade.UniqueTradeID}");
         return false;
     }
-    private void CleanupAllBatchTradesFromQueue(PokeTradeDetail<PB8> detail, bool sendNotification = false)
-    {
-        var result = Hub.Queues.Info.ClearTrade(detail.Trainer.ID);
-        switch (result)
-        {
-            case QueueResultRemove.CurrentlyProcessing:
-                break;
-            case QueueResultRemove.CurrentlyProcessingRemoved:
-                break;
-            case QueueResultRemove.Removed:
-                break;
-            case QueueResultRemove.NotInQueue:
-                break;
-        }
-        if (sendNotification && (result == QueueResultRemove.Removed || result == QueueResultRemove.CurrentlyProcessingRemoved))
-        {
-            detail.SendNotification(this, "⚠️ Todas las operaciones de lotes restantes han sido canceladas.");
-        }
-        Hub.Queues.CompleteTrade(this, detail);
-    }
+    
     private async Task HandleAbortedBatchTrade(PokeTradeDetail<PB8> detail, PokeRoutineType type, uint priority, PokeTradeResult result, CancellationToken token)
     {
         if (detail.TotalBatchTrades > 1)
         {
             detail.SendNotification(this, $"El trade {detail.BatchTradeNumber}/{detail.TotalBatchTrades} falló. Se cancelarán las operaciones restantes del lote.");
-            CleanupAllBatchTradesFromQueue(detail, false);
+            Hub.Queues.Info.ClearTrade(detail.Trainer.ID);
             detail.TradeCanceled(this, result);
             await EnsureOutsideOfUnionRoom(token).ConfigureAwait(false);
         }
@@ -1023,6 +1004,14 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
                     await Click(A, 0_450, token).ConfigureAwait(false);
                 if (--waitPartner <= 0)
                 {
+                    // If we completed all trades, this is expected - return success
+                    if (completedTrades >= startingDetail.TotalBatchTrades - 1)
+                    {
+                        poke.SendNotification(this, "✅ ¡Todos los intercambios por lotes completados! ¡Gracias por tradear!");
+                        await EnsureOutsideOfUnionRoom(token).ConfigureAwait(false);
+                        return PokeTradeResult.Success;
+                    }
+                    // Otherwise, it's an actual error
                     if (completedTrades > 0)
                         poke.SendNotification(this, "⚠️ No se encontró ningún entrenador después de un intercambio exitoso. Se cancelaron los intercambios por lotes restantes..");
                     await EnsureOutsideOfUnionRoom(token).ConfigureAwait(false);
@@ -1129,6 +1118,11 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
             }
             completedTrades++;
             UpdateCountsAndExport(poke, received, toSend);
+
+            // Complete this individual trade
+            poke.TradeFinished(this, received);
+            Hub.Queues.CompleteTrade(this, poke);
+
             if (completedTrades < startingDetail.TotalBatchTrades)
             {
                 // Get next trade in batch
@@ -1147,13 +1141,14 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
                     continue;
                 }
             }
+            Hub.Queues.Info.ClearTrade(poke.Trainer.ID);
             poke.SendNotification(this, "✅ ¡Todos los intercambios por lotes completados! ¡Gracias por tradear!");
             await Task.Delay(3_000, token).ConfigureAwait(false);
             await EnsureOutsideOfUnionRoom(token).ConfigureAwait(false);
         }
         return PokeTradeResult.Success;
     }
-    private async Task<PokeTradeResult> PerformTrade(SAV8BS sav, PokeTradeDetail<PB8> detail, PokeRoutineType type, uint priority, CancellationToken token)
+    private async Task PerformTrade(SAV8BS sav, PokeTradeDetail<PB8> detail, PokeRoutineType type, uint priority, CancellationToken token)
     {
         PokeTradeResult result;
         try
@@ -1161,31 +1156,22 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
             // Keep track of the first trade in batch for cleanup purposes
             bool isFirstInBatch = detail.BatchTradeNumber == 1;
             if (detail.Type == PokeTradeType.Batch)
-            {
                 result = await PerformBatchTrade(sav, detail, token).ConfigureAwait(false);
-            }
             else
-            {
                 result = await PerformLinkCodeTrade(sav, detail, token).ConfigureAwait(false);
-            }
 
             if (result == PokeTradeResult.Success)
             {
                 PB8? receivedPokemon = await ReadPokemon(BoxStartOffset, BoxFormatSlotSize, token).ConfigureAwait(false);
-                // Single trade handling
-                if (detail.TotalBatchTrades <= 1)
+                // Complete every trade individually
+                detail.TradeFinished(this, receivedPokemon);
+                Hub.Queues.CompleteTrade(this, detail);
+                // Only send completion notification on last trade
+                if (detail.BatchTradeNumber == detail.TotalBatchTrades)
                 {
-                    detail.TradeFinished(this, receivedPokemon);
-                    Hub.Queues.CompleteTrade(this, detail);
+                    detail.SendNotification(this, "✅ ¡Todas las operaciones por lotes se completaron con éxito!");
                 }
-                // Batch trade handling
-                else if (detail.BatchTradeNumber == detail.TotalBatchTrades)
-                {
-                    // Last trade in batch completed successfully
-                    detail.TradeFinished(this, receivedPokemon);
-                    CleanupAllBatchTradesFromQueue(detail, true);
-                }
-                return result;
+                return;
             }
             // Handle failed trades
             if (detail.TotalBatchTrades > 1)
@@ -1196,7 +1182,6 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
             {
                 HandleAbortedTrade(detail, type, priority, result);
             }
-            return result;
         }
         catch (SocketException socket)
         {
@@ -1210,7 +1195,6 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
             Log(e.Message);
             result = PokeTradeResult.ExceptionInternal;
             await HandleAbortedBatchTrade(detail, type, priority, result, token).ConfigureAwait(false);
-            return result;
         }
     }
 
