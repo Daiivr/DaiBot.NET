@@ -187,11 +187,265 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
     protected virtual (PokeTradeDetail<PK8>? detail, uint priority) GetTradeData(PokeRoutineType type)
     {
         string botName = Connection.Name;
+
+        // First check the specific type's queue
         if (Hub.Queues.TryDequeue(type, out var detail, out var priority, botName))
+        {
             return (detail, priority);
-        if (hub.Queues.TryDequeueLedy(out detail))
+        }
+        // If we're doing FlexTrade, also check the Batch queue
+        if (type == PokeRoutineType.FlexTrade)
+        {
+            if (Hub.Queues.TryDequeue(PokeRoutineType.Batch, out detail, out priority, botName))
+            {
+                return (detail, priority);
+            }
+        }
+        if (Hub.Queues.TryDequeueLedy(out detail))
+        {
             return (detail, PokeTradePriorities.TierFree);
+        }
         return (null, PokeTradePriorities.TierFree);
+    }
+
+    private void CleanupAllBatchTradesFromQueue(PokeTradeDetail<PK8> detail)
+    {
+        var result = Hub.Queues.Info.ClearTrade(detail.Trainer.ID);
+        var batchQueue = Hub.Queues.GetQueue(PokeRoutineType.Batch);
+        // Clear any remaining trades for this batch from the queue
+        var remainingTrades = batchQueue.Queue.GetSnapshot()
+            .Where(x => x.Value.Trainer.ID == detail.Trainer.ID &&
+                       x.Value.UniqueTradeID == detail.UniqueTradeID)
+            .ToList();
+        foreach (var trade in remainingTrades)
+        {
+            batchQueue.Queue.Remove(trade.Value);
+        }
+        Log($"Se limpiaron los intercambios por lotes para TrainerID: {detail.Trainer.ID}");
+    }
+    private bool GetNextBatchTrade(PokeTradeDetail<PK8> currentTrade, out PokeTradeDetail<PK8>? nextDetail)
+    {
+        nextDetail = null;
+        var batchQueue = Hub.Queues.GetQueue(PokeRoutineType.Batch);
+        Log($"Buscando el próximo intercambio después de {currentTrade.BatchTradeNumber}/{currentTrade.TotalBatchTrades}.");
+        // Get all trades for this user
+        var userTrades = batchQueue.Queue.GetSnapshot()
+            .Select(x => x.Value)
+            .Where(x => x.Trainer.ID == currentTrade.Trainer.ID)
+            .OrderBy(x => x.BatchTradeNumber)
+            .ToList();
+        // Log what we found
+        foreach (var trade in userTrades)
+        {
+            Log($"Encontré un intercambio en la cola: {trade.BatchTradeNumber}/{trade.TotalBatchTrades} para el entrenador {trade.Trainer.TrainerName}.");
+        }
+        // Get the next sequential trade
+        nextDetail = userTrades.FirstOrDefault(x => x.BatchTradeNumber == currentTrade.BatchTradeNumber + 1);
+        if (nextDetail != null)
+        {
+            Log($"Seleccionado el siguiente intercambio {nextDetail.BatchTradeNumber}/{nextDetail.TotalBatchTrades}.");
+            return true;
+        }
+        Log("No se encontraron más trades para este usuario");
+        return false;
+    }
+    private async Task<PokeTradeResult> PerformBatchTrade(SAV8SWSH sav, PokeTradeDetail<PK8> poke, CancellationToken token)
+    {
+        // Update Barrier Settings
+        UpdateBarrier(poke.IsSynchronized);
+        poke.TradeInitialize(this);
+        hub.Config.Stream.EndEnterCode(this);
+        int completedTrades = 0;
+        var startingDetail = poke;
+        bool firstTrade = true;
+        while (completedTrades < startingDetail.TotalBatchTrades)
+        {
+            var toSend = poke.TradeData;
+            if (toSend.Species != 0)
+                await SetBoxPokemon(toSend, 0, 0, token, sav).ConfigureAwait(false);
+            if (firstTrade)
+            {
+                // Only do initial connection and code entry for the first trade
+                await EnsureConnectedToYComm(OverworldOffset, hub.Config, token).ConfigureAwait(false);
+                if (await CheckIfSoftBanned(token).ConfigureAwait(false))
+                    await UnSoftBan(token).ConfigureAwait(false);
+                if (!await IsOnOverworld(OverworldOffset, token).ConfigureAwait(false))
+                {
+                    await ExitTrade(true, token).ConfigureAwait(false);
+                    return PokeTradeResult.RecoverStart;
+                }
+                Log("Abriendo el menú de Y-Comm.");
+                await Click(Y, 2_000, token).ConfigureAwait(false);
+                Log("Seleccionar Enlace Comercial.");
+                await Click(A, 1_500, token).ConfigureAwait(false);
+                Log("Seleccionar código de enlace comercial.");
+                await Click(DDOWN, 500, token).ConfigureAwait(false);
+                for (int i = 0; i < 2; i++)
+                    await Click(A, 1_500, token).ConfigureAwait(false);
+                // All other languages require an extra A press at this menu.
+                if (GameLang != LanguageID.English && GameLang != LanguageID.Spanish)
+                    await Click(A, 1_500, token).ConfigureAwait(false);
+                // Loading Screen
+                if (poke.Type != PokeTradeType.Random)
+                    hub.Config.Stream.StartEnterCode(this);
+                await Task.Delay(hub.Config.Timings.MiscellaneousSettings.ExtraTimeOpenCodeEntry, token).ConfigureAwait(false);
+                var code = poke.Code;
+                Log($"Ingresando el código de enlace comercial: {code:0000 0000}...");
+                await EnterLinkCode(code, hub.Config, token).ConfigureAwait(false);
+                // Wait for Barrier to trigger all bots simultaneously.
+                WaitAtBarrierIfApplicable(token);
+                await Click(PLUS, 1_000, token).ConfigureAwait(false);
+                hub.Config.Stream.EndEnterCode(this);
+                // Confirming and return to overworld.
+                var delay_count = 0;
+                while (!await IsOnOverworld(OverworldOffset, token).ConfigureAwait(false))
+                {
+                    if (delay_count++ >= 5)
+                    {
+                        // Too many attempts, recover out of the trade.
+                        await ExitTrade(true, token).ConfigureAwait(false);
+                        return PokeTradeResult.RecoverPostLinkCode;
+                    }
+                    for (int i = 0; i < 5; i++)
+                        await Click(A, 0_800, token).ConfigureAwait(false);
+                }
+                firstTrade = false;
+            }
+            poke.TradeSearching(this);
+            var partnerFound = await WaitForTradePartnerOffer(token).ConfigureAwait(false);
+            if (!partnerFound)
+            {
+                if (completedTrades > 0)
+                    poke.SendNotification(this, $"⚠️ No se encontró ningún entrenador después del intercambio {completedTrades + 1}/{startingDetail.TotalBatchTrades}. Cancelando los intercambios restantes.");
+                await ExitTrade(false, token).ConfigureAwait(false);
+                return PokeTradeResult.NoTrainerFound;
+            }
+            // Extra delay needed to open box properly 
+            await Task.Delay(5_500 + hub.Config.Timings.MiscellaneousSettings.ExtraTimeOpenBox, token).ConfigureAwait(false);
+            var trainerName = await GetTradePartnerName(TradeMethod.LinkTrade, token).ConfigureAwait(false);
+            var trainerTID = await GetTradePartnerTID7(TradeMethod.LinkTrade, token).ConfigureAwait(false);
+            var trainerSID = await GetTradePartnerSID7(TradeMethod.LinkTrade, token).ConfigureAwait(false);
+            var trainerNID = await GetTradePartnerNID(token).ConfigureAwait(false);
+            RecordUtil<PokeTradeBotSWSH>.Record($"Iniciando\t{trainerNID:X16}\t{trainerName}\t{poke.Trainer.TrainerName}\t{poke.Trainer.ID}\t{poke.ID}\t{toSend.EncryptionConstant:X8}");
+            Log($"Encontré un entrenador para intercambiar: {trainerName}-{trainerTID} (ID: {trainerNID})");
+            poke.SendNotification(this, $"Entrenador encontrado: **{trainerName}**.\n\n▼\n Aqui esta tu Informacion\n **TID**: __{trainerTID}__\n **SID**: __{trainerSID}__\n▲\n\n Esperando por un __Pokémon__...");
+            var tradeCodeStorage = new TradeCodeStorage();
+            var existingTradeDetails = tradeCodeStorage.GetTradeDetails(poke.Trainer.ID);
+            bool shouldUpdateOT = existingTradeDetails?.OT != trainerName;
+            bool shouldUpdateTID = existingTradeDetails?.TID != int.Parse(trainerTID);
+            bool shouldUpdateSID = existingTradeDetails?.SID != int.Parse(trainerSID);
+            if (shouldUpdateOT || shouldUpdateTID || shouldUpdateSID)
+            {
+                string? ot = shouldUpdateOT ? trainerName : existingTradeDetails?.OT;
+                int? tid = shouldUpdateTID ? int.Parse(trainerTID) : existingTradeDetails?.TID;
+                int? sid = shouldUpdateSID ? int.Parse(trainerSID) : existingTradeDetails?.SID;
+                if (ot != null && tid.HasValue && sid.HasValue)
+                {
+                    tradeCodeStorage.UpdateTradeDetails(poke.Trainer.ID, ot, tid.Value, sid.Value);
+                }
+            }
+            var partnerCheck = await CheckPartnerReputation(this, poke, trainerNID, trainerName, AbuseSettings, token);
+            if (partnerCheck != PokeTradeResult.Success)
+            {
+                if (completedTrades > 0)
+                    poke.SendNotification(this, $"⚠️ Actividad sospechosa detectada después del intercambio {completedTrades + 1}/{startingDetail.TotalBatchTrades}. Cancelando los intercambios restantes.");
+                await ExitTrade(false, token).ConfigureAwait(false);
+                return partnerCheck;
+            }
+            if (!await IsInBox(token).ConfigureAwait(false))
+            {
+                if (completedTrades > 0)
+                    poke.SendNotification(this, $"⚠️ No pude entrar en la casilla después del intercambio {completedTrades + 1}/{startingDetail.TotalBatchTrades}. Cancelando los intercambios restantes.");
+                await ExitTrade(true, token).ConfigureAwait(false);
+                return PokeTradeResult.RecoverOpenBox;
+            }
+            if (Hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT)
+            {
+                toSend = await ApplyAutoOT(toSend, trainerName, sav, token);
+            }
+            var offered = await ReadUntilPresent(LinkTradePartnerPokemonOffset, 25_000, 1_000, BoxFormatSlotSize, token).ConfigureAwait(false);
+            var oldEC = await Connection.ReadBytesAsync(LinkTradePartnerPokemonOffset, 4, token).ConfigureAwait(false);
+            if (offered == null)
+            {
+                if (completedTrades > 0)
+                    poke.SendNotification(this, $"⚠️ No se ofrecieron Pokémons después del intercambio {completedTrades + 1}/{startingDetail.TotalBatchTrades}. Cancelando los intercambios restantes.");
+                await ExitTrade(false, token).ConfigureAwait(false);
+                return PokeTradeResult.TrainerTooSlow;
+            }
+            var trainer = new PartnerDataHolder(trainerNID, trainerName, trainerTID);
+            var update = await GetEntityToSend(sav, poke, offered, oldEC, toSend, trainer, token).ConfigureAwait(false);
+            if (update.check != PokeTradeResult.Success)
+            {
+                if (completedTrades > 0)
+                    poke.SendNotification(this, $"⚠️ La verificación falló después de la operación: {completedTrades + 1}/{startingDetail.TotalBatchTrades}. Cancelando los intercambios restantes.");
+                await ExitTrade(false, token).ConfigureAwait(false);
+                return update.check;
+            }
+            toSend = update.toSend;
+            var tradeResult = await ConfirmAndStartTrading(poke, token).ConfigureAwait(false);
+            if (tradeResult != PokeTradeResult.Success)
+            {
+                if (completedTrades > 0)
+                    poke.SendNotification(this, $"⚠️ La operación falló después del intercambio {completedTrades + 1}/{startingDetail.TotalBatchTrades}. Cancelando las operaciones restantes.");
+                await ExitTrade(false, token).ConfigureAwait(false);
+                return tradeResult;
+            }
+            var received = await ReadBoxPokemon(0, 0, token).ConfigureAwait(false);
+            if (SearchUtil.HashByDetails(received) == SearchUtil.HashByDetails(toSend) && received.Checksum == toSend.Checksum)
+            {
+                if (completedTrades > 0)
+                    poke.SendNotification(this, $"⚠️ La operación no se completó después del intercambio {completedTrades + 1}/{startingDetail.TotalBatchTrades}. Cancelando las operaciones restantes.");
+                await ExitTrade(false, token).ConfigureAwait(false);
+                return PokeTradeResult.TrainerTooSlow;
+            }
+            // Trade was successful
+            UpdateCountsAndExport(poke, received, toSend);
+            LogSuccessfulTrades(poke, trainerNID, trainerName);
+            completedTrades++;
+            _batchTracker.AddReceivedPokemon(poke.Trainer.ID, received);
+            if (completedTrades == startingDetail.TotalBatchTrades)
+            {
+                // Get all collected Pokemon before cleaning anything up
+                var allReceived = _batchTracker.GetReceivedPokemon(poke.Trainer.ID);
+                // First send notification that trades are complete
+                poke.SendNotification(this, "✅ ¡Se han completado todos los intercambios por lotes! ¡Gracias por realizar el intercambio!");
+                // Then finish each trade with the corresponding received Pokemon
+                if (Hub.Config.Discord.ReturnPKMs)
+                {
+                    foreach (var pokemon in allReceived)
+                    {
+                        poke.TradeFinished(this, pokemon);
+                    }
+                }
+                // cleanup
+                Hub.Queues.CompleteTrade(this, poke);
+                CleanupAllBatchTradesFromQueue(poke);
+                _batchTracker.ClearReceivedPokemon(poke.Trainer.ID);
+                break;
+            }
+            if (GetNextBatchTrade(poke, out var nextDetail))
+            {
+                if (nextDetail == null)
+                {
+                    poke.SendNotification(this, "⚠️ Error en secuencia de lotes. Fin de operaciones.");
+                    await ExitTrade(false, token).ConfigureAwait(false);
+                    return PokeTradeResult.Success;
+                }
+                poke.SendNotification(this, $"✅ Intercambio {completedTrades} completado! Preparando el siguiente Pokémon: ({nextDetail.BatchTradeNumber}/{nextDetail.TotalBatchTrades}). Por favor, espera en la pantalla de intercambio!");
+                poke = nextDetail;
+                await Click(A, 1_000, token).ConfigureAwait(false);
+                if (poke.TradeData.Species != 0)
+                {
+                    await SetBoxPokemon(poke.TradeData, 0, 0, token, sav).ConfigureAwait(false);
+                }
+                continue;
+            }
+            poke.SendNotification(this, "⚠️ No se puede encontrar la siguiente operación en la secuencia. Se finalizará la operación por lotes.");
+            await ExitTrade(false, token).ConfigureAwait(false);
+            return PokeTradeResult.Success;
+        }
+        await ExitTrade(false, token).ConfigureAwait(false);
+        return PokeTradeResult.Success;
     }
 
     private async Task PerformTrade(SAV8SWSH sav, PokeTradeDetail<PK8> detail, PokeRoutineType type, uint priority, CancellationToken token)
@@ -199,7 +453,11 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
         PokeTradeResult result;
         try
         {
-            result = await PerformLinkCodeTrade(sav, detail, token).ConfigureAwait(false);
+            if (detail.Type == PokeTradeType.Batch)
+                result = await PerformBatchTrade(sav, detail, token).ConfigureAwait(false);
+            else
+                result = await PerformLinkCodeTrade(sav, detail, token).ConfigureAwait(false);
+
             if (result == PokeTradeResult.Success)
                 return;
         }
@@ -208,7 +466,7 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
             Log(socket.Message);
             result = PokeTradeResult.ExceptionConnection;
             HandleAbortedTrade(detail, type, priority, result);
-            throw; // let this interrupt the trade loop. re-entering the trade loop will recheck the connection.
+            throw;
         }
         catch (Exception e)
         {
