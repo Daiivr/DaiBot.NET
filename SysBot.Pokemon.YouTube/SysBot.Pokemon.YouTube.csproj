@@ -12,7 +12,7 @@
     <PackageReference Include="Google.Apis" Version="1.68.0" />
     <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
     <PackageReference Include="Google.Apis.Core" Version="1.68.0" />
-    <PackageReference Include="Google.Apis.YouTube.v3" Version="1.68.0.3421" />
+    <PackageReference Include="Google.Apis.YouTube.v3" Version="1.68.0.3624" />
     <PackageReference Include="Google.Apis.YouTubePartner.v1" Version="1.35.1.1334" />
   </ItemGroup>
 

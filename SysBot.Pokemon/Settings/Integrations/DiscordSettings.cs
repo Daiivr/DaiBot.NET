@@ -73,14 +73,21 @@ public class DiscordSettings
     [Category("Insignias"), Description("Lista de emojis personalizados para las insignias que se dara al usuario luego de completar x cantidad de trades.\nPuede mirar las insignias con el comando (profile)"), DisplayName("Insignias")]
     public List<Badge> CustomBadgeEmojis { get; set; } = new List<Badge>
     {
-        new Badge(10, "🏅"),
-        new Badge(100, "🎖️"),
-        new Badge(500, "🥉"),
-        new Badge(1000, "🥈"),
-        new Badge(1500, "🥇"),
-        new Badge(3000, "🏆"),
-        new Badge(5000, "👑"),
-        new Badge(10000, "💎")
+        new Badge(1, "🏅"),
+        new Badge(50, "🎖️"),
+        new Badge(100, "🥉"),
+        new Badge(150, "🥈"),
+        new Badge(200, "🥇"),
+        new Badge(250, "🏆"),
+        new Badge(300, "👑"),
+        new Badge(350, "💎"),
+        new Badge(400, "🔥"),
+        new Badge(450, "🌟"),
+        new Badge(500, "💠"),
+        new Badge(550, "🔶"),
+        new Badge(600, "🛡️"),
+        new Badge(650, "🪙"),
+        new Badge(700, "⚔️")
     };
 
     [Category(Operation), Description("Texto adicional para agregar al comienzo del Embed."), DisplayName("Texto adicional del embed")]

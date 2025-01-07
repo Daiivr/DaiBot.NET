@@ -60,14 +60,21 @@ public class ProfileModule : ModuleBase<SocketCommandContext>
         var (wins, losses) = GetGameStatsForUser(targetUser.Id.ToString());
         var (ot, sid, tid) = GetTrainerInfo(userId);
 
+        // Get the trade code for the user
+        var tradeCode = GetTradeCodeForUser(userId);
+
+        // Calculate current status based on trade milestones
+        var currentStatus = GetCurrentStatus(tradeCount);
+
         var embed = new EmbedBuilder()
             .WithTitle($"📝 Perfil de {targetUser.Username}")
             .WithThumbnailUrl(avatarUrl)
             .WithColor(dominantColor)  // Usar el color dominante
             .AddField("Cuenta creada:", discordRelativeTimestamp)
-            .AddField("Insignias", badges)
+            .AddField("Insignias", $"{badges}\n\n**Estado Actual:** {currentStatus}")
             .AddField("Tradeos Completados:", tradeCount.ToString())
             .AddField("Información de Entrenador", $"**OT**: {ot}\n**SID**: {sid}\n**TID**: {tid}")
+            .AddField("Código de Intercambio:", tradeCode ?? "Sin codigo aun.")
             .AddField("Ping Pong", $"Victorias: {wins} | Pérdidas: {losses}")
             .WithFooter(footer =>
             {
@@ -125,5 +132,45 @@ public class ProfileModule : ModuleBase<SocketCommandContext>
             return (tradeDetails.OT ?? "N/A", tradeDetails.SID.ToString(), tradeDetails.TID.ToString());
 
         return ("N/A", "N/A", "N/A");
+    }
+
+    // Helper method to get the current status
+    private string GetCurrentStatus(int totalTrades)
+    {
+        return totalTrades switch
+        {
+            >= 700 => "Dios Pokémon",
+            >= 650 => "Maestro Pokémon",
+            >= 600 => "Famoso Mundial",
+            >= 550 => "Maestro de Intercambios",
+            >= 500 => "Maestro Regional",
+            >= 450 => "Leyenda Pokémon",
+            >= 400 => "Sabio Pokémon",
+            >= 350 => "Comerciante Pokémon",
+            >= 300 => "Élite Pokémon",
+            >= 250 => "Héroe Pokémon",
+            >= 200 => "Campeón Pokémon",
+            >= 150 => "Especialista Pokémon",
+            >= 100 => "Profesor Pokémon",
+            >= 50 => "Entrenador Novato",
+            >= 1 => "Entrenador Principiante",
+            _ => "Entrenador Nuevo"
+        };
+    }
+
+    // Helper method to get the trade code for the user
+    private string? GetTradeCodeForUser(ulong userId)
+    {
+        var tradeStorage = new TradeCodeStorage();
+        var tradeDetails = tradeStorage.GetTradeDetails(userId);
+
+        if (tradeDetails?.Code != null)
+        {
+            // Insertar un espacio después de los primeros 4 dígitos y envolver en spoiler
+            var formattedCode = $"{tradeDetails.Code.Substring(0, 4)} {tradeDetails.Code.Substring(4)}";
+            return $"||{formattedCode}||"; // Agregar barras verticales dobles para el spoiler
+        }
+
+        return null; // Si no hay código, devolver null
     }
 }

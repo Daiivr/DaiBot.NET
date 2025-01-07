@@ -1,12 +1,12 @@
 using PKHeX.Core;
 using PKHeX.Core.Searching;
 using SysBot.Base;
+using SysBot.Base.Util;
 using SysBot.Pokemon.Helpers;
 using System;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using static SysBot.Base.SwitchButton;
@@ -867,7 +867,7 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
 
         var tradePartner = await GetTradePartnerInfo(token).ConfigureAwait(false);
         var trainerNID = GetFakeNID(tradePartner.TrainerName, tradePartner.TrainerID);
-        RecordUtil<PokeTradeBotSWSH>.Record($"Iniciando\t{trainerNID:X16}\t{tradePartner.TrainerName}\t{poke.Trainer.TrainerName}\t{poke.Trainer.ID}\t{poke.ID}\t{toSend.EncryptionConstant:X8}");
+        RecordUtil<PokeTradeBotBS>.Record($"Iniciando\t{trainerNID:X16}\t{tradePartner.TrainerName}\t{poke.Trainer.TrainerName}\t{poke.Trainer.ID}\t{poke.ID}\t{toSend.EncryptionConstant:X8}");
 
         var tradeCodeStorage = new TradeCodeStorage();
         var existingTradeDetails = tradeCodeStorage.GetTradeDetails(poke.Trainer.ID);
@@ -1139,12 +1139,9 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
                 poke.SendNotification(this, "✅ ¡Todos los intercambios por lotes completados! ¡Gracias por tradear!");
 
                 // Then finish each trade with the corresponding received Pokemon
-                if (Hub.Config.Discord.ReturnPKMs)
+                foreach (var pokemon in allReceived)
                 {
-                    foreach (var pokemon in allReceived)
-                    {
-                        poke.TradeFinished(this, pokemon);  // This sends each Pokemon back to the user
-                    }
+                    poke.TradeFinished(this, pokemon);  // This sends each Pokemon back to the user
                 }
                 // Finally do cleanup
                 Hub.Queues.CompleteTrade(this, poke);
@@ -1162,6 +1159,7 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
 
                 poke.SendNotification(this, $"✅ Intercambio {completedTrades} completado! Preparando el siguiente Pokémon: ({nextDetail.BatchTradeNumber}/{nextDetail.TotalBatchTrades}). Por favor, espera en la pantalla de intercambio!");
                 poke = nextDetail;
+                await Task.Delay(10_000, token).ConfigureAwait(false); // Add delay for trade animation/pokedex register
                 await Click(A, 1_000, token).ConfigureAwait(false);
                 if (poke.TradeData.Species != 0)
                 {
@@ -1187,13 +1185,12 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
             else
                 result = await PerformLinkCodeTrade(sav, detail, token).ConfigureAwait(false);
 
-            if (detail.Type == PokeTradeType.Batch)
+            if (result != PokeTradeResult.Success)
             {
-                await HandleAbortedBatchTrade(detail, type, priority, result, token).ConfigureAwait(false);
-            }
-            else if (result != PokeTradeResult.Success)
-            {
-                HandleAbortedTrade(detail, type, priority, result);
+                if (detail.Type == PokeTradeType.Batch)
+                    await HandleAbortedBatchTrade(detail, type, priority, result, token).ConfigureAwait(false);
+                else
+                    HandleAbortedTrade(detail, type, priority, result);
             }
         }
         catch (SocketException socket)
@@ -1274,10 +1271,10 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
 
             // If we detected a change, they offered something.
             var pk = await ReadPokemon(LinkTradePokemonOffset, BoxFormatSlotSize, token).ConfigureAwait(false);
-            var newEC = await SwitchConnection.ReadBytesAbsoluteAsync(LinkTradePokemonOffset, 8, token).ConfigureAwait(false);
-            if (pk.Species < 1 || !pk.ChecksumValid || lastOffered.SequenceEqual(newEC))
+            var newECchk = await SwitchConnection.ReadBytesAbsoluteAsync(LinkTradePokemonOffset, 8, token).ConfigureAwait(false);
+            if (pk.Species == 0 || !pk.ChecksumValid || lastOffered.SequenceEqual(newECchk))
                 continue;
-            lastOffered = newEC;
+            lastOffered = newECchk;
 
             // Send results from separate thread; the bot doesn't need to wait for things to be calculated.
             if (DumpSetting.Dump)
