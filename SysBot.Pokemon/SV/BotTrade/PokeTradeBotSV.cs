@@ -1003,7 +1003,6 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
 
                 // Finally do cleanup
                 Hub.Queues.CompleteTrade(this, poke);
-                CleanupAllBatchTradesFromQueue(poke);
                 _batchTracker.ClearReceivedPokemon(poke.Trainer.ID);
                 break;
             }
@@ -1315,53 +1314,22 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         }
         Log($"✅ Se han limpiado las operaciones por lotes para TrainerID: {detail.Trainer.ID}, UniqueTradeID: {detail.UniqueTradeID}");
     }
-    private async Task HandleAbortedBatchTrade(PokeTradeDetail<PK9> detail, PokeRoutineType type, uint priority, PokeTradeResult result, CancellationToken token)
-    {
-        if (detail.TotalBatchTrades > 1)
-        {
-            // Send notification once before cleanup
-            detail.SendNotification(this, $"⚠️ La operación {detail.BatchTradeNumber}/{detail.TotalBatchTrades} falló. Cancelando las operaciones por lote restantes.");
-            CleanupAllBatchTradesFromQueue(detail);
-            // Mark this specific trade as canceled
-            detail.TradeCanceled(this, result);
-            // Attempt to recover
-            if (await RecoverToPortal(token).ConfigureAwait(false))
-            {
-                Log("Recuperado en el portal después de un error con el comercio por lotes.");
-            }
-            else
-            {
-                Log("No se pudo recuperar en el portal después de un error con el intercambio por lotes.");
-                await RecoverToOverworld(token).ConfigureAwait(false);
-            }
-        }
-        else
-        {
-            HandleAbortedTrade(detail, type, priority, result);
-        }
-    }
 
     private async Task PerformTrade(SAV9SV sav, PokeTradeDetail<PK9> detail, PokeRoutineType type, uint priority, CancellationToken token)
     {
         PokeTradeResult result;
         try
         {
-            // Keep track of the first trade in batch for cleanup purposes
-            bool isFirstInBatch = detail.BatchTradeNumber == 1;
-            result = await PerformLinkCodeTrade(sav, detail, token).ConfigureAwait(false);
+            if (detail.Type == PokeTradeType.Batch)
+                result = await PerformBatchTrade(sav, detail, token).ConfigureAwait(false);
+            else
+                result = await PerformLinkCodeTrade(sav, detail, token).ConfigureAwait(false);
 
-            if (result == PokeTradeResult.Success)
-            {
-                PK9? receivedPokemon = await ReadPokemon(BoxStartOffset, BoxFormatSlotSize, token).ConfigureAwait(false);
-                return;
-            }
-
-            // Handle failed trades
-            if (detail.TotalBatchTrades > 1)
+            if (detail.Type == PokeTradeType.Batch)
             {
                 await HandleAbortedBatchTrade(detail, type, priority, result, token).ConfigureAwait(false);
             }
-            else
+            else if (result != PokeTradeResult.Success)
             {
                 HandleAbortedTrade(detail, type, priority, result);
             }
@@ -1370,14 +1338,51 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         {
             Log(socket.Message);
             result = PokeTradeResult.ExceptionConnection;
-            await HandleAbortedBatchTrade(detail, type, priority, result, token).ConfigureAwait(false);
+            if (detail.Type == PokeTradeType.Batch)
+                await HandleAbortedBatchTrade(detail, type, priority, result, token).ConfigureAwait(false);
+            else
+                HandleAbortedTrade(detail, type, priority, result);
             throw;
         }
         catch (Exception e)
         {
             Log(e.Message);
             result = PokeTradeResult.ExceptionInternal;
-            await HandleAbortedBatchTrade(detail, type, priority, result, token).ConfigureAwait(false);
+            if (detail.Type == PokeTradeType.Batch)
+                await HandleAbortedBatchTrade(detail, type, priority, result, token).ConfigureAwait(false);
+            else
+                HandleAbortedTrade(detail, type, priority, result);
+        }
+    }
+    private async Task HandleAbortedBatchTrade(PokeTradeDetail<PK9> detail, PokeRoutineType type, uint priority, PokeTradeResult result, CancellationToken token)
+    {
+        detail.IsProcessing = false;
+        if (detail.TotalBatchTrades > 1)
+        {
+            if (result != PokeTradeResult.Success)
+            {
+                if (result.ShouldAttemptRetry() && detail.Type != PokeTradeType.Random && !detail.IsRetry)
+                {
+                    detail.IsRetry = true;
+                    Hub.Queues.Enqueue(type, detail, Math.Min(priority, PokeTradePriorities.Tier2));
+                    detail.SendNotification(this, $"<a:warning:1206483664939126795> Oops! Algo sucedió durante el comercio por lotes {detail.BatchTradeNumber}/{detail.TotalBatchTrades}. Te volveré a poner en cola para otro intento.");
+                }
+                else
+                {
+                    detail.SendNotification(this, $"<a:warning:1206483664939126795> El trade {detail.BatchTradeNumber}/{detail.TotalBatchTrades} falló. Cancelando las operaciones por lotes restantes: {result}");
+                    CleanupAllBatchTradesFromQueue(detail);
+                    detail.TradeCanceled(this, result);
+                    await ExitTradeToPortal(false, token).ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                CleanupAllBatchTradesFromQueue(detail);
+            }
+        }
+        else
+        {
+            HandleAbortedTrade(detail, type, priority, result);
         }
     }
 
