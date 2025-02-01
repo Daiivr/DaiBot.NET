@@ -18,7 +18,9 @@ namespace SysBot.Pokemon.Discord
         public async Task GetStatusAsync()
         {
             var me = SysCord<T>.Runner;
+#pragma warning disable CA2021 // Do not call Enumerable.Cast<T> or Enumerable.OfType<T> with incompatible types
             var bots = me.Bots.Select(z => z.Bot).OfType<PokeRoutineExecutorBase>().ToArray();
+#pragma warning restore CA2021 // Do not call Enumerable.Cast<T> or Enumerable.OfType<T> with incompatible types
             if (bots.Length == 0)
             {
                 await ReplyAsync("<a:warning:1206483664939126795> No hay bots configurados.").ConfigureAwait(false);

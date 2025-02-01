@@ -168,8 +168,21 @@ public class DiscordSettings
         };
     }
 
-    [Category(Operation), Description("Enlace de donación."),DisplayName("Link para Donaciones")]
-    public string DonationLink { get; set; } = string.Empty;
+    [Category(Operation), TypeConverter(typeof(ExpandableObjectConverter)), Description("Configuración de donaciones."), DisplayName("Opciones de Donación")]
+    public DonationOptions Donation { get; set; } = new DonationOptions();
+    public class DonationOptions
+    {
+        public override string ToString() => "(Collection)";
+
+        [Category(Operation), Description("Enlace de donación."), DisplayName("Link para Donaciones")]
+        public string DonationLink { get; set; } = string.Empty;
+
+        [Category(Operation), Description("Meta de donación."), DisplayName("Meta de Donaciones")]
+        public string DonationGoal { get; set; } = string.Empty;
+
+        [Category(Operation), Description("Donaciones actuales."), DisplayName("Donaciones Actuales")]
+        public string DonationCurrent { get; set; } = string.Empty;
+    }
 
     [Category(Channels), Description("ID de canal que harán eco de los datos del bot de registro."), DisplayName("Canales de Registros")]
     public RemoteControlAccessList LoggingChannels { get; set; } = new();

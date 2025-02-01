@@ -1,9 +1,11 @@
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using PKHeX.Core;
-using SysBot.Pokemon;
+using System.Linq;
 using SysBot.Pokemon.Discord;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TuBotDiscord.Modules;
@@ -16,63 +18,165 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         [Summary("Muestra como usar algunos comandos como el clone, fix, egg y demas.")]
         public async Task HelpAsync(string? command = null)
         {
-            var icon = "https://i.imgur.com/axXN5Sd.gif";
             var botPrefix = SysCord<T>.Runner.Config.Discord.CommandPrefix;
-            var builder = new EmbedBuilder();
-            var avatarUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl(); // Utiliza el avatar predeterminado si no tiene uno personalizado
-            var currentTime = DateTime.Now.ToString("h:mm tt"); // Formato de 12 horas con AM/PM
 
-            if (string.IsNullOrEmpty(command))
+            // Si el usuario pidió ayuda para un comando específico
+            if (!string.IsNullOrEmpty(command))
             {
-                builder.WithTitle("Comandos disponibles")
-                       .WithDescription($"Usa `{botPrefix}ayuda <comando>` para obtener más información sobre un comando específico.")
-                       .AddField($"{botPrefix}ayuda sr", "Información sobre los **Pedidos Especiales**")
-                       .AddField($"{botPrefix}ayuda brl", "Información sobre los pedidos de **Pokemons Entrenados**")
-                       .AddField($"{botPrefix}ayuda le", "Información sobre los pedidos de **Pokemons de Eventos**")
-                       .AddField($"{botPrefix}ayuda bt", "Información sobre los pedidos de **Pokemons por Lotes**")
-                       .AddField($"{botPrefix}ayuda clone", "Información sobre el comando **Clone**")
-                       .AddField($"{botPrefix}ayuda fix", "Información sobre el comando **Fix**")
-                       .AddField($"{botPrefix}ayuda ditto", "Información sobre como pedir **Dittos**")
-                       .AddField($"{botPrefix}ayuda me", "Información sobre como pedir **Huevos Misteriosos**")
-                       .AddField($"{botPrefix}ayuda egg", "Información sobre como pedir **Huevos de un Pokemons específico**")
-                       .AddField($"{botPrefix}ayuda rt", "Información sobre como generar **Un equipo VGC random**")
-                       .AddField($"{botPrefix}ayuda pp", "Información sobre como generar **Un equipo completo a partir de un link de PokePaste**")
-                       .AddField($"{botPrefix}ayuda srp", "Información sobre como pedir **Regalos Misteriosos)**")
-                       // Agrega el resto de los comandos aquí
-                       .WithColor(Discord.Color.Blue);
+                var embedBuilder = new EmbedBuilder();
+                var icon = "https://i.imgur.com/axXN5Sd.gif";
 
-                var message = await ReplyAsync(embed: builder.Build());
-                await Context.Message.DeleteAsync(); // Opcional: Eliminar el mensaje original
-                await Task.Delay(TimeSpan.FromSeconds(10)); // Esperar 10 segundos
-                await message.DeleteAsync(); // Eliminar el mensaje embed después de 10 segundos
-            }
-            else
-            {
-                // Configuración específica del comando para MD
-                ConfigureHelpEmbed(command, builder, icon, botPrefix);
-                builder.WithFooter(footer =>
+                ConfigureHelpEmbed(command.ToLower(), embedBuilder, icon, botPrefix);
+
+                try
                 {
-                    footer.WithIconUrl(avatarUrl);
-                    footer.WithText($"{Context.User.Username} • {currentTime}");
-                });
-                builder.WithThumbnailUrl("https://i.imgur.com/lPU9wFp.png");
-                builder.WithColor(Discord.Color.Red);
+                    // Enviar el mensaje por DM
+                    var dmChannel = await Context.User.CreateDMChannelAsync();
+                    await dmChannel.SendMessageAsync(embed: embedBuilder.Build());
 
-                // Enviar a MD
-                await Context.User.SendMessageAsync(embed: builder.Build());
-                await Context.Message.DeleteAsync(); // Opcional: Eliminar el mensaje original
+                    // Eliminar el mensaje del usuario del canal
+                    await Context.Message.DeleteAsync();
 
-                // Notificar en el canal que se ha enviado el mensaje al MD
-                var replyMessage = await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention}, la información de ayuda sobre el comando `{command}` ha sido enviada a tu MD. Por favor, revisa tus mensajes directos.");
+                    // Enviar confirmación en el canal
+                    var confirmation = await ReplyAsync($"<a:yes:1206485105674166292> {Context.User.Mention}, la información de ayuda sobre el comando `{command}` ha sido enviada a tu MD. Por favor, revisa tus mensajes directos.");
 
-                // Esperar 10 segundos antes de eliminar el mensaje de respuesta
-                await Task.Delay(10000); // Delay de 10 segundos
-                await replyMessage.DeleteAsync(); // Elimina el mensaje de notificación
+                    // Borrar el mensaje de confirmación después de 5 segundos
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    await confirmation.DeleteAsync();
+                }
+                catch
+                {
+                    // Si el usuario tiene los DMs bloqueados, notificar en el canal
+                    await ReplyAsync($"❌ **{Context.User.Mention}, no puedo enviarte un mensaje privado. Asegúrate de tener los DMs habilitados.**");
+                }
+
+                return;
             }
+
+            var builder = new EmbedBuilder()
+                .WithTitle("Comandos disponibles")
+                .WithDescription($"Selecciona un comando del menú desplegable para obtener más información.\n\n🔴 **Haz clic en el botón 'Cerrar' cuando hayas terminado.**")
+                .AddField("» Menú Ayuda", $"Tenemos `12` categorías de las cuales puedes aprender cómo usar sus correspondientes funciones.\n\n**También puedes usar `{botPrefix}ayuda <comando>` para acceder directamente a un tema.**")
+                .AddField("Opciones", $"- `{botPrefix}ayuda sr` ∷ Pedidos Especiales.\n- `{botPrefix}ayuda brl` ∷ Pokemons Entrenados.\n- `{botPrefix}ayuda le` ∷ Eventos\n- `{botPrefix}ayuda bt` ∷ Intercambio por Lotes.\n- `{botPrefix}ayuda clone` ∷ Clonar un Pokemon.\n- `{botPrefix}ayuda fix` ∷ Quitar Anuncios de Pokemon.s\n- `{botPrefix}ayuda ditto` ∷ Como pedir Dittos.\n- `{botPrefix}ayuda me` ∷ Como pedir Huevos Misteriosos.\n- `{botPrefix}ayuda egg` ∷ Como pedir Huevos de un Pokemons específico.\n- `{botPrefix}ayuda rt` ∷ Como generar Un equipo VGC random.\n- `{botPrefix}ayuda pp` ∷ Cómo generar un equipo a partir de un link PokePaste.\n- `{botPrefix}ayuda srp` ∷ Como pedir Regalos Misteriosos.")
+                .WithColor(Discord.Color.Blue);
+
+            var selectMenu = new SelectMenuBuilder()
+                .WithPlaceholder("📜 Selecciona un comando...") // Emoji in placeholder
+                .WithCustomId("help_menu")
+                .AddOption("Pedidos Especiales", "help_sr", "Información sobre pedidos especiales", new Emoji("📌"))
+                .AddOption("Pokemons Entrenados", "help_brl", "Lista de pokémons entrenados", new Emoji("⚔️"))
+                .AddOption("Eventos", "help_le", "Cómo solicitar eventos", new Emoji("🎉"))
+                .AddOption("Intercambio por Lotes", "help_bt", "Cómo realizar intercambios por lotes", new Emoji("📦"))
+                .AddOption("Clone", "help_clone", "Cómo clonar un Pokémon", new Emoji("🔁"))
+                .AddOption("Fix", "help_fix", "Eliminar nombres no deseados de Pokémon", new Emoji("🛠️"))
+                .AddOption("Ditto", "help_ditto", "Solicitar un Ditto con IVs específicos", new Emoji("✨"))
+                .AddOption("Huevo Misterioso", "help_me", "Solicitar un huevo misterioso aleatorio", new Emoji("🥚"))
+                .AddOption("Huevos", "help_egg", "Cómo solicitar huevos", new Emoji("🐣"))
+                .AddOption("Equipo Random", "help_rt", "Generar un equipo aleatorio", new Emoji("🎲"))
+                .AddOption("Equipo Completo", "help_pp", "Cómo obtener un equipo completo", new Emoji("🏆"))
+                .AddOption("Regalos Misteriosos", "help_srp", "Solicitar regalos misteriosos", new Emoji("🎁"));
+
+            var closeButton = new ButtonBuilder()
+                .WithLabel("Cerrar")
+                .WithStyle(ButtonStyle.Danger)
+                .WithCustomId("close_help");
+
+            var componentBuilder = new ComponentBuilder()
+                .WithSelectMenu(selectMenu)
+                .WithButton(closeButton);
+
+            var message = await ReplyAsync(embed: builder.Build(), components: componentBuilder.Build());
+            await Context.Message.DeleteAsync();
+
+            await HandleInteractions(message);
+        }
+
+        private async Task HandleInteractions(IUserMessage message)
+        {
+            var cancellationTokenSource = new CancellationTokenSource();
+            var timeoutTask = Task.Delay(TimeSpan.FromMinutes(2), cancellationTokenSource.Token);
+
+            while (true)
+            {
+                var interactionTask = WaitForInteractionResponseAsync(message, TimeSpan.FromMinutes(2));
+                var completedTask = await Task.WhenAny(interactionTask, timeoutTask);
+
+                if (completedTask == timeoutTask)
+                {
+                    // Timeout occurred, remove the select menu and buttons
+                    await message.ModifyAsync(msg => msg.Components = new ComponentBuilder().Build());
+                    break;
+                }
+
+                var interaction = await interactionTask;
+                if (interaction != null)
+                {
+                    // Reset the timeout
+                    cancellationTokenSource.Cancel();
+                    cancellationTokenSource = new CancellationTokenSource();
+                    timeoutTask = Task.Delay(TimeSpan.FromMinutes(2), cancellationTokenSource.Token);
+
+                    if (interaction.Data.CustomId == "close_help")
+                    {
+                        await interaction.Message.DeleteAsync();
+                        return;
+                    }
+
+                    await interaction.DeferAsync(); // No ephemeral response
+
+                    var command = interaction.Data.Values.FirstOrDefault()?.Substring(5) ?? string.Empty;
+                    var icon = "https://i.imgur.com/axXN5Sd.gif";
+                    var embedBuilder = new EmbedBuilder();
+
+                    ConfigureHelpEmbed(command, embedBuilder, icon, SysCord<T>.Runner.Config.Discord.CommandPrefix);
+
+                    // Edit the main embed instead of sending a new ephemeral message
+                    await message.ModifyAsync(msg =>
+                    {
+                        msg.Embed = embedBuilder.Build();
+                    });
+                }
+            }
+        }
+
+        private async Task<SocketMessageComponent?> WaitForInteractionResponseAsync(IUserMessage message, TimeSpan timeout)
+        {
+            var tcs = new TaskCompletionSource<SocketMessageComponent?>();
+            var cancellationTokenSource = new CancellationTokenSource(timeout);
+
+            Context.Client.InteractionCreated += OnInteractionCreated;
+
+            try
+            {
+                return await tcs.Task;
+            }
+            catch (TaskCanceledException)
+            {
+                return null;
+            }
+            finally
+            {
+                Context.Client.InteractionCreated -= OnInteractionCreated;
+                cancellationTokenSource.Dispose();
+            }
+
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+            async Task OnInteractionCreated(SocketInteraction interaction)
+            {
+                if (interaction is SocketMessageComponent componentInteraction &&
+                    componentInteraction.Message.Id == message.Id)
+                {
+                    tcs.TrySetResult(componentInteraction);
+                }
+            }
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         }
 
         private void ConfigureHelpEmbed(string command, EmbedBuilder builder, string icon, string botPrefix)
         {
+            // Set the thumbnail for all embeds
+            builder.WithThumbnailUrl("https://i.imgur.com/lPU9wFp.png");
+
             switch (command.ToLower())
             {
                 case "sr":
@@ -124,7 +228,6 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                     builder.WithAuthor("Pedir Regalos Misteriosos", icon)
                            .WithDescription($"# Guía de comandos Pokemon de Petición Especial\r\n\r\n## **🔍 Cómo funciona**\r\n\r\nEl usuario obtendrá una lista de eventos válidos para cada juego escribiendo `{botPrefix}srp <juego> <páginaX>`. Sustituye `<juego>` por el juego del que quieras obtener información. \r\n\r\n- Para Sword/Shield, escribe: `{botPrefix}srp swsh` para obtener una lista de Eventos Misteriosos de SwSh.\r\n- Para Escarlata/Violeta, escribe `{botPrefix}srp gen9` para ver los eventos misteriosos de Scarlet/Violet.\r\n- Para la página 2, escriba `{botPrefix}srp gen9 page2`\r\n\r\n**Juegos disponibles\r\n`{botPrefix}srp gen9` - Escarlata/Violeta\r\n`{botPrefix}srp bdsp` - Diamante brillante/Perla brillante\r\n`{botPrefix}srp swsh` - Espada/Escudo\r\n`{botPrefix}srp pla` - Leyendas: Arceus\r\n`{botPrefix}srp gen7` - Sol y Luna - Ultra Sol y Ultra Luna\r\n`{botPrefix}srp gen6` - Pokémon X e Y\r\n`{botPrefix}srp gen5` - Negro/Blanco - Negro2/Blanco2\r\n`{botPrefix}srp gen4` - Diamante y Perla - Platino\r\n`{botPrefix}srp gen3` - Rubí/Safiro/Esmeralda\r\n\r\nEl bot te enviará una lista de 25 eventos por página para que elijas, y te dará un código para que lo introduzcas en el canal de comercio.\r\n\r\nEl código será el siguiente `srp gen9 10` para el Evento índice 10.\r\n\r\n**Solicitudes entre juegos**\r\n\r\nTambién puedes solicitar eventos de otros juegos, y el bot te lo legalizará para ese juego en concreto.\r\n\r\nPor ejemplo, si quieres un evento de SwSh, pero para Scarlet/Violet, mirarás la lista de eventos para SwSh con `srp swsh` e introducirás el código en un bot de comercio de Scarlet/Violet para que haga ese evento de SwSh para ti.\r\n\r\n**Características principales\r\n\r\n- 📖 Fácil de usar con comandos simples.\r\n- 🌐 Compatibilidad entre juegos\r\n- 📥 Generación de wondercards automática y legal.\r\n- 🤖 No requiere configuración adicional para los propietarios de bots");
                     break;
-                // Agrega casos para cada comando
                 default:
                     builder.WithAuthor("Comando no encontrado", icon)
                           .WithDescription($"No se encontró información sobre el comando: `{command}`.");

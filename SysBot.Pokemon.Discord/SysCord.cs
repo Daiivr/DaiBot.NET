@@ -7,12 +7,14 @@ using SysBot.Base;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using static Discord.GatewayIntents;
 using static SysBot.Pokemon.DiscordSettings;
 using Discord.Net;
+using Newtonsoft.Json;
 
 namespace SysBot.Pokemon.Discord;
 
@@ -27,6 +29,7 @@ public static class SysCordSettings
 
 public sealed class SysCord<T> where T : PKM, new()
 {
+    private const string StatsFilePath = "user_stats.json"; // Path to the stats file
     public readonly PokeTradeHub<T> Hub;
     private readonly ProgramConfig _config;
     private readonly Dictionary<ulong, ulong> _announcementMessageIds = [];
@@ -315,9 +318,7 @@ public sealed class SysCord<T> where T : PKM, new()
             await _client.StopAsync();
         }
     }
-    // If any services require the client, or the CommandService, or something else you keep on hand,
-    // pass them as parameters into this method as needed.
-    // If this method is getting pretty long, you can separate it out into another file using partials.
+
     private static ServiceProvider ConfigureServices()
     {
         var map = new ServiceCollection();//.AddSingleton(new SomeServiceClass());
@@ -327,9 +328,6 @@ public sealed class SysCord<T> where T : PKM, new()
         // you haven't made any mistakes in your dependency graph.
         return map.BuildServiceProvider();
     }
-
-    // Example of a logging handler. This can be reused by add-ons
-    // that ask for a Func<LogMessage, Task>.
 
     private static ConsoleColor GetTextColor(LogSeverity sv) => sv switch
     {
@@ -405,6 +403,62 @@ public sealed class SysCord<T> where T : PKM, new()
         return Task.CompletedTask;
     }
 
+    private void GrantXP(string userId)
+    {
+        // Check if the stats file exists, and create it if it doesn't
+        if (!File.Exists(StatsFilePath))
+        {
+            var initialStats = new Dictionary<string, UserStats>();
+            var initialJson = JsonConvert.SerializeObject(initialStats, Formatting.Indented);
+            File.WriteAllText(StatsFilePath, initialJson);
+        }
+
+        var json = File.ReadAllText(StatsFilePath);
+        var stats = JsonConvert.DeserializeObject<Dictionary<string, UserStats>>(json);
+
+        if (stats == null)
+            return;
+
+        if (!stats.TryGetValue(userId, out var userStats))
+        {
+            userStats = new UserStats { Level = 1, XP = 0, LastXPGain = DateTime.MinValue };
+            stats[userId] = userStats;
+        }
+
+        // Check if the user has gained XP in the last 2 minutes
+        if (DateTime.UtcNow - userStats.LastXPGain < TimeSpan.FromMinutes(2))
+            return;
+
+        // Grant random XP between 5 and 10, doubled if double XP is active
+        var random = new Random();
+        int xpGained = random.Next(5, 11);
+        if (AdminModule.IsDoubleXPActive())
+        {
+            xpGained *= 2; // Double XP
+        }
+
+        userStats.XP += xpGained;
+        userStats.LastXPGain = DateTime.UtcNow;
+
+        // Check if the user has enough XP to level up
+        int requiredXP = GetRequiredXPForNextLevel(userStats.Level);
+        while (userStats.XP >= requiredXP)
+        {
+            userStats.XP -= requiredXP;
+            userStats.Level++;
+            requiredXP = GetRequiredXPForNextLevel(userStats.Level);
+        }
+
+        // Save the updated stats
+        SaveStats(stats);
+    }
+
+    private int GetRequiredXPForNextLevel(int currentLevel)
+    {
+        // Base XP required for level 1 is 100, and it increases by 20% each level
+        return (int)(100 * Math.Pow(1.2, currentLevel - 1));
+    }
+
     private async Task HandleMessageAsync(SocketMessage arg)
     {
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -438,6 +492,9 @@ public sealed class SysCord<T> where T : PKM, new()
 
             if (msg.HasMentionPrefix(_client.CurrentUser, ref argPos) || msg.HasStringPrefix(correctPrefix, ref argPos))
             {
+                // Grant XP to the user for using a command
+                GrantXP(msg.Author.Id.ToString());
+
                 var context = new SocketCommandContext(_client, msg);
                 var handled = await TryHandleCommandAsync(msg, context, argPos);
                 if (handled)
@@ -566,21 +623,21 @@ public sealed class SysCord<T> where T : PKM, new()
             // Check if the user is in the bannedIDs list
             if (msg.Author is SocketGuildUser user && AbuseSettings.BannedIDs.List.Any(z => z.ID == user.Id))
             {
-                await SysCord<T>.SafeSendMessageAsync(msg.Channel, "Tienes prohibido usar este bot.").ConfigureAwait(false);
+                await SysCord<T>.SafeSendMessageAsync(msg.Channel, $"<a:no:1206485104424128593> Lo siento {msg.Author.Mention}, tienes prohibido usar este bot.").ConfigureAwait(false);
                 return true;
             }
 
             var mgr = Manager;
             if (!mgr.CanUseCommandUser(msg.Author.Id))
             {
-                await SysCord<T>.SafeSendMessageAsync(msg.Channel, "No tiene permitido usar este comando").ConfigureAwait(false);
+                await SysCord<T>.SafeSendMessageAsync(msg.Channel, $"<a:no:1206485104424128593> Lo siento {msg.Author.Mention}, no tiene permitido usar este comando").ConfigureAwait(false);
                 return true;
             }
 
             if (!mgr.CanUseCommandChannel(msg.Channel.Id) && msg.Author.Id != mgr.Owner)
             {
                 if (Hub.Config.Discord.ReplyCannotUseCommandInChannel)
-                    await SysCord<T>.SafeSendMessageAsync(msg.Channel, "No puedes usar ese comando aquí.").ConfigureAwait(false);
+                    await SysCord<T>.SafeSendMessageAsync(msg.Channel, $"<a:no:1206485104424128593> Lo siento {msg.Author.Mention}, no puedes usar ese comando aquí, usalo en un servidor.").ConfigureAwait(false);
                 return true;
             }
 
@@ -618,5 +675,22 @@ public sealed class SysCord<T> where T : PKM, new()
         {
             await Log(new LogMessage(LogSeverity.Error, "Command", $"Error al enviar el mensaje: {ex.Message}", ex)).ConfigureAwait(false);
         }
+    }
+
+    private void SaveStats(Dictionary<string, UserStats> stats)
+    {
+        var json = JsonConvert.SerializeObject(stats, Formatting.Indented);
+        File.WriteAllText(StatsFilePath, json);
+    }
+
+    public class UserStats
+    {
+        public int Wins { get; set; }
+        public int Losses { get; set; }
+        public int Points { get; set; }
+        public int XP { get; set; } // New property for XP
+        public int Level { get; set; } // New property for Level
+        public DateTime LastXPGain { get; set; } // New property to track the last time XP was gained
+        public DateTime CooldownEnd { get; set; } // Cooldown end time
     }
 }

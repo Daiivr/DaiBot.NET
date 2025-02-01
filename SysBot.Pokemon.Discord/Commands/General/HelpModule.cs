@@ -1,12 +1,9 @@
 using Discord;
 using Discord.Commands;
 using System;
-using SysBot.Pokemon.Discord;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Discord.Net;
-using System.Net;
 
 namespace SysBot.Pokemon.Discord;
 

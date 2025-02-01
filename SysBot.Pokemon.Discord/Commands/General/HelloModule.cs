@@ -6,13 +6,22 @@ using System.Net.Http;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using SysBot.Pokemon.Discord;
 using System;
 
 namespace SysBot.Pokemon.Discord;
 
 public class HelloModule : ModuleBase<SocketCommandContext>
 {
+    private static readonly string[] Greetings = new[]
+    {
+        "¡Hola", "¡Saludos", "¡Buenos días", "¡Buenas tardes", "¡Buenas noches", "¡Hey", "¡Holi"
+    };
+
+    private static readonly string[] WelcomeMessages = new[]
+    {
+        "¡Bienvenido", "¡Es un placer verte", "¡Qué gusto verte", "¡Encantado de verte", "¡Hola de nuevo"
+    };
+
     [Command("hello")]
     [Alias("hi")]
     [Summary("Saluda al bot y obtén una respuesta.")]
@@ -21,22 +30,25 @@ public class HelloModule : ModuleBase<SocketCommandContext>
         var avatarUrl = Context.User.GetAvatarUrl(size: 128) ?? Context.User.GetDefaultAvatarUrl();
         var color = await GetDominantColorAsync(avatarUrl);
 
+        var random = new Random();
+        var greeting = Greetings[random.Next(Greetings.Length)];
+        var welcomeMessage = WelcomeMessages[random.Next(WelcomeMessages.Length)];
+
         var str = SysCordSettings.Settings.HelloResponse;
         var msg = string.Format(str, Context.User.Mention);
 
         var embed = new EmbedBuilder()
-            .WithTitle("¡Saludos!")
-            .WithDescription(msg)
+            .WithTitle($"{greeting}, {Context.User.Username}! 👋")
+            .WithDescription($"{msg}, {welcomeMessage}!")
             .WithColor(color) // Establece el color del embed
             .WithCurrentTimestamp()
             .WithThumbnailUrl("https://i.imgur.com/BcMI5KC.png")
             .WithImageUrl("https://i.pinimg.com/originals/1a/0e/2f/1a0e2f953f778092b079dcf6f5800b5d.gif")
             .WithFooter(footer =>
             {
-                footer.WithText(Context.User.Username);
+                footer.WithText($"Solicitado por {Context.User.Username}");
                 footer.WithIconUrl(avatarUrl);
             });
-        embed.WithTimestamp(DateTime.Now);
 
         await ReplyAsync(embed: embed.Build()).ConfigureAwait(false);
     }
