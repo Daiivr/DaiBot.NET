@@ -40,9 +40,6 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
 
     public event EventHandler? ConnectionSuccess;
 
-    // Flag to indicate that a reboot has been requested.
-    private bool RebootAndStopRequested = false;
-
     public ICountSettings Counts => TradeSettings;
 
     /// <summary>
@@ -120,12 +117,16 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
         await HardStop().ConfigureAwait(false);
     }
 
-    public override Task RebootAndStop(CancellationToken t)
+    public override async Task RebootAndStop(CancellationToken t)
     {
-        // Set the flag instead of rebooting immediately.
-        RebootAndStopRequested = true;
-        Log("⚠️ Reiniciar y detener han sido solicitados. Se reiniciará en el próximo punto seguro.");
-        return Task.CompletedTask;
+        await ReOpenGame(Hub.Config, t).ConfigureAwait(false);
+        await HardStop().ConfigureAwait(false);
+        await Task.Delay(2_000, t).ConfigureAwait(false);
+        if (!t.IsCancellationRequested)
+        {
+            Log("Restarting the main loop.");
+            await MainLoop(t).ConfigureAwait(false);
+        }
     }
 
     protected virtual async Task<(PB8 toSend, PokeTradeResult check)> GetEntityToSend(SAV8BS sav, PokeTradeDetail<PB8> poke, PB8 offered, PB8 toSend, PartnerDataHolder partnerID, CancellationToken token)
@@ -371,20 +372,6 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
             {
                 Log(e.Message);
                 await HandleAbortedBatchTrade(detail, type, priority, PokeTradeResult.ExceptionInternal, token).ConfigureAwait(false);
-            }
-            if (RebootAndStopRequested)
-            {
-                Log("⚠️ Reiniciar y detener solicitado. Iniciando reinicio.");
-                await ReOpenGame(Hub.Config, token).ConfigureAwait(false);
-                await HardStop().ConfigureAwait(false);
-                await Task.Delay(2_000, token).ConfigureAwait(false);
-                if (!token.IsCancellationRequested)
-                {
-                    Log("Reiniciando el bucle principal.");
-                    RebootAndStopRequested = false;
-                    await MainLoop(token).ConfigureAwait(false);
-                }
-                return;
             }
         }
     }
