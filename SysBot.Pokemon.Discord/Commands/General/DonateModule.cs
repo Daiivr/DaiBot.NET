@@ -24,15 +24,6 @@ namespace SysBot.Pokemon.Discord
             // Fetch donation settings from DonationOptions
             var donationSettings = settings.Donation;
 
-            // Parse donation goal and current donations from settings
-            double donationGoal = ParseDonationValue(donationSettings.DonationGoal);
-            double currentDonations = ParseDonationValue(donationSettings.DonationCurrent);
-
-            // Calculate progress towards the donation goal
-            double progress = donationGoal > 0 ? currentDonations / donationGoal : 0; // Avoid division by zero
-            string progressBar = GetProgressBar(progress);
-            string progressText = $"**${currentDonations:0.00} / ${donationGoal:0.00}** ({progress * 100:0}%)";
-
             // Create a new EmbedBuilder
             var embed = new EmbedBuilder
             {
@@ -45,8 +36,21 @@ namespace SysBot.Pokemon.Discord
             // Add a thumbnail to the embed
             embed.WithThumbnailUrl("https://smilingwithjerome.com/wp-content/uploads/2019/04/Donation-icon.png");
 
-            // Add the progress bar and goal tracker to the embed
-            embed.AddField("Progreso de la Meta de Donaciones", $"{progressBar}\n{progressText}");
+            // Check if the progress bar is enabled in the settings
+            if (donationSettings.ProgressBar.ShowProgressBar)
+            {
+                // Parse donation goal and current donations from settings
+                double donationGoal = ParseDonationValue(donationSettings.ProgressBar.DonationGoal);
+                double currentDonations = ParseDonationValue(donationSettings.ProgressBar.DonationCurrent);
+
+                // Calculate progress towards the donation goal
+                double progress = donationGoal > 0 ? currentDonations / donationGoal : 0; // Avoid division by zero
+                string progressBar = GetProgressBar(progress);
+                string progressText = $"**${currentDonations:0.00} / ${donationGoal:0.00}** ({progress * 100:0}%)";
+
+                // Add the progress bar and goal tracker to the embed
+                embed.AddField("Progreso de la Meta de Donaciones", $"{progressBar}\n{progressText}");
+            }
 
             // Add a footer to the embed with the user's username and avatar
             embed.WithFooter(footer =>

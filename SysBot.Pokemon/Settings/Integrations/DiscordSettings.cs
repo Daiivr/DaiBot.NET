@@ -146,7 +146,6 @@ public class DiscordSettings
 
     [Category(Operation), TypeConverter(typeof(ExpandableObjectConverter)), Description("Opciones Extras sobre el stream del host"), DisplayName("Opciones del Stream")]
     public StreamOptions Stream { get; set; } = new StreamOptions();
-
     public class StreamOptions
     {
         public override string ToString() => "(Collection)";
@@ -177,11 +176,22 @@ public class DiscordSettings
         [Category(Operation), Description("Enlace de donación."), DisplayName("Link para Donaciones")]
         public string DonationLink { get; set; } = string.Empty;
 
-        [Category(Operation), Description("Meta de donación."), DisplayName("Meta de Donaciones")]
-        public string DonationGoal { get; set; } = string.Empty;
+        // Nested class for progress bar settings
+        [Category(Operation), TypeConverter(typeof(ExpandableObjectConverter)), Description("Configuración de la barra de progreso."), DisplayName("Configuración Extra")]
+        public ProgressBarSettings ProgressBar { get; set; } = new ProgressBarSettings();
+        public class ProgressBarSettings
+        {
+            public override string ToString() => "(Configuración de Barra de Donaciones)";
 
-        [Category(Operation), Description("Donaciones actuales."), DisplayName("Donaciones Actuales")]
-        public string DonationCurrent { get; set; } = string.Empty;
+            [Category(Operation), Description("Activa o desactiva la barra de progreso de donaciones."), DisplayName("Mostrar Barra de Progreso")]
+            public bool ShowProgressBar { get; set; } = false; // Default to false
+
+            [Category(Operation), Description("Meta de donación."), DisplayName("Meta de Donaciones")]
+            public string DonationGoal { get; set; } = string.Empty;
+
+            [Category(Operation), Description("Donaciones actuales."), DisplayName("Donaciones Actuales")]
+            public string DonationCurrent { get; set; } = string.Empty;
+        }
     }
 
     [Category(Channels), Description("ID de canal que harán eco de los datos del bot de registro."), DisplayName("Canales de Registros")]
