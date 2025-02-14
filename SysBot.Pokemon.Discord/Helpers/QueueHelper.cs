@@ -267,15 +267,23 @@ public static class QueueHelper<T> where T : PKM, new()
             {
                 if (homeTrack.HasTracker && isNonNative)
                 {
-                    // Both Non-Native and has Home Tracker
                     embedBuilder.Footer.IconUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/exclamation.gif";
-                    embedBuilder.AddField("__**Aviso**__: **Este Pokémon no es nativo y tiene rastreador de Home.**", "*AutoOT no fue aplicado.*");
+                    string trackerInfo = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowTracker
+                        ? $"\n\n **Home Tracker:** ||{homeTrack.Tracker}||"
+                        : string.Empty;
+
+                    embedBuilder.AddField("__**Aviso**__: **Este Pokémon no es nativo y tiene rastreador de Home.**",
+                        "*AutoOT no fue aplicado.*" + trackerInfo);
                 }
                 else if (homeTrack.HasTracker)
                 {
-                    // Only has Home Tracker
                     embedBuilder.Footer.IconUrl = "https://raw.githubusercontent.com/bdawg1989/sprites/main/exclamation.gif";
-                    embedBuilder.AddField("__**Aviso**__: **Rastreador de HOME detectado.**", "*AutoOT no fue aplicado.*");
+                    string trackerInfo = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowTracker
+                        ? $"\n\n **Home Tracker:** ||{homeTrack.Tracker}||"
+                        : string.Empty;
+
+                    embedBuilder.AddField("__**Aviso**__: **Rastreador de HOME detectado.**",
+                        "*AutoOT no fue aplicado.*" + trackerInfo);
                 }
                 else if (isNonNative)
                 {

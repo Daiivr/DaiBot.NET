@@ -25,13 +25,15 @@ public static class DetailsExtractor<T> where T : PKM, new()
     {
         string leftSideContent = (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowLevel ? $"**Nivel:** {embedData.Level}\n" : "");
         leftSideContent +=
-            (pk.Version is GameVersion.SL or GameVersion.VL && SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowTeraType ? $"**Tera Tipo:** {embedData.TeraType}\n" : "") +
+            (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowTeraType && !string.IsNullOrWhiteSpace(embedData.TeraType) ? $"**Tera Tipo:** {embedData.TeraType}\n" : "") +
                         (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowAbility ? $"**Habilidad:** {embedData.Ability}\n" : "") +
-            (pk.Version is GameVersion.SL or GameVersion.VL && SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowScale ? $"**Tamaño:** {embedData.Scale.Item1}\n" : "") +
+            (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowScale && !string.IsNullOrWhiteSpace(embedData.Scale.Item1) ? $"**Tamaño:** {embedData.Scale.Item1}\n" : "") +
                         (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowNature ? $"**Naturaleza:** {embedData.Nature}\n" : "") +
             (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowMetDate ? $"{embedData.MetDate}\n" : "") +
             (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowIVs ? $"**IVs**: {embedData.IVsDisplay}\n" : "") +
-            (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowEVs && !string.IsNullOrWhiteSpace(embedData.EVsDisplay) ? $"**EVs**: {embedData.EVsDisplay}\n" : "");
+            (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowEVs && !string.IsNullOrWhiteSpace(embedData.EVsDisplay) ? $"**EVs**: {embedData.EVsDisplay}\n" : "") +
+            (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowGVs && !string.IsNullOrWhiteSpace(embedData.GVsDisplay) ? $"**GVs**: {embedData.GVsDisplay}\n" : "") +
+            (SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.ShowAVs && !string.IsNullOrWhiteSpace(embedData.AVsDisplay) ? $"**AVs**: {embedData.AVsDisplay}\n" : "");
         leftSideContent += $"\n{trainerMention}\nAgregado a la cola de tradeo.";
 
         leftSideContent = leftSideContent.TrimEnd('\n');
@@ -146,6 +148,27 @@ public static class DetailsExtractor<T> where T : PKM, new()
             (evs[5] != 0 ? $"{evs[5]} SpD" : ""),
             (evs[3] != 0 ? $"{evs[3]} Spe" : "") // correct pkhex/ALM ordering of stats
         }.Where(s => !string.IsNullOrEmpty(s)));
+
+        int[] gvs = GetGVs(pk);
+        embedData.GVsDisplay = string.Join(" / ", new[] {
+            (gvs[0] != 0 ? $"{gvs[0]} HP" : ""),
+            (gvs[1] != 0 ? $"{gvs[1]} Atk" : ""),
+            (gvs[2] != 0 ? $"{gvs[2]} Def" : ""),
+            (gvs[4] != 0 ? $"{gvs[4]} SpA" : ""),
+            (gvs[5] != 0 ? $"{gvs[5]} SpD" : ""),
+            (gvs[3] != 0 ? $"{gvs[3]} Spe" : "") // correct pkhex/ALM ordering of stats
+        }.Where(s => !string.IsNullOrEmpty(s)));
+
+        int[] avs = GetAVs(pk);
+        embedData.AVsDisplay = string.Join(" / ", new[] {
+            (avs[0] != 0 ? $"{avs[0]} HP" : ""),
+            (avs[1] != 0 ? $"{avs[1]} Atk" : ""),
+            (avs[2] != 0 ? $"{avs[2]} Def" : ""),
+            (avs[4] != 0 ? $"{avs[4]} SpA" : ""),
+            (avs[5] != 0 ? $"{avs[5]} SpD" : ""),
+            (avs[3] != 0 ? $"{avs[3]} Spe" : "") // correct pkhex/ALM ordering of stats
+        }.Where(s => !string.IsNullOrEmpty(s)));
+
         if (pk.FatefulEncounter)
         {
             embedData.MetDate = "**Obtenido:** " + pk.MetDate.ToString();
@@ -218,6 +241,27 @@ public static class DetailsExtractor<T> where T : PKM, new()
         int[] evs = new int[6];
         pk.GetEVs(evs);
         return evs;
+    }
+
+    private static int[] GetGVs(T pk)
+    {
+        if (pk is IGanbaru ganbaru)
+        {
+            Span<byte> gvs = stackalloc byte[6];
+            ganbaru.GetGVs(gvs);
+            return gvs.ToArray().Select(x => (int)x).ToArray();
+        }
+        return new int[6];
+    }
+    private static int[] GetAVs(T pk)
+    {
+        if (pk is IAwakened awakened)
+        {
+            Span<byte> avs = stackalloc byte[6];
+            AwakeningUtil.GetAVs(awakened, avs);
+            return avs.ToArray().Select(x => (int)x).ToArray();
+        }
+        return new int[6]; // Default if not applicable
     }
 
     private static List<string> GetMoveNames(T pk)
@@ -313,14 +357,15 @@ public static class DetailsExtractor<T> where T : PKM, new()
         string markTitle = string.Empty;
         if (pk is IRibbonSetMark9 ribbonSetMark)
         {
-            alphaMarkSymbol = ribbonSetMark.RibbonMarkAlpha ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.SpecialMarksEmojis.AlphaMarkEmoji.EmojiString : string.Empty;
-            mightyMarkSymbol = ribbonSetMark.RibbonMarkMightiest ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.SpecialMarksEmojis.MightiestMarkEmoji.EmojiString : string.Empty;
+            alphaMarkSymbol = ribbonSetMark.RibbonMarkAlpha ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.SpecialMarksEmojis.AlphaMarkEmoji.EmojiString + " " : string.Empty;
+            mightyMarkSymbol = ribbonSetMark.RibbonMarkMightiest ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.SpecialMarksEmojis.MightiestMarkEmoji.EmojiString + " " : string.Empty;
         }
         if (pk is IRibbonIndex ribbonIndex)
         {
             TradeExtensions<T>.HasMark(ribbonIndex, out RibbonIndex result, out markTitle);
         }
-        string alphaSymbol = (pk is IAlpha alpha && alpha.IsAlpha) ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.SpecialMarksEmojis.AlphaPLAEmoji.EmojiString : string.Empty;
+        string alphaSymbol = (pk is IAlpha alpha && alpha.IsAlpha) ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.SpecialMarksEmojis.AlphaPLAEmoji.EmojiString + " " : string.Empty;
+        string GigantamaxSymbol = (pk is IGigantamax gigantamax && gigantamax.CanGigantamax) ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.SpecialMarksEmojis.GigantamaxEmoji.EmojiString + " " : string.Empty;
         string genderSymbol = GameInfo.GenderSymbolASCII[pk.Gender];
         string maleEmojiString = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.GenderEmojis.MaleEmoji.EmojiString;
         string femaleEmojiString = SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.GenderEmojis.FemaleEmoji.EmojiString;
@@ -332,7 +377,7 @@ public static class DetailsExtractor<T> where T : PKM, new()
         };
         string mysteryGiftEmoji = pk.FatefulEncounter ? SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.SpecialMarksEmojis.MysteryGiftEmoji.EmojiString : "";
 
-        return (!string.IsNullOrEmpty(markTitle) ? $"{markTitle} " : "") + displayGender + alphaSymbol + mightyMarkSymbol + alphaMarkSymbol + mysteryGiftEmoji;
+        return (!string.IsNullOrEmpty(markTitle) ? $"{markTitle} " : "") + displayGender + alphaSymbol + mightyMarkSymbol + alphaMarkSymbol + GigantamaxSymbol + mysteryGiftEmoji;
     }
 
     private static string GetTeraTypeString(PK9 pk9)
@@ -399,7 +444,12 @@ public class EmbedData
 
     public string? IVsDisplay { get; set; }
 
+    public string? GVsDisplay { get; set; }
+    public string? AVsDisplay { get; set; }
+
     public int Level { get; set; }
+
+    public int Tracker { get; set; }
 
     public string? MetDate { get; set; }
 

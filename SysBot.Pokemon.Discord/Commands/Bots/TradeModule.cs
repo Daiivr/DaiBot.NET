@@ -658,25 +658,29 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
                     if (pkm is not T correctedPk || !la.Valid)
                     {
-                        var reason = result == "Timeout" ? $"Este **{spec}** tomó demasiado tiempo en generarse." :
-                                 result == "VersionMismatch" ? "Solicitud denegada: Las versiones de **PKHeX** y **Auto-Legality Mod** no coinciden." :
-                                 $"{Context.User.Mention} No se puede crear un **{spec}** con los datos proporcionados.";
-                        var errorMessage = $"<a:no:1206485104424128593> Oops! {reason}";
-                        if (result == "Failed")
-                            errorMessage += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
+                        var reason = result switch
+                        {
+                            "Timeout" => $"El **{spec}** tardó demasiado en generarse y se canceló.",
+                            "VersionMismatch" => "❌ **Solicitud denegada:** La versión de **PKHeX** y **Auto-Legality Mod** no coinciden.",
+                            _ => $"{Context.User.Mention}, no se pudo crear un **{spec}** con los datos proporcionados."
+                        };
 
                         var embed = new EmbedBuilder
                         {
-                            Description = errorMessage,
-                            Color = Color.Red,
+                            Title = "⚠️ Error en la Legalidad del Conjunto",
+                            Description = $"<a:no:1206485104424128593> **Oops!** {reason}",
+                            Color = new Color(255, 0, 0), // Bright red for better visibility
                             ImageUrl = "https://i.imgur.com/Y64hLzW.gif",
                             ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
                         };
 
-                        embed.WithAuthor("Error en la Legalidad del Conjunto", "https://img.freepik.com/free-icon/warning_318-478601.jpg")
+                        if (result == "Failed")
+                            embed.AddField("🔍 Sugerencia:", AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm), false);
+
+                        embed.WithAuthor(Context.User.Username, Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl())
                              .WithFooter(footer =>
                              {
-                                 footer.Text = $"{Context.User.Username} • {DateTime.UtcNow.ToString("hh:mm tt")}";
+                                 footer.Text = $"Solicitado por {Context.User.Username} • {DateTime.UtcNow:hh:mm tt} UTC";
                                  footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
                              });
 
@@ -924,25 +928,29 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
                     if (pkm is not T correctedPk || !la.Valid)
                     {
-                        var reason = result == "Timeout" ? $"Este **{spec}** tomó demasiado tiempo en generarse." :
-                                 result == "VersionMismatch" ? "Solicitud denegada: Las versiones de **PKHeX** y **Auto-Legality Mod** no coinciden." :
-                                 $"{Context.User.Mention} No se puede crear un **{spec}** con los datos proporcionados.";
-                        var errorMessage = $"<a:no:1206485104424128593> Oops! {reason}";
-                        if (result == "Failed")
-                            errorMessage += $"\n{AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm)}";
+                        var reason = result switch
+                        {
+                            "Timeout" => $"El **{spec}** tardó demasiado en generarse y se canceló.",
+                            "VersionMismatch" => "❌ **Solicitud denegada:** La versión de **PKHeX** y **Auto-Legality Mod** no coinciden.",
+                            _ => $"{Context.User.Mention}, no se pudo crear un **{spec}** con los datos proporcionados."
+                        };
 
                         var embed = new EmbedBuilder
                         {
-                            Description = errorMessage,
-                            Color = Color.Red,
+                            Title = "⚠️ Error en la Legalidad del Conjunto",
+                            Description = $"<a:no:1206485104424128593> **Oops!** {reason}",
+                            Color = new Color(255, 0, 0), // Bright red for better visibility
                             ImageUrl = "https://i.imgur.com/Y64hLzW.gif",
                             ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
                         };
 
-                        embed.WithAuthor("Error en la Legalidad del Conjunto", "https://img.freepik.com/free-icon/warning_318-478601.jpg")
+                        if (result == "Failed")
+                            embed.AddField("🔍 Sugerencia:", AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm), false);
+
+                        embed.WithAuthor(Context.User.Username, Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl())
                              .WithFooter(footer =>
                              {
-                                 footer.Text = $"{Context.User.Username} • {DateTime.UtcNow.ToString("hh:mm tt")}";
+                                 footer.Text = $"Solicitado por {Context.User.Username} • {DateTime.UtcNow:hh:mm tt} UTC";
                                  footer.IconUrl = Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl();
                              });
 
@@ -1175,13 +1183,13 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var attachment = Context.Message.Attachments.FirstOrDefault();
         if (attachment == default)
         {
-            _ = ReplyAndDeleteAsync("<a:warning:1206483664939126795> No se proporcionó ningún archivo adjunto!", 2);
+            _ = ReplyAndDeleteAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, no se ha adjuntado ningún archivo. ¡Por favor intenta de nuevo!", 2);
             return;
         }
 
         if (!attachment.Filename.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
         {
-            _ = ReplyAndDeleteAsync("<a:warning:1206483664939126795> Formato de archivo no válido. Proporcione un archivo .zip.", 2);
+            _ = ReplyAndDeleteAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, el formato de archivo no es válido. Por favor, proporciona un archivo en formato .zip.", 2);
             return;
         }
 
@@ -1863,14 +1871,14 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var attachment = Context.Message.Attachments.FirstOrDefault();
         if (attachment == default)
         {
-            await ReplyAsync("<a:warning:1206483664939126795> No se proporcionó ningún archivo adjunto!").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, no se ha proporcionado ningún archivo adjunto. ¡Por favor, inténtalo de nuevo!").ConfigureAwait(false);
             return;
         }
         var att = await NetUtil.DownloadPKMAsync(attachment).ConfigureAwait(false);
         var pk = GetRequest(att);
         if (pk == null)
         {
-            await ReplyAsync("<a:warning:1206483664939126795> ¡El archivo adjunto proporcionado no es compatible con este módulo!").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, ¡el archivo adjunto proporcionado no es compatible con este módulo!").ConfigureAwait(false);
             return;
         }
         await AddTradeToQueueAsync(code, usr.Username, pk, sig, usr, ignoreAutoOT: ignoreAutoOT).ConfigureAwait(false);
@@ -1881,7 +1889,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var attachment = Context.Message.Attachments.FirstOrDefault();
         if (attachment == default)
         {
-            await ReplyAsync("<a:warning:1206483664939126795> No se proporciona ningún archivo adjunto!").ConfigureAwait(false);
+            await ReplyAsync($"<a:warning:1206483664939126795> {Context.User.Mention}, no se ha proporcionado ningún archivo adjunto. ¡Por favor, inténtalo de nuevo!").ConfigureAwait(false);
             return;
         }
 

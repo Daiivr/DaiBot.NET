@@ -425,17 +425,20 @@ public class TradeSettings : IBotStateSettings, ICountSettings
         {
             public override string ToString() => "(Collection)";
 
-            [Description("La información del emoji para mostrar el estado del regalo misterioso."), DisplayName("Emoji Regalo Misterioso")]
+            [Description("Emoji utilizado para representar el estado de Regalo Misterioso."), DisplayName("Emoji de Regalo Misterioso")]
             public EmojiInfo MysteryGiftEmoji { get; set; } = new EmojiInfo();
 
-            [Description("La información del emoji para mostrar la marca alfa."), DisplayName("Emoji Marca Alfa")]
+            [Description("Emoji utilizado para representar la Marca Alfa."), DisplayName("Emoji de la Marca Alfa")]
             public EmojiInfo AlphaMarkEmoji { get; set; } = new EmojiInfo();
 
-            [Description("La información emoji para mostrar la marca Imbatible."), DisplayName("Emoji Imbatible")]
+            [Description("Emoji utilizado para representar la Marca Imbatible."), DisplayName("Emoji de la Marca Imbatible")]
             public EmojiInfo MightiestMarkEmoji { get; set; } = new EmojiInfo();
 
-            [Description("La información emoji para mostrar el emoji alfa en Legends: Arceus."), DisplayName("Emoji Alfa PLA")]
+            [Description("Emoji utilizado para representar Pokémon Alfa en Legends: Arceus."), DisplayName("Emoji de Alfa PLA")]
             public EmojiInfo AlphaPLAEmoji { get; set; } = new EmojiInfo();
+
+            [Description("Emoji utilizado para representar Pokémon Gigantamax en Sword & Shield."), DisplayName("Emoji de Gigantamax")]
+            public EmojiInfo GigantamaxEmoji { get; set; } = new EmojiInfo();
         }
 
         [Category(EmbedSettings), Description("Se mostrará la Escala en el Embed Trade (SV y Discord solamente). Requiere que el usuario suba los emojis a su servidor."), DisplayName("Mostrar Tamaño")]
@@ -446,6 +449,9 @@ public class TradeSettings : IBotStateSettings, ICountSettings
 
         [Category(EmbedSettings), Description("Se mostrará el nivel en el Embed Trade (Discord solamente)."), DisplayName("Mostrar Nivel")]
         public bool ShowLevel { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Mostrará el Rastreador Home en el embed de intercambio (solo en Discord)."), DisplayName("Mostrar Rastreador")]
+        public bool ShowTracker { get; set; } = true;
 
         [Category(EmbedSettings), Description("Mostrará MetDate en el Embed Trade (sólo Discord)."), DisplayName("Mostrar Fecha de Encuentro")]
         public bool ShowMetDate { get; set; } = true;
@@ -461,6 +467,13 @@ public class TradeSettings : IBotStateSettings, ICountSettings
 
         [Category(EmbedSettings), Description("Mostrará los EVs en el Embed Trade (sólo Discord)."), DisplayName("Mostrar EVs")]
         public bool ShowEVs { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Mostrar GVs en el embed de intercambio (solo Discord)."), DisplayName("Mostrar GVs para PLA")]
+
+        public bool ShowGVs { get; set; } = true;
+
+        [Category(EmbedSettings), Description("Mostrar AVs en el embed de intercambio (solo Discord)."), DisplayName("Mostrar AVs para LGPE")]
+        public bool ShowAVs { get; set; } = true;
     }
 
     [Category(VGCPastesConfig), TypeConverter(typeof(CategoryConverter<VGCPastesCategory>))]
