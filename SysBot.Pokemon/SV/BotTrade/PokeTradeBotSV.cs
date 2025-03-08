@@ -771,29 +771,29 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         nextDetail = null;
         var batchQueue = Hub.Queues.GetQueue(PokeRoutineType.Batch);
 
-        Log($"Buscando el próximo comercio después {currentTrade.BatchTradeNumber}/{currentTrade.TotalBatchTrades}");
+        Log($"{currentTrade.Trainer.TrainerName}-{currentTrade.Trainer.ID}: Buscando el siguiente trade después de {currentTrade.BatchTradeNumber}/{currentTrade.TotalBatchTrades}");
         // Get all trades for this user
         var userTrades = batchQueue.Queue.GetSnapshot()
             .Select(x => x.Value)
-            .Where(x => x.Trainer.ID == currentTrade.Trainer.ID)
+            .Where(x => x.Trainer.ID == currentTrade.Trainer.ID &&
+                        x.UniqueTradeID == currentTrade.UniqueTradeID)
             .OrderBy(x => x.BatchTradeNumber)
             .ToList();
 
         // Log what we found
         foreach (var trade in userTrades)
         {
-            Log($"Comercio encontrado en cola: #{trade.BatchTradeNumber}/{trade.TotalBatchTrades} para el entrenador: {trade.Trainer.TrainerName}");
+            Log($"{currentTrade.Trainer.TrainerName}-{currentTrade.Trainer.ID}: Trade encontrado en la cola: #{trade.BatchTradeNumber}/{trade.TotalBatchTrades} para el entrenador {trade.Trainer.TrainerName}");
         }
 
         // Get the next sequential trade
         nextDetail = userTrades.FirstOrDefault(x => x.BatchTradeNumber == currentTrade.BatchTradeNumber + 1);
-
         if (nextDetail != null)
         {
-            Log($"Seleccionando el siguiente trade: {nextDetail.BatchTradeNumber}/{nextDetail.TotalBatchTrades}");
+            Log($"{currentTrade.Trainer.TrainerName}-{currentTrade.Trainer.ID}: Siguiente trade seleccionado {nextDetail.BatchTradeNumber}/{nextDetail.TotalBatchTrades}");
             return true;
         }
-        Log($"No se encontraron más transacciones para este usuario.");
+        Log($"{currentTrade.Trainer.TrainerName}-{currentTrade.Trainer.ID}: No se encontraron más trades para este usuario");
         return false;
     }
 
@@ -801,24 +801,57 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
     {
         int completedTrades = 0;
         var startingDetail = poke;
+        var originalTrainerID = startingDetail.Trainer.ID;
+
+        // Verify that this is actually the first trade in the batch
+        // If not, find the first trade and use that as our starting point
+        if (startingDetail.BatchTradeNumber != 1 && startingDetail.TotalBatchTrades > 1)
+        {
+            Log($"Trade iniciada con un elemento que no es el primero del lote ({startingDetail.BatchTradeNumber}/{startingDetail.TotalBatchTrades}). Buscando el primer elemento...");
+
+            var batchQueue = Hub.Queues.GetQueue(PokeRoutineType.Batch);
+            var firstTrade = batchQueue.Queue.GetSnapshot()
+                .Select(x => x.Value)
+                .Where(x => x.Trainer.ID == startingDetail.Trainer.ID &&
+                           x.UniqueTradeID == startingDetail.UniqueTradeID &&
+                           x.BatchTradeNumber == 1)
+                .FirstOrDefault();
+
+            if (firstTrade != null)
+            {
+                Log($"Primer trade del lote encontrada. Iniciando con la trade 1/{startingDetail.TotalBatchTrades} en su lugar.");
+                poke = firstTrade;
+                startingDetail = firstTrade;
+            }
+            else
+            {
+                Log($"ADVERTENCIA: No se pudo encontrar la primera trade del lote. Se continuará con la trade {startingDetail.BatchTradeNumber}/{startingDetail.TotalBatchTrades}");
+            }
+        }
 
         // Helper method to send collected Pokémon back to the user before early return
         void SendCollectedPokemonAndCleanup()
         {
-            var allReceived = _batchTracker.GetReceivedPokemon(startingDetail.Trainer.ID);
+            var allReceived = _batchTracker.GetReceivedPokemon(originalTrainerID);
             if (allReceived.Count > 0)
             {
-                poke.SendNotification(this, "Enviándote el Pokémon que me cambiaste antes de la interrupción.");
+                poke.SendNotification(this, $"Enviándote los {allReceived.Count} Pokémon que me intercambiaste antes de la interrupción.");
 
-                // Send back all collected Pokémon
+                // Log the Pokémon we're returning for debugging
+                Log($"Devolviendo {allReceived.Count} Pokémon al entrenador {originalTrainerID}.");
                 foreach (var pokemon in allReceived)
                 {
+                    Log($"  - Devolviendo: {pokemon.Species} (Checksum: {pokemon.Checksum:X8})");
                     poke.TradeFinished(this, pokemon);
                 }
             }
+            else
+            {
+                Log($"No se encontraron Pokémon para devolver al entrenador {originalTrainerID}.");
+            }
 
             // Cleanup
-            _batchTracker.ClearReceivedPokemon(startingDetail.Trainer.ID);
+            _batchTracker.ClearReceivedPokemon(originalTrainerID);
         }
 
         while (completedTrades < startingDetail.TotalBatchTrades)
@@ -1040,24 +1073,34 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             LogSuccessfulTrades(poke, trainerNID, tradePartner.TrainerName);
             completedTrades++;
 
-            _batchTracker.AddReceivedPokemon(poke.Trainer.ID, received);
+            // Always use the original trainer ID for consistency
+            _batchTracker.AddReceivedPokemon(originalTrainerID, received);
+            Log($"Se añadió el Pokémon recibido {received.Species} (Checksum: {received.Checksum:X8}) al rastreador de lotes para el entrenador {originalTrainerID} (Trade {completedTrades}/{startingDetail.TotalBatchTrades})");
+
             if (completedTrades == startingDetail.TotalBatchTrades)
             {
                 // Get all collected Pokemon before cleaning anything up
-                var allReceived = _batchTracker.GetReceivedPokemon(poke.Trainer.ID);
+                var allReceived = _batchTracker.GetReceivedPokemon(originalTrainerID);
+                Log($"Trades por lotes completados. Se encontraron {allReceived.Count} Pokémon almacenados para el entrenador {originalTrainerID}");
+
                 // First send notification that trades are complete
                 poke.SendNotification(this, "✅ ¡Todos los intercambios por lotes completados! ¡Gracias por tradear!");
 
                 // Then finish each trade with the corresponding received Pokemon
                 foreach (var pokemon in allReceived)
                 {
+                    Log($"  - Devolviendo: {pokemon.Species} (Checksum: {pokemon.Checksum:X8})");
                     poke.TradeFinished(this, pokemon);
                 }
 
-                // Finally do cleanup
-                Hub.Queues.CompleteTrade(this, poke);
+                // Mark the batch as fully completed and clean up
+                Hub.Queues.CompleteTrade(this, startingDetail);
                 CleanupAllBatchTradesFromQueue(startingDetail);
-                _batchTracker.ClearReceivedPokemon(poke.Trainer.ID);
+                _batchTracker.ClearReceivedPokemon(originalTrainerID);
+
+                // Exit the trade state to prevent further searching
+                await ExitTradeToPortal(false, token).ConfigureAwait(false);
+                poke.IsProcessing = false; // Ensure the trade is marked as not processing
                 break;
             }
             if (GetNextBatchTrade(poke, out var nextDetail))
@@ -1099,7 +1142,10 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
             await ExitTradeToPortal(false, token).ConfigureAwait(false);
             return PokeTradeResult.Success;
         }
+
+        // Ensure we exit properly even if the loop breaks unexpectedly
         await ExitTradeToPortal(false, token).ConfigureAwait(false);
+        poke.IsProcessing = false; // Explicitly mark as not processing
         return PokeTradeResult.Success;
     }
 
