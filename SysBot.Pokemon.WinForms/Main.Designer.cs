@@ -234,6 +234,7 @@ namespace SysBot.Pokemon.WinForms
             RTB_Logs.Size = new Size(768, 444);
             RTB_Logs.TabIndex = 0;
             RTB_Logs.Text = "";
+            RTB_Logs.HideSelection = false;
             // 
             // B_Stop
             // 
