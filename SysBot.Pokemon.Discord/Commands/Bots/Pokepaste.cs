@@ -55,7 +55,7 @@ namespace SysBot.Pokemon.Discord
         [Summary("Genera un equipo a partir de una URL de pokepaste especificada y lo envía como archivos a través de DM.")]
         public async Task GenerateTeamFromUrlAsync(string pokePasteUrl)
         {
-            var generatingMessage = await ReplyAsync("<a:loading:1210133423050719283> {Context.User.Mention} Generando y enviando tu equipo de Pokepaste. Espere por favor...");
+            var generatingMessage = await ReplyAsync($"<a:loading:1210133423050719283> {Context.User.Mention} Generando y enviando tu equipo de Pokepaste. Espere por favor...");
             try
             {
                 await Task.Run(async () =>

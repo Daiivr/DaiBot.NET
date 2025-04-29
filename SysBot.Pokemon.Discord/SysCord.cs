@@ -637,7 +637,7 @@ public sealed class SysCord<T> where T : PKM, new()
             if (!mgr.CanUseCommandChannel(msg.Channel.Id) && msg.Author.Id != mgr.Owner)
             {
                 if (Hub.Config.Discord.ReplyCannotUseCommandInChannel)
-                    await SysCord<T>.SafeSendMessageAsync(msg.Channel, $"<a:no:1206485104424128593> Lo siento {msg.Author.Mention}, no puedes usar ese comando aquí, usalo en un servidor.").ConfigureAwait(false);
+                    await SysCord<T>.SafeSendMessageAsync(msg.Channel, $"<a:no:1206485104424128593> Lo siento {msg.Author.Mention}, no puedes usar ese comando aquí, usalo en el canal o servidor correspondiente.").ConfigureAwait(false);
                 return true;
             }
 
