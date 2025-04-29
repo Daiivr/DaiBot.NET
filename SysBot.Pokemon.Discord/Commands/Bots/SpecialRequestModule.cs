@@ -172,7 +172,7 @@ namespace SysBot.Pokemon.Discord
                 var lgcode = Info.GetRandomLGTradeCode();
                 var sig = Context.User.GetFavor();
 
-                await AddTradeToQueueAsync(code, Context.User.Username, pk as T, sig, Context.User, lgcode: lgcode).ConfigureAwait(false);
+                await AddTradeToQueueAsync(code, Context.User.Username, pk, sig, Context.User, lgcode: lgcode).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -184,7 +184,7 @@ namespace SysBot.Pokemon.Discord
             }
         }
 
-        private static MysteryGift[]? GetEventData(string generationOrGame)
+        public static MysteryGift[]? GetEventData(string generationOrGame)
         {
             return generationOrGame.ToLowerInvariant() switch
             {
@@ -272,100 +272,33 @@ namespace SysBot.Pokemon.Discord
                 await userMessage.DeleteAsync().ConfigureAwait(false);
         }
 
-        public static T? ConvertEventToPKM(MysteryGift selectedEvent)
+        public static T? ConvertEventToPKM(MysteryGift selectedEvent, byte? requestedLanguage = null)
         {
-            var download = new Download<PKM>
+            // Create a SimpleTrainerInfo instance with just version and language
+            // Don't try to set other properties - let the MysteryGift implementation handle defaults
+            var trainer = new SimpleTrainerInfo(selectedEvent.Version)
             {
-                Data = selectedEvent.ConvertToPKM(new SimpleTrainerInfo(), EncounterCriteria.Unrestricted),
-                Success = true
+                Language = requestedLanguage ?? (byte)LanguageID.English,
             };
 
-            if (download.Data is null)
+            // Let the original implementation handle everything including special cases
+            PKM? pkm = selectedEvent.ConvertToPKM(trainer, EncounterCriteria.Unrestricted);
+
+            if (pkm is null)
                 return null;
 
-            var pk = GetRequest(download);
-            if (pk is null)
-                return null;
+            // Convert to the correct type if necessary
+            if (pkm is T pk)
+                return pk;
 
-            if (selectedEvent is IEncounterServerDate)
-            {
-                var (start, end) = GetEncounterDateRange(selectedEvent);
-                if (start.HasValue)
-                {
-                    // If end date is null ("Never"), set the MetDate to the start date
-                    if (end is null)
-                    {
-                        pk.MetDate = start.Value;  // Set to the start date only
-                    }
-                    else
-                    {
-                        // Generate a random date between start and end if both are available
-                        pk.MetDate = GenerateRandomDateInRange(start.Value, end.Value);
-                    }
-                }
-                else
-                {
-                    // Start date not found, using current date
-                    pk.MetDate = DateOnly.FromDateTime(DateTime.UtcNow);
-                }
-            }
-            else
-            {
-                // Not an IEncounterServerDate, using current date
-                pk.MetDate = DateOnly.FromDateTime(DateTime.UtcNow);
-            }
-
-            return pk;
-        }
-
-        private static (DateOnly? Start, DateOnly? End) GetEncounterDateRange(MysteryGift selectedEvent)
-        {
-            if (selectedEvent is WC8 wc8)
-            {
-                if (EncounterServerDate.WC8Gifts.TryGetValue(wc8.CardID, out var wc8Range))
-                    return (wc8Range.Start, wc8Range.End);
-                else if (EncounterServerDate.WC8GiftsChk.TryGetValue(wc8.Checksum, out var wc8ChkRange))
-                    return (wc8ChkRange.Start, wc8ChkRange.End);
-            }
-            else if (selectedEvent is WA8 wa8 && EncounterServerDate.WA8Gifts.TryGetValue(wa8.CardID, out var wa8Range))
-            {
-                return (wa8Range.Start, wa8Range.End);
-            }
-            else if (selectedEvent is WB8 wb8 && EncounterServerDate.WB8Gifts.TryGetValue(wb8.CardID, out var wb8Range))
-            {
-                return (wb8Range.Start, wb8Range.End);
-            }
-            else if (selectedEvent is WC9 wc9)
-            {
-                if (EncounterServerDate.WC9Gifts.TryGetValue(wc9.CardID, out var wc9Range))
-                    return (wc9Range.Start, wc9Range.End);
-                else if (EncounterServerDate.WC9GiftsChk.TryGetValue(wc9.Checksum, out var wc9ChkRange))
-                    return (wc9ChkRange.Start, wc9ChkRange.End);
-            }
-
-            return (null, null);
-        }
-
-        private static DateOnly GenerateRandomDateInRange(DateOnly startDate, DateOnly endDate)
-        {
-            var random = new Random();
-            var totalDays = (endDate.DayNumber - startDate.DayNumber) + 1;
-            if (totalDays <= 0)
-                return startDate;
-            var randomDays = random.Next(totalDays);
-            return startDate.AddDays(randomDays);
+            return EntityConverter.ConvertToType(pkm, typeof(T), out _) as T;
         }
 
         [Command("geteventpokemon")]
         [Alias("gep")]
-        [Summary("Descarga el evento solicitado como un archivo pk y lo envía al usuario.")]
-        public async Task GetEventPokemonAsync(string generationOrGame, [Remainder] string args = "")
+        [Summary("Descarga el evento solicitado como archivo pk y lo envía al usuario. Opcionalmente, especifique el idioma.")]
+        public async Task GetEventPokemonAsync(string generationOrGame, int eventIndex, byte? language = null)
         {
-            if (!int.TryParse(args, out int index))
-            {
-                await ReplyAsync("<a:warning:1206483664939126795> Índice de evento no válido. Proporcione un número de evento válido.").ConfigureAwait(false);
-                return;
-            }
             try
             {
                 var eventData = GetEventData(generationOrGame);
@@ -375,18 +308,26 @@ namespace SysBot.Pokemon.Discord
                     return;
                 }
                 var entityEvents = eventData.Where(gift => gift.IsEntity && !gift.IsItem).ToArray();
-                if (index < 1 || index > entityEvents.Length)
+                if (eventIndex < 1 || eventIndex > entityEvents.Length)
                 {
-                    await ReplyAsync($"<a:warning:1206483664939126795> Índice de evento no válido. Utilice un número de evento válido del comando `{SysCord<T>.Runner.Config.Discord.CommandPrefix}srp {generationOrGame}`.").ConfigureAwait(false);
+                    await ReplyAsync($"<a:warning:1206483664939126795> Índice de evento no válido. Utilice un número de evento válido del comando `{SysCord<T>.Runner.Config.Discord.CommandPrefix}gep {generationOrGame}`.").ConfigureAwait(false);
                     return;
                 }
-                var selectedEvent = entityEvents[index - 1];
+
+                var selectedEvent = entityEvents[eventIndex - 1];
                 var pk = ConvertEventToPKM(selectedEvent);
                 if (pk == null)
                 {
                     await ReplyAsync("<a:warning:1206483664939126795> Los datos de Wondercard proporcionados no son compatibles con este módulo!").ConfigureAwait(false);
                     return;
                 }
+
+                // If language is provided, set pk.Language
+                if (language.HasValue)
+                {
+                    pk.Language = language.Value;
+                }
+
                 try
                 {
                     await Context.User.SendPKMAsync(pk);
@@ -458,7 +399,7 @@ namespace SysBot.Pokemon.Discord
                 if (la.Valid) pk = clone;
             }
 
-            await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryTrade, isMysteryEgg, lgcode, ignoreAutoOT).ConfigureAwait(false);
+            await QueueHelper<T>.AddToQueueAsync(Context, code, trainerName, sig, pk, PokeRoutineType.LinkTrade, tradeType, usr, isBatchTrade, batchTradeNumber, totalBatchTrades, isHiddenTrade, isMysteryTrade, isMysteryEgg, lgcode: lgcode, ignoreAutoOT).ConfigureAwait(false);
         }
     }
 }
