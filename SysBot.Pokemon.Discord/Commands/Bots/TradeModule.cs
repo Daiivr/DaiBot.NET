@@ -675,7 +675,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                         };
 
                         if (result == "Failed")
-                            embed.AddField("🔍 Sugerencia:", AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm), false);
+                            embed.Description = AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm);
 
                         embed.WithAuthor(Context.User.Username, Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl())
                              .WithFooter(footer =>
@@ -945,7 +945,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
                         };
 
                         if (result == "Failed")
-                            embed.AddField("🔍 Sugerencia:", AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm), false);
+                            embed.Description = AutoLegalityWrapper.GetLegalizationHint(template, sav, pkm);
 
                         embed.WithAuthor(Context.User.Username, Context.User.GetAvatarUrl() ?? Context.User.GetDefaultAvatarUrl())
                              .WithFooter(footer =>
