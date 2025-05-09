@@ -554,7 +554,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             var invalidLines = string.Join("\n", set.InvalidLines);
             var embed = new EmbedBuilder
             {
-                Description = $"<a:warning:1206483664939126795> No se puede analizar el conjunto showdown:\n{invalidLines}",
+                Description = $"<a:no:1206485104424128593> Hubo un error al analizar el conjunto de Showdown.\n\n Las siguientes líneas son inválidas:\n\n**{invalidLines}**",
                 Color = Color.Red,
                 ImageUrl = "https://i.imgur.com/Y64hLzW.gif",
                 ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
@@ -826,7 +826,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
             var invalidLines = string.Join("\n", set.InvalidLines);
             var embed = new EmbedBuilder
             {
-                Description = $"<a:warning:1206483664939126795> No se puede analizar el conjunto showdown:\n{invalidLines}",
+                Description = $"<a:no:1206485104424128593> Hubo un error al analizar el conjunto de Showdown.\n\n Las siguientes líneas son inválidas:\n\n**{invalidLines}**",
                 Color = Color.Red,
                 ImageUrl = "https://i.imgur.com/Y64hLzW.gif",
                 ThumbnailUrl = "https://i.imgur.com/DWLEXyu.png"
@@ -1290,7 +1290,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
 
         if (set.InvalidLines.Count != 0)
         {
-            var msg = $"No se puede analizar el conjunto showdown:\n{string.Join("\n", set.InvalidLines)}";
+            var msg = $"Hubo un error al analizar el conjunto de Showdown.\n\n Las siguientes líneas son inválidas:\n{string.Join("\n", set.InvalidLines)}";
             await ReplyAsync(msg).ConfigureAwait(false);
             return;
         }
