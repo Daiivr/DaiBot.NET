@@ -701,6 +701,8 @@ public class PokeTradeBotSV(PokeTradeHub<PK9> Hub, PokeBotState Config) : PokeRo
         }
         else if (config.LedyQuitIfNoMatch)
         {
+            var nickname = offered.IsNicknamed ? $" (Apodo: \"{offered.Nickname}\")" : string.Empty;
+            poke.SendNotification(this, $"No se encontró coincidencia para el {GameInfo.GetStrings(1).Species[offered.Species]} ofrecido{nickname}.");
             return (toSend, PokeTradeResult.TrainerRequestBad);
         }
 

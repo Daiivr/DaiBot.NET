@@ -1036,6 +1036,8 @@ public class PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState config) : Poke
         }
         else if (config.LedyQuitIfNoMatch)
         {
+            var nickname = offered.IsNicknamed ? $" (Apodo: \"{offered.Nickname}\")" : string.Empty;
+            poke.SendNotification(this, $"No se encontró coincidencia para el {GameInfo.GetStrings(1).Species[offered.Species]} ofrecido{nickname}.");
             return (toSend, PokeTradeResult.TrainerRequestBad);
         }
 

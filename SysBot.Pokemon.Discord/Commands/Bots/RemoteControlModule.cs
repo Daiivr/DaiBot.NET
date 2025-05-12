@@ -58,6 +58,52 @@ public class RemoteControlModule<T> : ModuleBase<SocketCommandContext> where T :
         await SetScreen(true).ConfigureAwait(false);
     }
 
+    [Command("screenOnAll")]
+    [Alias("setScreenOnAll", "scrOnAll")]
+    [Summary("Enciende la pantalla para todos los bots conectados")]
+    [RequireSudo]
+    public async Task SetScreenOnAllAsync()
+    {
+        await SetScreenForAllBots(true).ConfigureAwait(false);
+    }
+
+    [Command("screenOffAll")]
+    [Alias("setScreenOffAll", "scrOffAll")]
+    [Summary("Apaga la pantalla para todos los bots conectados")]
+    [RequireSudo]
+    public async Task SetScreenOffAllAsync()
+    {
+        await SetScreenForAllBots(false).ConfigureAwait(false);
+    }
+
+    private async Task SetScreenForAllBots(bool on)
+    {
+        var bots = SysCord<T>.Runner.Bots;
+        if (bots.Count == 0)
+        {
+            await ReplyAsync($"<a:warning:1206483664939126795> No hay bots actualmente conectados.").ConfigureAwait(false);
+            return;
+        }
+
+        int successCount = 0;
+        foreach (var bot in bots)
+        {
+            try
+            {
+                var b = bot.Bot;
+                var crlf = b is SwitchRoutineExecutor<PokeBotState> { UseCRLF: true };
+                await b.Connection.SendAsync(SwitchCommand.SetScreen(on ? ScreenState.On : ScreenState.Off, crlf), CancellationToken.None).ConfigureAwait(false);
+                successCount++;
+            }
+            catch (Exception)
+            {
+                // Continue with other bots if one fails
+            }
+        }
+
+        await ReplyAsync($"Estado de pantalla establecido en {(on ? "On" : "Off")} para {successCount} de {bots.Count} bots.").ConfigureAwait(false);
+    }
+
     [Command("setStick")]
     [Summary("Coloca el joystick en la posición especificada.")]
     [RequireRoleAccess(nameof(DiscordManager.RolesRemoteControl))]

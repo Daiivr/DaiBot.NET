@@ -65,13 +65,10 @@ namespace SysBot.Pokemon
     {
         public override string ToString() => "Apertura del Juego";
 
-        [Description("Tiempo extra en milisegundos para esperar a verificar si el DLC es usable.")]
-        public int ExtraTimeCheckDLC { get; set; }
-
         [Description("Tiempo extra en milisegundos para esperar antes de presionar A en la pantalla de título.")]
         public int ExtraTimeLoadGame { get; set; } = 5000;
 
-        [Description("[BDSP] Tiempo extra en milisegundos para esperar a que cargue el mundo exterior después de la pantalla de título.")]
+        [Description("Tiempo extra en milisegundos para esperar a que el mundo exterior se cargue después de la pantalla de título.")]
         public int ExtraTimeLoadOverworld { get; set; } = 3000;
 
         [Description("Activa esto si necesitas seleccionar un perfil al iniciar el juego.")]

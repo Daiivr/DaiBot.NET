@@ -682,6 +682,8 @@ public class PokeTradeBotBS : PokeRoutineExecutor8BS, ICountBot, ITradeBot, IDis
         }
         else if (config.LedyQuitIfNoMatch)
         {
+            var nickname = offered.IsNicknamed ? $" (Apodo: \"{offered.Nickname}\")" : string.Empty;
+            poke.SendNotification(this, $"No se encontró coincidencia para el {GameInfo.GetStrings(1).Species[offered.Species]} ofrecido{nickname}.");
             return (toSend, PokeTradeResult.TrainerRequestBad);
         }
 
