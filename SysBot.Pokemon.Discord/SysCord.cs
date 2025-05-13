@@ -492,8 +492,11 @@ public sealed class SysCord<T> where T : PKM, new()
 
             if (msg.HasMentionPrefix(_client.CurrentUser, ref argPos) || msg.HasStringPrefix(correctPrefix, ref argPos))
             {
-                // Grant XP to the user for using a command
-                GrantXP(msg.Author.Id.ToString());
+                // Grant XP to the user for using a command only if XP system is enabled
+                if (SysCordSettings.Settings.EnableXPSystem)
+                {
+                    GrantXP(msg.Author.Id.ToString());
+                }
 
                 var context = new SocketCommandContext(_client, msg);
                 var handled = await TryHandleCommandAsync(msg, context, argPos);

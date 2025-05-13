@@ -70,6 +70,9 @@ public class DiscordSettings
     [Category(Startup), Description("Estado personalizado del bot."), DisplayName("Estado de Juego del Bot")]
     public string BotGameStatus { get; set; } = "SysBot.NET: Pokémon";
 
+    [Category(Operation), Description("Habilita o deshabilita el sistema de XP para usuarios cuando usan comandos."), DisplayName("Sistema de XP")]
+    public bool EnableXPSystem { get; set; } = false;
+
     [Category("Insignias"), Description("Lista de emojis personalizados para las insignias que se dara al usuario luego de completar x cantidad de trades.\nPuede mirar las insignias con el comando (profile)"), DisplayName("Insignias")]
     public List<Badge> CustomBadgeEmojis { get; set; } = new List<Badge>
     {
